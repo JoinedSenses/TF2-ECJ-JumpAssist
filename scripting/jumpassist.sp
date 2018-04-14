@@ -1965,6 +1965,9 @@ public Action:cmdSendPlayer(client, args)
 		GetCmdArg(2, arg2, sizeof(arg2));
 		new target1 = FindTarget2(client, arg1, true, false);
 		new target2 = FindTarget2(client, arg2, true, false);
+		if (target1 < 0 || target2 < 0){
+			return Plugin_Handled;
+		}
 		if(speedrunStatus[target1]){
 			ReplyToCommand(client, "\x01[\x03JA\x01] You cannot send a player in a speedrun");
 			return Plugin_Handled;
@@ -3092,9 +3095,15 @@ public Action:WelcomePlayer(Handle:timer, any:client)
 	GetConVarString(g_hHostname, sHostname, sizeof(sHostname));
 	if (!IsClientInGame(client))
 		return;
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}JA{DEFAULT}] Welcome to {ZPURPLE}%s{DEFAULT}", sHostname);
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}JA{DEFAULT}] For help with [{LIGHTGREEN}TF2{DEFAULT}] {LIGHTGREEN}JumpAssist{DEFAULT}, type {ORANGE}!ja_help{DEFAULT}");
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}SM{DEFAULT}] For server information, type {ORANGE}!help{DEFAULT}");
+	CPrintToChat(client, "{LIGHTGREEN}----------------------------------------------------------------");
+	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] Welcome to {ZPURPLE}%s{DEFAULT}", sHostname);
+	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] For help with [{LIGHTGREEN}TF2{DEFAULT}] {LIGHTGREEN}JumpAssist{DEFAULT}, type {ORANGE}!ja_help{DEFAULT}");
+	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] For server information, type {ORANGE}!help{DEFAULT}");
+	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] {LightGreen}Be nice to fellow jumpers");
+	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] {LightGreen}No trade chat");
+	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] {LightGreen}No complaining");
+	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] {LightGreen}No chat/voice spam");
+	CPrintToChat(client, "{LIGHTGREEN}----------------------------------------------------------------");
 }
 /*****************************************************************************************************************
 											ConVars Hooks
