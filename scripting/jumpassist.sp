@@ -1,19 +1,19 @@
 /*
-             *     ,MMM8&&&.            *
-                  MMMM88&&&&&    .
-                 MMMM88&&&&&&&
-     *           MMM88&&&&&&&&
-                 MMM88&&&&&&&&
-                 'MMM88&&&&&&'
-                   'MMM8&&&'      *
-          |\___/|
-          )     (             .              '
-         =\     /=
-           )===(       *
-          /     \
-          |     |
-         /       \
-         \       /
+			 *     ,MMM8&&&.            *
+				  MMMM88&&&&&    .
+				 MMMM88&&&&&&&
+	 *           MMM88&&&&&&&&
+				 MMM88&&&&&&&&
+				 'MMM88&&&&&&'
+				   'MMM8&&&'      *
+		  |\___/|
+		  )     (             .              '
+		 =\     /=
+		   )===(       *
+		  /     \
+		  |     |
+		 /       \
+		 \       /
   _/\_/\_/\__  _/_/\_/\_/\_/\_/\_/\_/\_/\_/\_
   |  |  |  |( (  |  |  |  |  |  |  |  |  |  |
   |  |  |  | ) ) |  |  |  |  |  |  |  |  |  |
@@ -175,15 +175,15 @@
 	* Once the database is set up, an example configuration would look like:
 	*
 	* "jumpassist"
-    *     {
-    *             "driver"                        "default"
-    *             "host"                          "127.0.0.1"
-    *             "database"                      "jumpassist"
-    *             "user"                          "tf2server"
-    *             "pass"                          "tf2serverpassword"
-    *             //"timeout"                     "0"
-    *             //"port"                        "0"
-    *     }
+	*     {
+	*             "driver"                        "default"
+	*             "host"                          "127.0.0.1"
+	*             "database"                      "jumpassist"
+	*             "user"                          "tf2server"
+	*             "pass"                          "tf2serverpassword"
+	*             //"timeout"                     "0"
+	*             //"port"                        "0"
+	*     }
 	*
 	*
 	**********************************************************************************************************************************
@@ -200,7 +200,7 @@
 #define AUTOLOAD_EXTENSIONS
 #endif
 
-#define PLUGIN_VERSION "0.8.14"
+#define PLUGIN_VERSION "0.9.0"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs"
 #define cDefault    0x01
@@ -224,16 +224,12 @@ new g_bRaceEndPoint[MAXPLAYERS+1];
 new g_bRaceInvitedTo[MAXPLAYERS+1];
 new bool:g_bRaceLocked[MAXPLAYERS+1];
 new bool:g_bRaceAmmoRegen[MAXPLAYERS+1];
-new bool:g_bRaceHealthRegen[MAXPLAYERS+1];
 new bool:g_bRaceClassForce[MAXPLAYERS+1];
 new g_bRaceSpec[MAXPLAYERS+1];
-new speedrunStatus[32];
 new g_iLastTeleport[MAXPLAYERS+1];
 #include "jumpassist/skeys.sp"
-#include "jumpassist/skillsrank.sp"
 #include "jumpassist/database.sp"
 #include "jumpassist/sound.sp"
-#include "jumpassist/speedrun.sp"
 new Handle:g_hWelcomeMsg;
 new Handle:g_hCriticals;
 new Handle:g_hSuperman;
@@ -241,7 +237,6 @@ new Handle:g_hSentryLevel;
 new Handle:g_hCheapObjects;
 new Handle:g_hAmmoCheat;
 new Handle:g_hFastBuild;
-//new Handle:hCvarBranch;
 new Handle:hArray_NoFuncRegen;
 new Handle:waitingForPlayers;
 new String:szWebsite[128] = "http://www.jump.tf/";
@@ -269,27 +264,18 @@ public OnPluginStart()
 	g_hCheapObjects = CreateConVar("ja_cheapobjects", "0", "No metal cost on buildings.", FCVAR_NOTIFY);
 	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
 	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_NOTIFY);
-	//g_hSoundBlock = CreateConVar("ja_sounds", "0", "Block pain, regenerate, and ammo pickup sounds?", FCVAR_NOTIFY);
 	g_hSentryLevel = CreateConVar("ja_sglevel", "1", "Sets the default sentry level (1-3)", FCVAR_NOTIFY);
-	//char sDesc[128]="";
-	//Format(sDesc,sizeof(sDesc),"Select a branch folder from %s to update from.", UPDATE_URL_BASE);
-	//hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH, sDesc, FCVAR_NOTIFY);
-	hSpeedrunEnabled = CreateConVar("ja_speedrun_enabled", "0", "Turns speedrunning on/off", FCVAR_NOTIFY);
-	// Jump Assist console commands
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
 	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Sends you back to the beginning without deleting your save..");
 	RegConsoleCmd("sm_r", cmdReset, "Sends you back to the beginning without deleting your save..");
 	RegConsoleCmd("sm_reset", cmdReset, "Sends you back to the beginning without deleting your save..");
 	RegConsoleCmd("sm_restart", cmdRestart, "Deletes your save, and sends you back to the beginning.");
 	RegConsoleCmd("sm_setmy", cmdSetMy, "Saves player settings.");
-	//RegConsoleCmd("sm_goto", cmdGotoClient, "Goto <target>");
 	RegConsoleCmd("sm_s", cmdSave, "Saves your current position.");
 	RegConsoleCmd("sm_save", cmdSave, "Saves your current position.");
-	RegConsoleCmd("sm_regen", cmdDoRegen, "Changes regeneration settings.");
 	RegConsoleCmd("sm_undo", cmdUndo, "Restores your last saved position.");
 	RegConsoleCmd("sm_t", cmdTele, "Teleports you to your current saved location.");
 	RegConsoleCmd("sm_ammo", cmdToggleAmmo, "Regenerates weapon ammunition");
-	RegConsoleCmd("sm_health", cmdToggleHealth, "Regenerates health");
 	RegConsoleCmd("sm_tele", cmdTele, "Teleports you to your current saved location.");
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a clients key's.");
 	RegConsoleCmd("sm_skeys_color", cmdChangeSkeysColor, "Changes the color of the text for skeys."); //cannot whether the database is configured or not
@@ -298,7 +284,6 @@ public OnPluginStart()
 	RegConsoleCmd("sm_jumptf", cmdJumpTF, "Shows the jump.tf website.");
 	RegConsoleCmd("sm_forums", cmdJumpForums, "Shows the jump.tf forums.");
 	RegConsoleCmd("sm_jumpassist", cmdJumpAssist, "Shows the forum page for JumpAssist.");
-	//RegConsoleCmd("sm_spec", cmdSpec, "Sets you as spectator of a player.");
 	RegConsoleCmd("sm_race_list", cmdRaceList, "Lists players and their times in a race.");
 	RegConsoleCmd("sm_r_list", cmdRaceList, "Lists players and their times in a race.");
 	RegConsoleCmd("sm_race", cmdRaceInitialize, "Initializes a new race.");
@@ -319,33 +304,7 @@ public OnPluginStart()
 	// Admin Commands
 	RegAdminCmd("sm_mapset", cmdMapSet, ADMFLAG_GENERIC, "Change map settings");
 	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
-	//RegAdminCmd("sm_jatele", SendToLocation, ADMFLAG_ROOT, "Sends a player to the spcified jump.");
-	//RegAdminCmd("sm_addtele", cmdAddTele, ADMFLAG_ROOT, "Adds a teleport location for the current map");
-	//RegAdminCmd("sm_removetele", cmdRemoveTele, ADMFLAG_ROOT, "Removes a teleport location for the current map");
-	RegAdminCmd("sm_setstart", cmdSetStart, ADMFLAG_ROOT, "Sets the map start location for speedrunning");
-	RegAdminCmd("sm_addzone", cmdAddZone, ADMFLAG_ROOT, "Adds a checkpoint or end zone for speedrunning");
-	RegAdminCmd("sm_clearzones", cmdClearZones, ADMFLAG_ROOT, "Deletes all zones on the current map");
-	RegAdminCmd("sm_cleartimes", cmdClearTimes, ADMFLAG_ROOT, "Deletes all times on the current map");
-	RegAdminCmd("sm_sr_force_reload", cmdSpeedrunForceReload, ADMFLAG_ROOT, "Deletes all times on the current map");
-	RegConsoleCmd("sm_showzones", cmdShowZones, "Shows all zones of the map");
-	RegConsoleCmd("sm_rmtime", cmdRemoveTime, "Removes your time on the map");
-	RegConsoleCmd("sm_showzone", cmdShowZone, "Shows the current zone and says what zone it is");
-	RegConsoleCmd("sm_sz", cmdShowZone, "Shows the current zone and says what zone it is");
-	RegConsoleCmd("sm_speedrun", cmdToggleSpeedrun, "Enables/disables speedrunning");
-	RegConsoleCmd("sm_sr", cmdToggleSpeedrun, "Enables/disables speedrunning");
-	RegConsoleCmd("sm_stopspeedrun", cmdDisableSpeedrun, "Disables speedrunning");
-	RegConsoleCmd("sm_pr", cmdShowPR, "Shows your personal record");
-	RegConsoleCmd("sm_wr", cmdShowWR, "Shows the map record");
-	RegConsoleCmd("sm_top", cmdShowTop, "Shows the map record");
-	RegConsoleCmd("sm_pi", cmdShowPlayerInfo, "Shows the player's runs");
-	//RegConsoleCmd("sm_stest", cmdTest, "Shows the map record");
-	RegConsoleCmd("sm_top", cmdShowTop, "Shows the top speedruns of the map");
-	// ROOT COMMANDS, they're set to root users for a reason.
-	//RegAdminCmd("sm_ja_query", RunQuery, ADMFLAG_ROOT, "Runs a SQL query on the JA database. (FOR TESTING)");
-//#if defined DEBUG
-	//RegAdminCmd("sm_ja_update_force", Command_Update, ADMFLAG_RCON, "Forces update check of plugin");
-//#endif
-	// Hooks
+	
 	HookEvent("player_team", eventPlayerChangeTeam);
 	HookEvent("player_changeclass", eventPlayerChangeClass);
 	HookEvent("player_spawn", eventPlayerSpawn);
@@ -363,7 +322,6 @@ public OnPluginStart()
 	HookConVarChange(g_hWelcomeMsg, cvarWelcomeMsgChanged);
 	HookConVarChange(g_hSuperman, cvarSupermanChanged);
 	HookConVarChange(g_hSentryLevel, cvarSentryLevelChanged);
-	HookConVarChange(hSpeedrunEnabled, cvarSpeedrunEnabledChanged);
 	HookUserMessage(GetUserMessageId("VoiceSubtitle"), HookVoice, true);
 
 	LoadTranslations("jumpassist.phrases");
@@ -395,14 +353,9 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 {
 	CreateNative("JA_ClearSave", Native_JA_ClearSave);
 	CreateNative("JA_GetSettings", Native_JA_GetSettings);
-	CreateNative("JA_PrepSpeedRun", Native_JA_PrepSpeedRun);
 	CreateNative("JA_ReloadPlayerSettings", Native_JA_ReloadPlayerSettings);
 	g_bLateLoad = late;
 	return APLRes_Success;
-}
-public OnAllPluginsLoaded()
-{
-	skillsrank = LibraryExists("skillsrank");
 }
 enum TFGameType {
 	TFGame_Unknown,
@@ -416,181 +369,181 @@ TF2_SetGameType()
 	GameRules_SetProp("m_nGameType", 2);
 }
 
-    enum TFExtObjectType
-    {
-        TFExtObject_Unknown = -1,
-        TFExtObject_CartDispenser = 0,
-        TFExtObject_Dispenser = 0,
-        TFExtObject_Teleporter = 1,
-        TFExtObject_Sentry = 2,
-        TFExtObject_Sapper = 3,
-        TFExtObject_TeleporterEntry,
-        TFExtObject_TeleporterExit,
-        TFExtObject_MiniSentry,
-        TFExtObject_Amplifier,
-        TFExtObject_RepairNode
-    };
-    stock const String:TF2_ObjectClassNames[TFExtObjectType][] =
-    {
-        "obj_dispenser",
-        "obj_teleporter",
-        "obj_sentrygun",
-        "obj_sapper",
-        "obj_teleporter", // _entrance
-        "obj_teleporter", // _exit
-        "obj_sentrygun",  // minisentry
-        "obj_dispenser",  // amplifier
-        "obj_dispenser"   // repair_node
-    };
-    stock const String:TF2_ObjectNames[TFExtObjectType][] =
-    {
-        "Dispenser",
-        "Teleporter",
-        "Sentry Gun",
-        "Sapper",
-        "Teleporter Entrance",
-        "Teleporter Exit",
-        "Mini Sentry Gun",
-        "Amplifier",
-        "Repair Node"
-    };
-    stock TF2_ObjectModes[TFExtObjectType] =
-    {
-        -1, // dispenser
-        -1, // teleporter (either)
-        -1, // sentrygun
-        -1, // sapper
-         0, // telporter_entrance
-         1, // teleporter_exit
-        -1, // minisentry
-        -1, // amplifier
-        -1  // repair_node
-    };
-    // Max Sentry Ammo for Level:         mini,   1,   2,   3, max
-    stock const TF2_MaxSentryShells[]  = { 150, 100, 120, 144,  255 };
-    stock const TF2_MaxSentryRockets[] = {   0,   0,   0,  20,   63 };
-    stock const TF2_SentryHealth[]     = { 100, 150, 180, 216, 8191 };
-    stock const TF2_MaxUpgradeMetal    = 200;
-    stock const TF2_MaxDispenserMetal  = 400;
+	enum TFExtObjectType
+	{
+		TFExtObject_Unknown = -1,
+		TFExtObject_CartDispenser = 0,
+		TFExtObject_Dispenser = 0,
+		TFExtObject_Teleporter = 1,
+		TFExtObject_Sentry = 2,
+		TFExtObject_Sapper = 3,
+		TFExtObject_TeleporterEntry,
+		TFExtObject_TeleporterExit,
+		TFExtObject_MiniSentry,
+		TFExtObject_Amplifier,
+		TFExtObject_RepairNode
+	};
+	stock const String:TF2_ObjectClassNames[TFExtObjectType][] =
+	{
+		"obj_dispenser",
+		"obj_teleporter",
+		"obj_sentrygun",
+		"obj_sapper",
+		"obj_teleporter", // _entrance
+		"obj_teleporter", // _exit
+		"obj_sentrygun",  // minisentry
+		"obj_dispenser",  // amplifier
+		"obj_dispenser"   // repair_node
+	};
+	stock const String:TF2_ObjectNames[TFExtObjectType][] =
+	{
+		"Dispenser",
+		"Teleporter",
+		"Sentry Gun",
+		"Sapper",
+		"Teleporter Entrance",
+		"Teleporter Exit",
+		"Mini Sentry Gun",
+		"Amplifier",
+		"Repair Node"
+	};
+	stock TF2_ObjectModes[TFExtObjectType] =
+	{
+		-1, // dispenser
+		-1, // teleporter (either)
+		-1, // sentrygun
+		-1, // sapper
+		 0, // telporter_entrance
+		 1, // teleporter_exit
+		-1, // minisentry
+		-1, // amplifier
+		-1  // repair_node
+	};
+	// Max Sentry Ammo for Level:         mini,   1,   2,   3, max
+	stock const TF2_MaxSentryShells[]  = { 150, 100, 120, 144,  255 };
+	stock const TF2_MaxSentryRockets[] = {   0,   0,   0,  20,   63 };
+	stock const TF2_SentryHealth[]     = { 100, 150, 180, 216, 8191 };
+	stock const TF2_MaxUpgradeMetal    = 200;
+	stock const TF2_MaxDispenserMetal  = 400;
 	
 stock BuildSentry(hBuilder, const Float:fOrigin[3], const Float:fAngle[3], iLevel=1,
-                  bool:bDisabled=false, bool:bMini=false, bool:bShielded=false,
-                  iHealth=-1, iMaxHealth=-1, iShells=-1, iRockets=-1,
-                  Float:flPercentage=1.0)
+				  bool:bDisabled=false, bool:bMini=false, bool:bShielded=false,
+				  iHealth=-1, iMaxHealth=-1, iShells=-1, iRockets=-1,
+				  Float:flPercentage=1.0)
 {
-    static const Float:fBuildMaxs[3] = { 24.0, 24.0, 66.0 };
-    //static const Float:fMdlWidth[3] = { 1.0, 0.5, 0.0 };
-    new iTeam = GetClientTeam(hBuilder);
-    new iSentryHealth;
-    new iMaxSentryShells;
-    new iMaxSentryRockets;
-    if (iLevel < 1 || bMini)
-    {
-        iLevel = 1;
-        iSentryHealth = TF2_SentryHealth[0];
-        iMaxSentryShells = TF2_MaxSentryShells[0];
-        iMaxSentryRockets = TF2_MaxSentryRockets[0];
-    }
-    else if (iLevel <= 3)
-    {
-        iSentryHealth = TF2_SentryHealth[iLevel];
-        iMaxSentryShells = TF2_MaxSentryShells[iLevel];
-        iMaxSentryRockets = TF2_MaxSentryRockets[iLevel];
-    }
-    else if (iLevel == 4)
-    {
-        iLevel = 3;
-        iSentryHealth = TF2_SentryHealth[3]+40;
-        iMaxSentryShells = (TF2_MaxSentryShells[3]+TF2_MaxSentryShells[4])/2;
-        iMaxSentryRockets = (TF2_MaxSentryRockets[3]+TF2_MaxSentryRockets[4])/2;
-    }
-    else
-    {
-        iLevel = 3;
-        iSentryHealth = TF2_SentryHealth[4];
-        iMaxSentryShells = TF2_MaxSentryShells[4];
-        iMaxSentryRockets = TF2_MaxSentryRockets[4];
-    }
-    if (iShells < 0)
-        iRockets = iMaxSentryRockets;
-    if (iShells < 0)
-        iShells = iMaxSentryShells;
-    if (iMaxHealth < 0)
-        iMaxHealth = iSentryHealth;
-    if (iHealth < 0 || iHealth > iMaxHealth)
-        iHealth = iMaxHealth;
-    new iSentry = CreateEntityByName(TF2_ObjectClassNames[TFExtObject_Sentry]);
-    if (iSentry > 0 && IsValidEdict(iSentry))
-    {
-        DispatchSpawn(iSentry);
-        TeleportEntity(iSentry, fOrigin, fAngle, NULL_VECTOR);
-        decl String:sModel[64];
-        if (bMini)
-            strcopy(sModel, sizeof(sModel),"models/buildables/sentry1.mdl");
-        else
-            Format(sModel, sizeof(sModel),"models/buildables/sentry%d.mdl", iLevel);
-        SetEntityModel(iSentry,sModel);
-        // m_bPlayerControlled is set to make m_bShielded work,
-        // but it gets reset almost immediately :(
-        SetEntProp(iSentry, Prop_Send, "m_iMaxHealth", 				        iMaxHealth, 4);
-        SetEntProp(iSentry, Prop_Send, "m_iHealth", 					    iHealth, 4);
-        SetEntProp(iSentry, Prop_Send, "m_bDisabled", 				        bDisabled, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bShielded", 				        bShielded, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bPlayerControlled", 				bShielded, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bMiniBuilding", 				    bMini, 2);
-        SetEntProp(iSentry, Prop_Send, "m_iObjectType", 				    _:TFExtObject_Sentry, 1);
-        SetEntProp(iSentry, Prop_Send, "m_iUpgradeLevel", 			        iLevel, 4);
-        SetEntProp(iSentry, Prop_Send, "m_iAmmoRockets", 				    iRockets, 4);
-        SetEntProp(iSentry, Prop_Send, "m_iAmmoShells" , 				    iShells, 4);
-        SetEntProp(iSentry, Prop_Send, "m_iState" , 				        (bShielded ? 2 : 0), 4);
-        SetEntProp(iSentry, Prop_Send, "m_iObjectMode", 				    0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_iUpgradeMetal", 			        0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bBuilding", 				        0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bPlacing", 					    0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_iState", 					        1, 1);
-        SetEntProp(iSentry, Prop_Send, "m_bHasSapper", 				        0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_nNewSequenceParity", 		        4, 4);
-        SetEntProp(iSentry, Prop_Send, "m_nResetEventsParity", 		        4, 4);
-        SetEntProp(iSentry, Prop_Send, "m_bServerOverridePlacement", 	    1, 1);
-        SetEntProp(iSentry, Prop_Send, "m_nSequence",                       0);
-        SetEntPropEnt(iSentry, Prop_Send, "m_hBuilder", 	                hBuilder);
-        SetEntPropFloat(iSentry, Prop_Send, "m_flPercentageConstructed", 	flPercentage);
-        SetEntPropFloat(iSentry, Prop_Send, "m_flModelWidthScale", 	        1.0);
-        SetEntPropFloat(iSentry, Prop_Send, "m_flPlaybackRate", 			1.0);
-        SetEntPropFloat(iSentry, Prop_Send, "m_flCycle", 					0.0);
-        SetEntPropVector(iSentry, Prop_Send, "m_vecOrigin", 			    fOrigin);
-        SetEntPropVector(iSentry, Prop_Send, "m_angRotation", 		        fAngle);
-        SetEntPropVector(iSentry, Prop_Send, "m_vecBuildMaxs", 		        fBuildMaxs);
-        //SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_flModelWidthScale"),	fMdlWidth, true);
-        if (bMini)
-        {
-            SetEntProp(iSentry, Prop_Send, "m_nSkin", 					    iTeam, 1);
-            SetEntProp(iSentry, Prop_Send, "m_nBody", 					    5, 1);
-        }
-        else
-        {
-            SetEntProp(iSentry, Prop_Send, "m_nSkin", 					    (iTeam-2), 1);
-            SetEntProp(iSentry, Prop_Send, "m_nBody", 					    0, 1);
-        }
-        SetVariantInt(iTeam);
-        AcceptEntityInput(iSentry, "TeamNum", -1, -1, 0);
-        SetVariantInt(iTeam);
-        AcceptEntityInput(iSentry, "SetTeam", -1, -1, 0);
-        SetVariantInt(hBuilder);
-        AcceptEntityInput(iSentry, "SetBuilder", -1, -1, 0);
-        new Handle:event = CreateEvent("player_builtobject");
-        if (event != INVALID_HANDLE)
-        {
-            SetEventInt(event, "userid", GetClientUserId(hBuilder));
-            SetEventInt(event, "object", _:TFExtObject_Sentry);
-            SetEventInt(event, "index", iSentry);
-            SetEventBool(event, "sourcemod", true);
-            FireEvent(event);
-        }
-        g_WasBuilt[iSentry] = true;
-        g_HasBuilt[hBuilder] |= HasBuiltSentry;
-    }
-    return iSentry;
+	static const Float:fBuildMaxs[3] = { 24.0, 24.0, 66.0 };
+	//static const Float:fMdlWidth[3] = { 1.0, 0.5, 0.0 };
+	new iTeam = GetClientTeam(hBuilder);
+	new iSentryHealth;
+	new iMaxSentryShells;
+	new iMaxSentryRockets;
+	if (iLevel < 1 || bMini)
+	{
+		iLevel = 1;
+		iSentryHealth = TF2_SentryHealth[0];
+		iMaxSentryShells = TF2_MaxSentryShells[0];
+		iMaxSentryRockets = TF2_MaxSentryRockets[0];
+	}
+	else if (iLevel <= 3)
+	{
+		iSentryHealth = TF2_SentryHealth[iLevel];
+		iMaxSentryShells = TF2_MaxSentryShells[iLevel];
+		iMaxSentryRockets = TF2_MaxSentryRockets[iLevel];
+	}
+	else if (iLevel == 4)
+	{
+		iLevel = 3;
+		iSentryHealth = TF2_SentryHealth[3]+40;
+		iMaxSentryShells = (TF2_MaxSentryShells[3]+TF2_MaxSentryShells[4])/2;
+		iMaxSentryRockets = (TF2_MaxSentryRockets[3]+TF2_MaxSentryRockets[4])/2;
+	}
+	else
+	{
+		iLevel = 3;
+		iSentryHealth = TF2_SentryHealth[4];
+		iMaxSentryShells = TF2_MaxSentryShells[4];
+		iMaxSentryRockets = TF2_MaxSentryRockets[4];
+	}
+	if (iShells < 0)
+		iRockets = iMaxSentryRockets;
+	if (iShells < 0)
+		iShells = iMaxSentryShells;
+	if (iMaxHealth < 0)
+		iMaxHealth = iSentryHealth;
+	if (iHealth < 0 || iHealth > iMaxHealth)
+		iHealth = iMaxHealth;
+	new iSentry = CreateEntityByName(TF2_ObjectClassNames[TFExtObject_Sentry]);
+	if (iSentry > 0 && IsValidEdict(iSentry))
+	{
+		DispatchSpawn(iSentry);
+		TeleportEntity(iSentry, fOrigin, fAngle, NULL_VECTOR);
+		decl String:sModel[64];
+		if (bMini)
+			strcopy(sModel, sizeof(sModel),"models/buildables/sentry1.mdl");
+		else
+			Format(sModel, sizeof(sModel),"models/buildables/sentry%d.mdl", iLevel);
+		SetEntityModel(iSentry,sModel);
+		// m_bPlayerControlled is set to make m_bShielded work,
+		// but it gets reset almost immediately :(
+		SetEntProp(iSentry, Prop_Send, "m_iMaxHealth", 				        iMaxHealth, 4);
+		SetEntProp(iSentry, Prop_Send, "m_iHealth", 					    iHealth, 4);
+		SetEntProp(iSentry, Prop_Send, "m_bDisabled", 				        bDisabled, 2);
+		SetEntProp(iSentry, Prop_Send, "m_bShielded", 				        bShielded, 2);
+		SetEntProp(iSentry, Prop_Send, "m_bPlayerControlled", 				bShielded, 2);
+		SetEntProp(iSentry, Prop_Send, "m_bMiniBuilding", 				    bMini, 2);
+		SetEntProp(iSentry, Prop_Send, "m_iObjectType", 				    _:TFExtObject_Sentry, 1);
+		SetEntProp(iSentry, Prop_Send, "m_iUpgradeLevel", 			        iLevel, 4);
+		SetEntProp(iSentry, Prop_Send, "m_iAmmoRockets", 				    iRockets, 4);
+		SetEntProp(iSentry, Prop_Send, "m_iAmmoShells" , 				    iShells, 4);
+		SetEntProp(iSentry, Prop_Send, "m_iState" , 				        (bShielded ? 2 : 0), 4);
+		SetEntProp(iSentry, Prop_Send, "m_iObjectMode", 				    0, 2);
+		SetEntProp(iSentry, Prop_Send, "m_iUpgradeMetal", 			        0, 2);
+		SetEntProp(iSentry, Prop_Send, "m_bBuilding", 				        0, 2);
+		SetEntProp(iSentry, Prop_Send, "m_bPlacing", 					    0, 2);
+		SetEntProp(iSentry, Prop_Send, "m_iState", 					        1, 1);
+		SetEntProp(iSentry, Prop_Send, "m_bHasSapper", 				        0, 2);
+		SetEntProp(iSentry, Prop_Send, "m_nNewSequenceParity", 		        4, 4);
+		SetEntProp(iSentry, Prop_Send, "m_nResetEventsParity", 		        4, 4);
+		SetEntProp(iSentry, Prop_Send, "m_bServerOverridePlacement", 	    1, 1);
+		SetEntProp(iSentry, Prop_Send, "m_nSequence",                       0);
+		SetEntPropEnt(iSentry, Prop_Send, "m_hBuilder", 	                hBuilder);
+		SetEntPropFloat(iSentry, Prop_Send, "m_flPercentageConstructed", 	flPercentage);
+		SetEntPropFloat(iSentry, Prop_Send, "m_flModelWidthScale", 	        1.0);
+		SetEntPropFloat(iSentry, Prop_Send, "m_flPlaybackRate", 			1.0);
+		SetEntPropFloat(iSentry, Prop_Send, "m_flCycle", 					0.0);
+		SetEntPropVector(iSentry, Prop_Send, "m_vecOrigin", 			    fOrigin);
+		SetEntPropVector(iSentry, Prop_Send, "m_angRotation", 		        fAngle);
+		SetEntPropVector(iSentry, Prop_Send, "m_vecBuildMaxs", 		        fBuildMaxs);
+		//SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_flModelWidthScale"),	fMdlWidth, true);
+		if (bMini)
+		{
+			SetEntProp(iSentry, Prop_Send, "m_nSkin", 					    iTeam, 1);
+			SetEntProp(iSentry, Prop_Send, "m_nBody", 					    5, 1);
+		}
+		else
+		{
+			SetEntProp(iSentry, Prop_Send, "m_nSkin", 					    (iTeam-2), 1);
+			SetEntProp(iSentry, Prop_Send, "m_nBody", 					    0, 1);
+		}
+		SetVariantInt(iTeam);
+		AcceptEntityInput(iSentry, "TeamNum", -1, -1, 0);
+		SetVariantInt(iTeam);
+		AcceptEntityInput(iSentry, "SetTeam", -1, -1, 0);
+		SetVariantInt(hBuilder);
+		AcceptEntityInput(iSentry, "SetBuilder", -1, -1, 0);
+		new Handle:event = CreateEvent("player_builtobject");
+		if (event != INVALID_HANDLE)
+		{
+			SetEventInt(event, "userid", GetClientUserId(hBuilder));
+			SetEventInt(event, "object", _:TFExtObject_Sentry);
+			SetEventInt(event, "index", iSentry);
+			SetEventBool(event, "sourcemod", true);
+			FireEvent(event);
+		}
+		g_WasBuilt[iSentry] = true;
+		g_HasBuilt[hBuilder] |= HasBuiltSentry;
+	}
+	return iSentry;
 }
 SentryOnGameFrame(){
 	new i = -1;
@@ -671,9 +624,7 @@ SentryOnGameFrame(){
 }
 public OnGameFrame(){
 	SkeysOnGameFrame();
-	if(GetConVarBool(hSpeedrunEnabled)){
-		SpeedrunOnGameFrame();
-	}
+
 	if(GetConVarBool(g_hFastBuild)){
 		SentryOnGameFrame();
 	}
@@ -715,8 +666,6 @@ public OnMapStart()
 		// Precache cap sounds
 		PrecacheSound("misc/freeze_cam.wav");
 		PrecacheSound("misc/killstreak.wav");
-		g_BeamSprite = PrecacheModel("materials/sprites/laser.vmt");
-		g_HaloSprite = PrecacheModel("materials/sprites/halo01.vmt");
 		// Change game rules to CP.
 		TF2_SetGameType();
 		// Find caps, and store the number of them in g_iCPs.
@@ -725,9 +674,6 @@ public OnMapStart()
 		{
 			g_iCPs++;
 		}
-		if(databaseConfigured){
-			LoadMapSpeedrunInfo();
-		}
 		Hook_Func_regenerate();
 	}
 }
@@ -735,19 +681,14 @@ public OnClientDisconnect(client)
 {
 	if (GetConVarBool(g_hPluginEnabled))
 	{
-		g_bHardcore[client] = false, g_bHPRegen[client] = false, g_bLoadedPlayerSettings[client] = false, g_bBeatTheMap[client] = false;
-		g_bGetClientKeys[client] = false, g_bSpeedRun[client] = false, g_bUnkillable[client] = false, Format(g_sCaps[client], sizeof(g_sCaps), "\0");
+		g_bHardcore[client] = false, g_bLoadedPlayerSettings[client] = false, g_bBeatTheMap[client] = false;
+		g_bGetClientKeys[client] = false, g_bUnkillable[client] = false, Format(g_sCaps[client], sizeof(g_sCaps), "\0");
 		EraseLocs(client);
 	}
 	if(g_bRace[client] !=0)
 	{
 		LeaveRace(client);
 	}
-	speedrunStatus[client] = 0;
-	for(new i = 0; i < 32; i++){
-		zoneTimes[client][i] = 0.0;
-	}
-	lastFrameInStartZone[client] = false;
 	SetSkeysDefaults(client);
 	new idx;
 	if((idx = FindValueInArray(hArray_NoFuncRegen,client)) != -1)
@@ -759,9 +700,6 @@ public OnClientPutInServer(client)
 {
 	if (GetConVarBool(g_hPluginEnabled))
 	{
-		if(hSpeedrunEnabled){
-			UpdateSteamID(client);
-		}
 		// Hook the client
 		if(IsValidClient(client))
 		{
@@ -775,8 +713,8 @@ public OnClientPutInServer(client)
 		{
 			CreateTimer(15.0, WelcomePlayer, client);
 		}
-		g_bHardcore[client] = false, g_bHPRegen[client] = false, g_bLoadedPlayerSettings[client] = false, g_bBeatTheMap[client] = false;
-		g_bGetClientKeys[client] = false, g_bSpeedRun[client] = false, g_bUnkillable[client] = false, Format(g_sCaps[client], sizeof(g_sCaps), "\0");
+		g_bHardcore[client] = false, g_bLoadedPlayerSettings[client] = false, g_bBeatTheMap[client] = false;
+		g_bGetClientKeys[client] = false, g_bUnkillable[client] = false, Format(g_sCaps[client], sizeof(g_sCaps), "\0");
 	}
 }
 /*****************************************************************************************************************
@@ -786,15 +724,6 @@ public OnClientPutInServer(client)
 public Action:cmdRaceInitialize(client, args)
 {
 	if (!IsValidClient(client)) { return; }
-	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-		PrintToChat(client, "\x01[\x03JA\x01] You may not race while speedrunning");
-		return;
-	}
-	if (g_bSpeedRun[client])
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
-		return;
-	}
 	if (g_iCPs == 0){
 		PrintToChat(client, "\x01[\x03JA\x01] You may only race on maps with control points.");
 		return;
@@ -835,6 +764,7 @@ public ControlPointSelector(Handle:menu, MenuAction:action, param1, param2)
 	}
 	else if (action == MenuAction_Cancel)
 	{
+		if(!IsClientConnected(param1)) return;
 		g_bRace[param1] = 0;
 		PrintToChat(param1, "\x01[\x03JA\x01] The race has been cancelled.");
 	}
@@ -874,7 +804,7 @@ public Action:cmdRaceInvite(client, args)
 			GetCmdArg(i, arg1, sizeof(arg1));
 			target = FindTarget(client, arg1, true, false);
 			GetClientName(target, client2Name, sizeof(client2Name));
-			if(target != -1 && !speedrunStatus[target]){
+			if(target != -1){
 				PrintToChat(client, "\x01[\x03JA\x01] You have invited %s to race.", client2Name);
 				Format(buffer, sizeof(buffer), "You have been invited to race to %s by %s", GetCPNameByIndex(g_bRaceEndPoint[client]), clientName);
 				panel = CreatePanel();
@@ -884,8 +814,6 @@ public Action:cmdRaceInvite(client, args)
 				g_bRaceInvitedTo[target] = client;
 				SendPanelToClient(panel, target, InviteHandler, 15);
 				CloseHandle(panel);
-			}else if(speedrunStatus[target]){
-				PrintToChat(client, "\x01[\x03JA\x01] %s is currently in a speedrun", client2Name);
 			}
 		}
 	}
@@ -912,7 +840,7 @@ Handle:PlayerMenu()
 	//SHOULDNT SHOW CURRENT PLAYER AND ALSO PLAYERS ALREADY IN A RACE BUT I NEED THAT FOR TESTING FOR NOW
 	for (new i = 1; i <= GetMaxClients(); i++)
 	{
-		if(IsValidClient(i) && !speedrunStatus[i])
+		if(IsValidClient(i))
 		{
 			IntToString(i, buffer, sizeof(buffer));
 			GetClientName(i, clientName, sizeof(clientName));
@@ -1085,17 +1013,6 @@ public Action:cmdRaceList(client, args){
 	SendPanelToClient(panel, client, InfoHandler, 30);
 	CloseHandle(panel);
 }
-public ListHandler(Handle:menu, MenuAction:action, param1, param2)
-{
-	// if (action == MenuAction_Select)
-	// {
-		// PrintToConsole(param1, "You selected item: %d", param2);
-		// g_bRaceInvitedTo[param1] = 0;
-	// } else if (action == MenuAction_Cancel) {
-		// PrintToServer("Client %d's menu was cancelled.  Reason: %d", param1, param2);
-		// g_bRaceInvitedTo[param1] = 0;
-	// }
-}
 public Action:cmdRaceInfo(client, args)
 {
 	if (!IsValidClient(client)) { return; }
@@ -1123,21 +1040,11 @@ public Action:cmdRaceInfo(client, args)
 	new String:leader[32];
 	new String:leaderFormatted[64];
 	new String:status[64];
-	new String:healthRegen[32];
 	new String:ammoRegen[32];
 	new String:classForce[32];
 	GetClientName(g_bRace[iClientToShow], leader, sizeof(leader));
 	Format(leaderFormatted, sizeof(leaderFormatted), "Race Host: %s", leader);
-	if(g_bRaceHealthRegen[g_bRace[iClientToShow]]){
-		healthRegen = "HP Regen: Enabled";
-	}else{
-		healthRegen = "HP Regen: Disabled";
-	}
-	if(g_bRaceHealthRegen[g_bRace[iClientToShow]]){
-		ammoRegen = "Ammo Regen: Enabled";
-	}else{
-		ammoRegen = "Ammo Regen: Disabled";
-	}
+
 	if(GetRaceStatus(iClientToShow) == 1){
 		status = "Race Status: Waiting for start";
 	}else if(GetRaceStatus(iClientToShow) == 2){
@@ -1156,7 +1063,6 @@ public Action:cmdRaceInfo(client, args)
 	DrawPanelText(panel, leaderFormatted);
 	DrawPanelText(panel, status);
 	DrawPanelText(panel, "---------------");
-	DrawPanelText(panel, healthRegen);
 	DrawPanelText(panel, ammoRegen);
 	DrawPanelText(panel, "---------------");
 	DrawPanelText(panel, classForce);
@@ -1265,11 +1171,6 @@ public Action:cmdServerRace(client, args)
 public Action:cmdRaceInitializeServer(client, args)
 {
 	if (!IsValidClient(client)) { return; }
-	if (g_bSpeedRun[client])
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
-		return;
-	}
 	if (g_iCPs == 0){
 		PrintToChat(client, "\x01[\x03JA\x01] You may only race on maps with control points.");
 		return;
@@ -1409,13 +1310,6 @@ public Action:cmdRaceSet(client, args){
 	if(StrEqual(arg1, "ammo", false)){
 		g_bRaceAmmoRegen[client] = toSet;
 		PrintToChat(client, "\x01[\x03JA\x01] Ammo regen has been set.");
-	}else if(StrEqual(arg1, "health", false)){
-		g_bRaceHealthRegen[client] = toSet;
-		PrintToChat(client, "\x01[\x03JA\x01] Health regen has been set.");
-	}else if(StrEqual(arg1, "regen", false)){
-		g_bRaceAmmoRegen[client] = toSet;
-		g_bRaceHealthRegen[client] = toSet;
-		PrintToChat(client, "\x01[\x03JA\x01] Regen has been set.");
 	}else if(StrEqual(arg1, "cf", false) || StrEqual(arg1, "classforce", false)){
 		g_bRaceClassForce[client] = toSet;
 		PrintToChat(client, "\x01[\x03JA\x01] Class force has been set.");
@@ -1431,7 +1325,6 @@ stock ApplyRaceSettings(race){
 		if (IsClientInRace(i, race))
 		{
 			g_bAmmoRegen[i] = g_bRaceAmmoRegen[g_bRace[i]];
-			g_bHPRegen[i] = g_bRaceHealthRegen[g_bRace[i]];
 		}
 	}
 }
@@ -1493,7 +1386,6 @@ stock LeaveRace(client){
 							g_bRaceStartTime[i] = g_bRaceStartTime[race];
 							g_bRaceFirstTime[i] = g_bRaceFirstTime[race];
 							g_bRaceAmmoRegen[i] = g_bRaceAmmoRegen[race];
-							g_bRaceHealthRegen[i] = g_bRaceHealthRegen[race];
 							g_bRaceClassForce[i] = g_bRaceClassForce[race];
 							g_bRaceTimes[i] = g_bRaceTimes[race];
 							g_bRaceFinishedPlayers[i] = g_bRaceFinishedPlayers[race];
@@ -1552,7 +1444,6 @@ stock ResetRace(raceID)
 			g_bRaceEndPoint[i] = 0;
 			g_bRaceStartTime[i] = 0.0;
 			g_bRaceAmmoRegen[i] = false;
-			g_bRaceHealthRegen[i] = false;
 			g_bRaceClassForce[i] = true;
 		}
 		g_bRaceTimes[raceID][i] = 0.0;
@@ -1680,28 +1571,11 @@ stock bool:IsRaceOver(client){
 public Action:cmdToggleAmmo(client, args)
 {
 	if (!IsValidClient(client)) { return; }
-	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-		PrintToChat(client, "\x01[\x03JA\x01] You may not change regen during a speedrun");
-		return;
-	}
 	if(IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)){
 		ReplyToCommand(client, "\x01[\x03JA\x01] You may not change regen during a race");
 		return;
 	}
-	SetRegen(client, "Ammo", "z");
-}
-public Action:cmdToggleHealth(client, args)
-{
-	if (!IsValidClient(client)) { return; }
-	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-		PrintToChat(client, "\x01[\x03JA\x01] You may not change regen during a speedrun");
-		return;
-	}
-	if(IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)){
-		ReplyToCommand(client, "\x01[\x03JA\x01] You may not change regen during a race");
-		return;
-	}
-	SetRegen(client, "Health", "z");
+	SetRegen(client, "Ammo");
 }
 public Action:cmdToggleHardcore(client, args)
 {
@@ -1753,9 +1627,7 @@ public JAHelpHandler(Handle:menu, MenuAction:action, param1, param2){
 		DrawPanelText(panel, "!restart - Deletes your save and restarts you");
 	}else if(param2 == 2){
 		SetPanelTitle(panel, "Regen Help");
-		DrawPanelText(panel, "!regen <on|off> - Sets ammo & health regen");
 		DrawPanelText(panel, "!ammo - Toggles ammo regen");
-		DrawPanelText(panel, "!health - Toggles health regen");
 	}else if(param2 == 3){
 		SetPanelTitle(panel, "Skeys Help");
 		DrawPanelText(panel, "!skeys - Shows key presses on the screen");
@@ -1767,7 +1639,7 @@ public JAHelpHandler(Handle:menu, MenuAction:action, param1, param2){
 		DrawPanelText(panel, "!r_info - Provides info about the current race.");
 		DrawPanelText(panel, "!r_inv - Invite players to the race.");
 		DrawPanelText(panel, "!r_set - Change settings of a race.");
-		DrawPanelText(panel, "     <classforce|cf|ammo|health|regen>");
+		DrawPanelText(panel, "     <classforce|cf|ammo");
 		DrawPanelText(panel, "     <on|off>");
 		DrawPanelText(panel, "!r_list - Lists race players and their times");
 		DrawPanelText(panel, "!r_spec - Spectates a race.");
@@ -1820,8 +1692,8 @@ stock CheckBeggers(iClient)
 {
 	new iWeapon = GetPlayerWeaponSlot(iClient, 0);
 	new index = FindValueInArray(hArray_NoFuncRegen,iClient);
-        if (IsValidEntity(iWeapon) &&
-		GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex") == 730)
+	if (IsValidEntity(iWeapon) &&
+	GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex") == 730)
 	{
 		if(index == -1)
 		{
@@ -1831,7 +1703,7 @@ stock CheckBeggers(iClient)
 #endif
 		}
 	} else if(index != -1) {
-		RemoveFromArray(hArray_NoFuncRegen,index);
+	RemoveFromArray(hArray_NoFuncRegen,index);
 #if defined DEBUG
 		LogMessage("Allowing player %d to touch func_regenerate");
 #endif
@@ -1865,18 +1737,9 @@ public Action:RunQuery(client, args)
 public Action:cmdUnkillable(client, args)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return Plugin_Handled; }
-	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-		ReplyToCommand(client, "\x01[\x03JA\x01] You may not use superman during a speedrun");
-		return Plugin_Handled;
-	}
 	if (!GetConVarBool(g_hSuperman) && !IsUserAdmin(client))
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Command_Locked");
-		return Plugin_Handled;
-	}
-	if (g_bSpeedRun[client])
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
 		return Plugin_Handled;
 	}
 	if (!g_bUnkillable[client])
@@ -1893,11 +1756,6 @@ public Action:cmdUnkillable(client, args)
 }
 public Action:cmdUndo(client, args)
 {
-	if (g_bSpeedRun[client])
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Save_UndoSpeedRun");
-		return Plugin_Handled;
-	}
 	if (g_fLastSavePos[client][0] == 0.0)
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Save_UndoCant");
@@ -1911,40 +1769,6 @@ public Action:cmdUndo(client, args)
 		return Plugin_Handled;
 	}
 }
-public Action:cmdDoRegen(client, args)
-{
-	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-		ReplyToCommand(client, "\x01[\x03JA\x01] You may not change regen during a speedrun");
-		return Plugin_Handled;
-	}
-	if(IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)){
-		ReplyToCommand(client, "\x01[\x03JA\x01] You may not change regen during a race");
-		return Plugin_Handled;
-	}
-	decl String:arg1[MAX_NAME_LENGTH];
-	GetCmdArg(1, arg1, sizeof(arg1));
-	if (StrEqual(arg1, "on", false))
-	{
-		SetRegen(client, "regen", "on");
-		return Plugin_Handled;
-	} else if (StrEqual(arg1, "off", false))
-	{
-		SetRegen(client, "regen", "off");
-		return Plugin_Handled;
-	} else {
-		SetRegen(client, "Regen", "Display");
-	}
-	return Plugin_Handled;
-}
-//public Action:cmdClearSave(client, args)
-//{
-//	if (GetConVarBool(g_hPluginEnabled))
-//	{
-//		EraseLocs(client);
-//		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_ClearedSave");
-//	}
-//	return Plugin_Handled;
-//}
 public Action:cmdSendPlayer(client, args)
 {
 	if(!databaseConfigured)
@@ -1966,10 +1790,6 @@ public Action:cmdSendPlayer(client, args)
 		new target1 = FindTarget2(client, arg1, true, false);
 		new target2 = FindTarget2(client, arg2, true, false);
 		if (target1 < 0 || target2 < 0){
-			return Plugin_Handled;
-		}
-		if(speedrunStatus[target1]){
-			ReplyToCommand(client, "\x01[\x03JA\x01] You cannot send a player in a speedrun");
 			return Plugin_Handled;
 		}
 		if (target1 == client)
@@ -2003,14 +1823,6 @@ public Action:cmdReset(client, args)
 {
 	if (GetConVarBool(g_hPluginEnabled))
 	{
-		if (skillsrank)
-		{
-			if (IsPlayerBusy(client))
-			{
-				PrintToChat(client, "\x01[\x03JA\x01] %t", "General_Busy");
-				return Plugin_Handled;
-			}
-		}
 		if (IsClientObserver(client))
 		{
 			return Plugin_Handled;
@@ -2024,10 +1836,6 @@ public Action:cmdReset(client, args)
 public Action:cmdTele(client, args)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return Plugin_Handled; }
-	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-		PrintToChat(client, "\x01[\x03JA\x01] You may not teleport while speedrunning");
-		return Plugin_Handled;
-	}
 	Teleport(client);
 	g_iLastTeleport[client] = RoundFloat(GetEngineTime());
 	return Plugin_Handled;
@@ -2045,11 +1853,6 @@ Teleport(client)
 	if (g_bRace[client] && (g_bRaceStatus[g_bRace[client]] == 2 || g_bRaceStatus[g_bRace[client]] == 3) )
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] Cannot teleport while racing.");
-		return;
-	}
-	if (g_bSpeedRun[client])
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
 		return;
 	}
 	new g_iClass = view_as<int>(TF2_GetPlayerClass(client));
@@ -2080,11 +1883,6 @@ Teleport(client)
 SaveLoc(client)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	if (g_bSpeedRun[client])
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
-		return;
-	}
 	if (g_bHardcore[client])
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Disabled");
 	else if(!IsPlayerAlive(client))
@@ -2119,14 +1917,6 @@ ResetPlayerPos(client)
 Hardcore(client)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	if (skillsrank)
-	{
-		if (IsPlayerBusy(client))
-		{
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Hardcore_SettingsBusy");
-			return;
-		}
-	}
 	new String:steamid[32];
 	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
 	if (!IsClientInGame(client))
@@ -2140,14 +1930,9 @@ Hardcore(client)
 	if (!g_bHardcore[client])
 	{
 		g_bHardcore[client] = true;
-		g_bHPRegen[client] = false;
 		g_bAmmoRegen[client] = false;
 		EraseLocs(client);
-		if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-			RestartSpeedrun(client);
-		}else{
-			TF2_RespawnPlayer(client);
-		}
+		TF2_RespawnPlayer(client);
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Hardcore_On", cLightGreen, cDefault);
 	} else {
 		g_bHardcore[client] = false;
@@ -2155,17 +1940,9 @@ Hardcore(client)
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Hardcore_Off");
 	}
 }
-SetRegen(client, String:RegenType[], String:RegenToggle[])
+SetRegen(client, String:RegenType[])
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	if (skillsrank)
-	{
-		if (IsPlayerBusy(client))
-		{
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_SettingsBusy");
-			return;
-		}
-	}
 	if (StrEqual(RegenType, "Ammo", false))
 	{
 		if (g_bHardcore[client]) { g_bHardcore[client] = false; }
@@ -2179,49 +1956,6 @@ SetRegen(client, String:RegenType[], String:RegenToggle[])
 			PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_AmmoOnlyOff");
 			return;
 		}
-	}
-	if (StrEqual(RegenType, "Health", false))
-	{
-		if (g_bHardcore[client]) { g_bHardcore[client] = false; }
-		if (!g_bHPRegen[client])
-		{
-			g_bHPRegen[client] = true;
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_HealthOnlyOn");
-			return;
-		} else {
-			g_bHPRegen[client] = false;
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_HealthOnlyOff");
-			return;
-		}
-	}
-	if (StrEqual(RegenType, "Regen", false) && StrEqual(RegenToggle, "display", false))
-	{
-		if (!g_bAmmoRegen[client])
-		{
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_DisplayAmmoOff");
-		} else {
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_DisplayAmmoOn");
-		}
-		if (!g_bHPRegen[client])
-		{
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_DisplayHealthOff");
-		} else {
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_DisplayHealthOn");
-		}
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_ShowHelp");
-		return;
-	} else if (StrEqual(RegenType, "Regen", false) && StrEqual(RegenToggle, "on", false))
-	{
-		g_bAmmoRegen[client] = true;
-		g_bHPRegen[client] = true;
-		if (g_bHardcore[client]) { g_bHardcore[client] = false; }
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_On");
-	} else if (StrEqual(RegenType, "Regen", false) && StrEqual(RegenToggle, "off", false))
-	{
-		g_bAmmoRegen[client] = false;
-		g_bHPRegen[client] = false;
-		if (g_bHardcore[client]) { g_bHardcore[client] = false; }
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_Off");
 	} else {
 		LogError("Unknown regen settings.");
 	}
@@ -2258,10 +1992,6 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			if (TF2_GetPlayerClass(client) == TFClass_Engineer){
 				SetEntProp(client, Prop_Data, "m_iAmmo", 200, 4, 3);
 			}
-		}
-		if (g_bHPRegen[client]){
-			new iMaxHealth = TF2_GetPlayerResourceData(client, TFResource_MaxHealth);
-			SetEntityHealth(client, iMaxHealth);
 		}
 	}
 	if(g_bRaceLocked[client])
@@ -2516,24 +2246,12 @@ public Action:cmdRestart(client, args)
 	{
 		return Plugin_Handled;
 	}
-	if (skillsrank)
-	{
-		if (IsPlayerBusy(client))
-		{
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "General_Busy");
-			return Plugin_Handled;
-		}
-	}
 	EraseLocs(client);
 	if(databaseConfigured)
 	{
 		ResetPlayerPos(client);
 	}
-	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-		RestartSpeedrun(client);
-	}else{
-		TF2_RespawnPlayer(client);
-	}
+	TF2_RespawnPlayer(client);
 	PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 	g_iLastTeleport[client] = 0;
 	return Plugin_Handled;
@@ -2545,11 +2263,7 @@ SendToStart(client)
 		return;
 	}
 	g_bUsedReset[client] = true;
-	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-		RestartSpeedrun(client);
-	}else{
-		TF2_RespawnPlayer(client);
-	}
+	TF2_RespawnPlayer(client);
 	PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_SentToStart");
 }
 stock String:GetClassname(class)
@@ -2571,21 +2285,9 @@ stock String:GetClassname(class)
 }
 bool:IsValidClient( client )
 {
-    if ( !( 1 <= client <= MaxClients ) || !IsClientInGame(client) || IsFakeClient(client))
-        return false;
-    return true;
-}
-public jteleHandler(Handle:menu, MenuAction:action, client, item)
-{
-	//decl String:MenuInfo[64];
-	if (action == MenuAction_Select)
-	{
-		GetMenuItem(menu, item, Jtele, sizeof(Jtele));
-		JumpList(client);
-	} else if (action == MenuAction_End) {
-		CloseHandle(menu);
-	}
-	return;
+	if ( !( 1 <= client <= MaxClients ) || !IsClientInGame(client) || IsFakeClient(client))
+		return false;
+	return true;
 }
 stock FindTarget2(client, const String:target[], bool:nobots = false, bool:immunity = true)
 {
@@ -2670,23 +2372,6 @@ stock GetValidClassNum(String:class[])
 	}
 	return iClass;
 }
-public JumpListHandler(Handle:menu, MenuAction:action, client, item)
-{
-	if(!databaseConfigured)
-	{
-		PrintToChat(client, "This feature is not supported without a database configuration");
-		return;
-	}
-	decl String:MenuInfo[64];
-	if (action == MenuAction_Select)
-	{
-		GetMenuItem(menu, item, MenuInfo, sizeof(MenuInfo));
-		MenuSendToLocation(client, Jtele, MenuInfo);
-	} else if (action == MenuAction_End) {
-		CloseHandle(menu);
-	}
-	return;
-}
 stock bool:IsUserAdmin(client)
 {
 	new bool:IsAdmin = GetAdminFlag(GetUserAdmin(client), Admin_Generic);
@@ -2730,7 +2415,6 @@ public Native_JA_GetSettings(Handle:plugin, numParams)
 	{
 		case 1: { return g_iMapClass; }
 		case 2: { return g_bAmmoRegen[client]; }
-		case 3: { return g_bHPRegen[client]; }
 	}
 	return ThrowNativeError(SP_ERROR_NATIVE, "Invalid setting param.");
 }
@@ -2749,23 +2433,6 @@ public Native_JA_ClearSave(Handle:plugin, numParams)
 	PrintToChat(client, "\x01[\x03JA\x01] %t", "Native_ClearSave");
 	return true;
 }
-public Native_JA_PrepSpeedRun(Handle:plugin, numParams)
-{
-	new client = GetNativeCell(1);
-	if (client < 1 || client > GetMaxClients())
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
-	}
-	if (!IsClientConnected(client))
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
-	}
-	EraseLocs(client);
-	if (g_bUnkillable[client]) { g_bUnkillable[client] = false; SetEntProp(client, Prop_Data, "m_takedamage", 2, 1); }
-	g_bSpeedRun[client] = true;
-	PrintToChat(client, "\x01[\x03JA\x01] %t", "Native_ClearSave");
-	return true;
-}
 public Native_JA_ReloadPlayerSettings(Handle:plugin, numParams)
 {
 	new client = GetNativeCell(1);
@@ -2777,7 +2444,6 @@ public Native_JA_ReloadPlayerSettings(Handle:plugin, numParams)
 	{
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
-	g_bSpeedRun[client] = false;
 	if(databaseConfigured)
 	{
 		ReloadPlayerData(client);
@@ -2815,7 +2481,7 @@ public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBr
 	}
 	if (!g_bHardcore[client])
 	{
-		SetEntData(client, FindDataMapOffs(client, "m_iAmmo") + (3 * 4), 199, 4);
+		SetEntData(client, FindDataMapInfo(client, "m_iAmmo") + (3 * 4), 199, 4);
 	}
 }
 public Action:eventPlayerUpgradedObj(Handle:event, const String:name[], bool:dontBroadcast)
@@ -2824,7 +2490,7 @@ public Action:eventPlayerUpgradedObj(Handle:event, const String:name[], bool:don
 	new client = GetClientOfUserId(GetEventInt(event, "userid")); //object = GetEventInt(event, "object"), index = GetEventInt(event, "index");
 	if (!g_bHardcore[client])
 	{
-		SetEntData(client, FindDataMapOffs(client, "m_iAmmo") + (3 * 4), 199, 4);
+		SetEntData(client, FindDataMapInfo(client, "m_iAmmo") + (3 * 4), 199, 4);
 	}
 }
 public Action:eventRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
@@ -2991,14 +2657,6 @@ public Action:eventPlayerChangeTeam(Handle:event, const String:name[], bool:dont
 	{
 		g_fOrigin[client][0] = 0.0; g_fOrigin[client][1] = 0.0; g_fOrigin[client][2] = 0.0;
 		g_fAngles[client][0] = 0.0; g_fAngles[client][1] = 0.0; g_fAngles[client][2] = 0.0;
-		if(speedrunStatus[client]){
-			PrintToChat(client, "\x01[\x03JA\x01] Speedrun cancelled");
-		}
-		speedrunStatus[client] = 0;
-		for(new i = 0; i < 32; i++){
-			zoneTimes[client][i] = 0.0;
-		}
-		lastFrameInStartZone[client] = false;
 	} else {
 		CreateTimer(0.1, timerTeam, client);
 	}
@@ -3023,10 +2681,6 @@ public Action:eventPlayerHurt(Handle:event, const String:name[], bool:dontBroadc
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if (g_bHPRegen[client])
-	{
-		CreateTimer(0.1, timerRegen, client);
-	}
 	if (g_bAmmoRegen[client])
 	{
 		ReSupply(client, g_iClientWeapons[client][0]);
@@ -3072,15 +2726,6 @@ public Action:timerTeam(Handle:timer, any:client)
 	if(IsClientInGame(client)){
 		ChangeClientTeam(client, g_iForceTeam);
 	}
-}
-public Action:timerRegen(Handle:timer, any:client)
-{
-	if (client == 0 || !IsValidEntity(client))
-	{
-		return;
-	}
-	new iMaxHealth = TF2_GetPlayerResourceData(client, TFResource_MaxHealth);
-	SetEntityHealth(client, iMaxHealth);
 }
 public Action:timerRespawn(Handle:timer, any:client)
 {
@@ -3161,11 +2806,4 @@ public cvarSupermanChanged(Handle:convar, const String:oldValue[], const String:
 		SetConVarBool(g_hSuperman, false);
 	else
 		SetConVarBool(g_hSuperman, true);
-}
-public cvarSpeedrunEnabledChanged(Handle:convar, const String:oldValue[], const String:newValue[])
-{
-	if (StringToInt(newValue) == 0)
-		SetConVarBool(hSpeedrunEnabled, false);
-	else
-		SetConVarBool(hSpeedrunEnabled, true);
 }

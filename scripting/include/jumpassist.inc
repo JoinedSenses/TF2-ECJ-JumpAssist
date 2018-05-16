@@ -50,13 +50,6 @@ native bool:JA_ClearSave(client);
 
 /*
 	@param			client
-
-	Preps the user for a speed run.
-*/
-native bool:JA_PrepSpeedRun(client);
-
-/*
-	@param			client
 	
 	Reload the players stored settings.
 */

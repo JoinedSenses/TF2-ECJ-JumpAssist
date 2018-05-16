@@ -10,7 +10,7 @@ new bool:g_bHardcore[MAXPLAYERS+1];
 new bool:g_bLoadedPlayerSettings[MAXPLAYERS+1];
 new bool:g_bBeatTheMap[MAXPLAYERS+1];
 new bool:g_bUsedReset[MAXPLAYERS+1];
-new bool:g_bSpeedRun[MAXPLAYERS+1];
+// new bool:g_bSpeedRun[MAXPLAYERS+1];
 new bool:g_bUnkillable[MAXPLAYERS+1];
 new bool:g_bLateLoad = false;
 
@@ -28,7 +28,6 @@ new Float:g_fAngles[MAXPLAYERS+1][3];
 new Float:g_fLastSavePos[MAXPLAYERS+1][3];
 new Float:g_fLastSaveAngles[MAXPLAYERS+1][3];
 
-new String:Jtele[64];
 new String:g_sCaps[MAXPLAYERS+1];
 
 JA_SendQuery(String:query[], client)
@@ -70,47 +69,6 @@ RunDBCheck()
 		LogError("Failed to query (map_settings) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `Teleports` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `MapName` TEXT(32) NOT NULL, `TeleName` TEXT(64) NOT NULL, `L1` FLOAT NOT NULL, `L2` FLOAT NOT NULL, `L3` FLOAT NOT NULL, `A1` FLOAT NOT NULL, `A2` FLOAT NOT NULL, `A3` FLOAT NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
-	if (!SQL_FastQuery(g_hDatabase, query))
-	{
-		SQL_GetError(g_hDatabase, error, sizeof(error));
-		LogError("Failed to query (teleports) (error: %s)", error);
-		SQL_UnlockDatabase(g_hDatabase);
-	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `startlocs` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `MapName` TEXT(32) NOT NULL, `x` FLOAT(25) NOT NULL, `y` FLOAT(25) NOT NULL, `z` FLOAT(25) NOT NULL, `xang` FLOAT(25) NOT NULL, `yang` FLOAT(25) NOT NULL, `zang` FLOAT(25) NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
-	if (!SQL_FastQuery(g_hDatabase, query))
-	{
-		SQL_GetError(g_hDatabase, error, sizeof(error));
-		LogError("Failed to query (startlocs) (error: %s)", error);
-		SQL_UnlockDatabase(g_hDatabase);
-	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `zones` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `Number` INT(25) NOT NULL, `MapName` TEXT(32) NOT NULL, `x1` FLOAT(25) NOT NULL, `y1` FLOAT(25) NOT NULL, `z1` FLOAT(25) NOT NULL, `x2` FLOAT(25) NOT NULL, `y2` FLOAT(25) NOT NULL, `z2` FLOAT(25) NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
-	if (!SQL_FastQuery(g_hDatabase, query))
-	{
-		SQL_GetError(g_hDatabase, error, sizeof(error));
-		LogError("Failed to query (zones) (error: %s)", error);
-		SQL_UnlockDatabase(g_hDatabase);
-	}
-	SQL_UnlockDatabase(g_hDatabase);
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `times` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `SteamID` text NOT NULL, `class` INT(23) NOT NULL, `MapName` TEXT(32) NOT NULL, `time` BIGINT NOT NULL, `c0` FLOAT(25) DEFAULT '0.0', `c1` FLOAT(25) DEFAULT '0.0', `c2` FLOAT(25) DEFAULT '0.0', `c3` FLOAT(25) DEFAULT '0.0', `c4` FLOAT(25) DEFAULT '0.0', `c5` FLOAT(25) DEFAULT '0.0', `c6` FLOAT(25) DEFAULT '0.0', `c7` FLOAT(25) DEFAULT '0.0', `c8` FLOAT(25) DEFAULT '0.0', `c9` FLOAT(25) DEFAULT '0.0', `c10` FLOAT(25) DEFAULT '0.0', `c11` FLOAT(25) DEFAULT '0.0', `c12` FLOAT(25) DEFAULT '0.0', `c13` FLOAT(25) DEFAULT '0.0', `c14` FLOAT(25) DEFAULT '0.0', `c15` FLOAT(25) DEFAULT '0.0', `c16` FLOAT(25) DEFAULT '0.0', `c17` FLOAT(25) DEFAULT '0.0', `c18` FLOAT(25) DEFAULT '0.0', `c19` FLOAT(25) DEFAULT '0.0', `c20` FLOAT(25) DEFAULT '0.0', `c21` FLOAT(25) DEFAULT '0.0', `c22` FLOAT(25) DEFAULT '0.0', `c23` FLOAT(25) DEFAULT '0.0', `c24` FLOAT(25) DEFAULT '0.0', `c25` FLOAT(25) DEFAULT '0.0', `c26` FLOAT(25) DEFAULT '0.0', `c27` FLOAT(25) DEFAULT '0.0', `c28` FLOAT(25) DEFAULT '0.0', `c29` FLOAT(25) DEFAULT '0.0', `c30` FLOAT(25) DEFAULT '0.0', `c31` FLOAT(25) DEFAULT '0.0');", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
-	if (!SQL_FastQuery(g_hDatabase, query))
-	{
-		SQL_GetError(g_hDatabase, error, sizeof(error));
-		LogError("Failed to query (times) (error: %s)", error);
-		SQL_UnlockDatabase(g_hDatabase);
-	}
-	SQL_UnlockDatabase(g_hDatabase);
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `steamids` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `SteamID` text NOT NULL, `name` TEXT(64) NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
-	if (!SQL_FastQuery(g_hDatabase, query))
-	{
-		SQL_GetError(g_hDatabase, error, sizeof(error));
-		LogError("Failed to query (steamids) (error: %s)", error);
-		SQL_UnlockDatabase(g_hDatabase);
-	}
-	SQL_UnlockDatabase(g_hDatabase);
-
-
-	LoadMapSpeedrunInfo();
 }
 public SQL_OnConnect(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
@@ -131,7 +89,6 @@ public SQL_OnConnect(Handle:owner, Handle:hndl, const String:error[], any:data)
 			{
 				if (IsValidClient(i))
 				{
-					UpdateSteamID(i);
 					ReloadPlayerData(i);
 				}
 			}
@@ -270,102 +227,6 @@ public SQL_OnCreatePlayerProfile(Handle:owner, Handle:hndl, const String:error[]
 	g_bLoadedPlayerSettings[client] = true;
 	return true;
 }
-public SQL_OnMenuSendToLocation(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	new client = data;
-
-	if (hndl == INVALID_HANDLE)
-	{
-		LogError("OnMenuSendToLocation() - Query failed! %s", error);
-		return false;
-	}
-	else if (SQL_GetRowCount(hndl))
-	{
-		SQL_FetchRow(hndl);
-		decl Float:g_fLoc[3], Float:g_fPosVec[3], Float:g_fPosAng[3];
-		decl String:g_sJumpName[MAX_NAME_LENGTH], String:g_sClientName[MAX_NAME_LENGTH];
-		GetClientName(client, g_sClientName, sizeof(g_sClientName));
-		g_fPosVec[0] = 0.0, g_fPosVec[1] = 0.0, g_fPosVec[2] = 0.0;
-		g_fLoc[0] = SQL_FetchFloat(hndl, 1),	g_fLoc[1] = SQL_FetchFloat(hndl, 2),	g_fLoc[2] = SQL_FetchFloat(hndl, 3);
-		g_fPosAng[0] = SQL_FetchFloat(hndl, 4), g_fPosAng[1] = SQL_FetchFloat(hndl, 5), g_fPosAng[2] = SQL_FetchFloat(hndl, 6);
-
-		SQL_FetchString(hndl, 0, g_sJumpName, sizeof(g_sJumpName));
-
-		TeleportEntity(client, g_fLoc, g_fPosAng, g_fPosVec);
-		PrintToChatAll("\x01[\x03JA\x01] %t", "Teleported_PlayerJump", g_sClientName, cLightGreen, cDefault, g_sJumpName, cLightGreen, cDefault);
-		return true;
-	}
-	else
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Teleports_NoneFound");
-		return false;
-	}
-}
-public SQL_OnJumpList(Handle:owner, Handle:hndl, const String:error[], any:Data)
-{
-	new client = Data;
-	new count = 1;
-	if (hndl == INVALID_HANDLE)
-	{
-		LogError("OnJumpList() - Query failed! %s", error);
-		return;
-	}
-	else if (SQL_GetRowCount(hndl))
-	{
-		new g_iJumps = SQL_GetRowCount(hndl);
-		new String:menuItem[MAX_NAME_LENGTH]; new String:g_sMenuItemName[MAX_NAME_LENGTH]; new String:g_sTempStorage[MAX_NAME_LENGTH];
-
-		// Create the menu
-		new Handle:g_hMenu = CreateMenu(JumpListHandler);
-		SetMenuTitle(g_hMenu, "%t", "Found_Jumps", g_iJumps);
-
-		for (new i=1; i<=g_iJumps; i++)
-		{
-			SQL_FetchRow(hndl);
-			SQL_FetchString(hndl, 0, g_sTempStorage, sizeof(g_sTempStorage));
-			Format(menuItem, sizeof(menuItem), "%s", g_sTempStorage);
-			Format(g_sMenuItemName, sizeof(g_sMenuItemName), "%s", g_sTempStorage);
-			AddMenuItem(g_hMenu, menuItem, g_sMenuItemName);
-			//LogMessage("Processing %s %i of %i", g_sJump[count], count, g_iJumps);
-			count++;
-		}
-		DisplayMenu(g_hMenu, client, MENU_TIME_FOREVER);
-	}
-	else
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Teleports_NoneFound");
-	}
-}
-public SQL_OnSendToLocation(Handle:owner, Handle:hndl, const String:error[], any:data)
-{
-	new client = data;
-
-	if (hndl == INVALID_HANDLE)
-	{
-		LogError("OnSendToLocaton() - Query failed! %s", error);
-		return false;
-	}
-	else if (SQL_GetRowCount(hndl))
-	{
-		decl Float:g_fLoc[3], Float:g_fPosVec[3], Float:g_fPosAng[3];
-		decl String:g_sJumpName[MAX_NAME_LENGTH], String:g_sClientName[MAX_NAME_LENGTH];
-		g_fPosVec[0] = 0.0, g_fPosVec[1] = 0.0, g_fPosVec[2] = 0.0;
-		g_fLoc[0] = SQL_FetchFloat(hndl, 1),	g_fLoc[1] = SQL_FetchFloat(hndl, 2),	g_fLoc[2] = SQL_FetchFloat(hndl, 3);
-		g_fPosAng[0] = SQL_FetchFloat(hndl, 4), g_fPosAng[1] = SQL_FetchFloat(hndl, 5), g_fPosAng[2] = SQL_FetchFloat(hndl, 6);
-
-		SQL_FetchString(hndl, 0, g_sJumpName, sizeof(g_sJumpName));
-
-		TeleportEntity(client, g_fLoc, g_fPosAng, g_fPosVec);
-		GetClientName(client, g_sClientName, sizeof(g_sClientName));
-		PrintToChatAll("\x01[\x03JA\x01] %t", "Teleport_Send", g_sClientName, cLightGreen, cDefault, g_sJumpName, cLightGreen, cDefault);
-		return true;
-	}
-	else
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Teleports_NoMatch");
-		return false;
-	}
-}
 public SQL_OnDefaultCallback(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	if (hndl == INVALID_HANDLE)
@@ -394,18 +255,6 @@ public SQL_OnReloadPlayerData(Handle:owner, Handle:hndl, const String:error[], a
 
 		SQL_FetchString(hndl, 6, g_sCaps[client], sizeof(g_sCaps));
 
-		if (g_bUsedReset[client])
-		{
-			if (g_sCaps[client] != -1)
-			{
-				new len = strlen(g_sCaps[client]);
-				for (new i = 0; i <= len; i++)
-				{
-					//g_bCPTouched[client][i] = true;
-					//g_iCPsTouched[client]++;
-				}
-			}
-		}
 		g_bUsedReset[client] = false;
 	}
 }
@@ -430,17 +279,7 @@ public SQL_OnLoadPlayerData(Handle:owner, Handle:hndl, const String:error[], any
 
 		SQL_FetchString(hndl, 6, g_sCaps[client], sizeof(g_sCaps));
 
-		if (g_sCaps[client] != -1)
-		{
-			new len = strlen(g_sCaps[client]);
-			for (new i = 0; i <= len; i++)
-			{
-				//g_bCPTouched[client][i] = true; TURNING OFF HTESE LINES FOR NOW
-				//g_iCPsTouched[client]++;
-			}
-		}
-
-		if (!g_bHardcore[client] && !IsClientRacing(client) && speedrunStatus[client] == 0)
+		if (!g_bHardcore[client] && !IsClientRacing(client))
 		{
 			Teleport(client);
 			g_iLastTeleport[client] = RoundFloat(GetEngineTime());
@@ -610,7 +449,6 @@ ReloadPlayerData(client)
 	new class = view_as<int>(TF2_GetPlayerClass(client));
 
 	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
-	//PrintToServer(sSteamID);
 	SQL_TQuery(g_hDatabase, SQL_OnReloadPlayerData, sQuery, client, DBPrio_High);
 }
 LoadPlayerData(client)
@@ -626,7 +464,6 @@ LoadPlayerData(client)
 
 
 	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", SteamID, sTeam, class, pMap);
-	//PrintToServer(sSteamID);
 	SQL_TQuery(g_hDatabase, SQL_OnLoadPlayerData, sQuery, client, DBPrio_High);
 }
 LoadPlayerProfile(client, String:SteamID[])
@@ -647,27 +484,7 @@ LoadPlayerProfile(client, String:SteamID[])
 		g_bLoadedPlayerSettings[client] = true;
 	}
 }
-JumpList(client)
-{
-	decl String:query[1024], String:currentMap[32];
-	GetCurrentMap(currentMap, sizeof(currentMap));
 
-	Format(query, sizeof(query), "SELECT TeleName, L1, L2, L3 FROM `Teleports` WHERE MapName = '%s' ORDER BY TeleName*1", currentMap);
-	SQL_TQuery(g_hDatabase, SQL_OnJumpList, query, client);
-
-	return;
-}
-MenuSendToLocation(client, String:ClientName[], String:Jump[])
-{
-	decl String:query[1024], String:currentMap[32];
-	GetCurrentMap(currentMap, sizeof(currentMap));
-
-	new g_iClient = FindTarget2(client, ClientName, true, false);
-
-	Format(query, sizeof(query), "SELECT TeleName, L1, L2, L3, A1, A2, A3 FROM `Teleports` WHERE MapName = '%s' AND TeleName = '%s'", currentMap, Jump);
-	SQL_TQuery(g_hDatabase, SQL_OnMenuSendToLocation, query, g_iClient);
-	return;
-}
 CreateMapCFG()
 {
 	decl String:sMapName[64], String:query[1024]; GetCurrentMap(sMapName, sizeof(sMapName));
@@ -714,52 +531,6 @@ public Action:cmdAddTele(client, args)
 
 	SQL_TQuery(g_hDatabase, SQL_OnTeleportAdded, sQuery, client);
 
-	return Plugin_Handled;
-}
-
-public Action:SendToLocation(client, args)
-{
-	if(!databaseConfigured)
-	{
-		PrintToChat(client, "This feature is not supported without a database configuration");
-		return Plugin_Handled;
-	}
-	if (GetConVarBool(g_hPluginEnabled))
-	{
-		if (args < 2)
-		{
-			new Handle:menu = CreateMenu(jteleHandler);
-			SetMenuTitle(menu, "%t", "Pick_Client");
-			for (new i = 0; i < GetMaxClients(); i++)
-			{
-				if (i>0)
-				{
-					if (IsClientInGame(i) && !IsClientObserver(i) && !IsFakeClient(i))
-					{
-						decl String:clientname[MAX_NAME_LENGTH]; GetClientName(i, clientname, sizeof(clientname));
-						AddMenuItem(menu, clientname, clientname);
-					}
-				}
-			}
-			DisplayMenu(menu, client, MENU_TIME_FOREVER);
-			return Plugin_Handled;
-		}
-		decl String:query[1024], String:currentMap[32], String:arg1[MAX_NAME_LENGTH], String:arg2[MAX_NAME_LENGTH];
-
-		GetCurrentMap(currentMap, sizeof(currentMap));
-		GetCmdArg(1, arg1, sizeof(arg1));
-		GetCmdArg(2, arg2, sizeof(arg2));
-
-		new g_iClient = FindTarget2(client, arg1, true, false);
-
-		if (g_iClient == -1)
-		{
-			return Plugin_Handled;
-		}
-		Format(query, sizeof(query), "SELECT TeleName, L1, L2, L3, A1, A2, A3 FROM `Teleports` WHERE MapName = '%s' AND TeleName = '%s'", currentMap, arg2[0]);
-
-		SQL_TQuery(g_hDatabase, SQL_OnSendToLocation, query, g_iClient);
-	}
 	return Plugin_Handled;
 }
 public Action:cmdSetMy(client, args)
@@ -811,29 +582,6 @@ public Action:cmdSetMy(client, args)
 			}
 		}
 	}
-	if (StrEqual(arg1[0], "regen", false))
-	{
-		if (IsClientInGame(client) && !IsFakeClient(client))
-		{
-			decl String:query[1024];
-
-			if (StrEqual(arg2[0], "off", false))
-			{
-				Format(query, sizeof(query), "UPDATE `player_profiles` SET Health=0, Ammo=0, Hardcore=0 WHERE SteamID = '%s'", SteamID);
-				SQL_TQuery(g_hDatabase, SQL_OnSetMy, query, client);
-				g_bHardcore[client] = false; g_bHPRegen[client] = false; g_bAmmoRegen[client] = false;
-			} else if (StrEqual(arg2[0], "on", false))
-			{
-				Format(query, sizeof(query), "UPDATE `player_profiles` SET Health=1, Ammo=1, Hardcore=0 WHERE SteamID = '%s'", SteamID);
-				SQL_TQuery(g_hDatabase, SQL_OnSetMy, query, client);
-				g_bHardcore[client] = false; g_bHPRegen[client] = true; g_bAmmoRegen[client] = true;
-			} else {
-				PrintToChat(client, "\x01[\x03JA\x01] %t", "SetMy_Regen_Help");
-				return Plugin_Handled;
-			}
-		}
-	}
-
 	if (StrEqual(arg1[0], "ammo", false))
 	{
 		if (IsClientInGame(client) && !IsFakeClient(client))
@@ -850,29 +598,6 @@ public Action:cmdSetMy(client, args)
 				Format(query, sizeof(query), "UPDATE `player_profiles` SET Ammo=1, Hardcore=0 WHERE SteamID = '%s'", SteamID);
 				SQL_TQuery(g_hDatabase, SQL_OnSetMy, query, client);
 				g_bHardcore[client] = false; g_bAmmoRegen[client] = true;
-			} else {
-				PrintToChat(client, "\x01[\x03JA\x01] %t", "SetMy_Regen_Help");
-				return Plugin_Handled;
-			}
-		}
-	}
-
-	if (StrEqual(arg1[0], "health", false))
-	{
-		if (IsClientInGame(client) && !IsFakeClient(client))
-		{
-			decl String:query[1024];
-
-			if (StrEqual(arg2[0], "off", false))
-			{
-				Format(query, sizeof(query), "UPDATE `player_profiles` SET Health=0, Hardcore=0 WHERE SteamID = '%s'", SteamID);
-				SQL_TQuery(g_hDatabase, SQL_OnSetMy, query, client);
-				g_bHardcore[client] = false; g_bHPRegen[client] = false;
-			} else if (StrEqual(arg2[0], "on", false))
-			{
-				Format(query, sizeof(query), "UPDATE `player_profiles` SET Health=1, Hardcore=0 WHERE SteamID = '%s'", SteamID);
-				SQL_TQuery(g_hDatabase, SQL_OnSetMy, query, client);
-				g_bHardcore[client] = false; g_bHPRegen[client] = true;
 			} else {
 				PrintToChat(client, "\x01[\x03JA\x01] %t", "SetMy_Regen_Help");
 				return Plugin_Handled;
@@ -903,15 +628,6 @@ public Action:cmdSetMy(client, args)
 		Format(fovcmd, sizeof(fovcmd), "sm_fov %i", StringToInt(arg2[0]));
 		FakeClientCommand(client, fovcmd);
 	}
-	/*
-	if (StrEqual(arg1[0], "color", false))
-	{
-		if (StrEqual(arg2[0]), "", false))
-		{
-			return Plugin_Handled;
-		}
-	}
-	*/
 	return Plugin_Handled;
 }
 public Action:cmdMapSet(client, args)
