@@ -4,7 +4,6 @@ new Handle:g_hPluginEnabled;
 new Handle:g_hProfileLoaded = INVALID_HANDLE;
 
 new bool:g_bCPTouched[MAXPLAYERS+1][32];
-new bool:g_bHPRegen[MAXPLAYERS+1];
 new bool:g_bAmmoRegen[MAXPLAYERS+1];
 new bool:g_bHardcore[MAXPLAYERS+1];
 new bool:g_bLoadedPlayerSettings[MAXPLAYERS+1];
@@ -55,7 +54,7 @@ RunDBCheck()
 		LogError("Failed to query (player_saves) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_profiles` (`ID` integer PRIMARY KEY %s NOT NULL, `SteamID` text NOT NULL, `Health` integer NOT NULL DEFAULT 0, `Ammo` integer NOT NULL DEFAULT 0, `Hardcore` integer NOT NULL DEFAULT 0, `PlayerFOV` integer NOT NULL DEFAULT 90, `SKEYS_RED_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_GREEN_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_BLUE_COLOR`  INTEGER NOT NULL DEFAULT 255)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_profiles` (`ID` integer PRIMARY KEY %s NOT NULL, `SteamID` text NOT NULL, `Ammo` integer NOT NULL DEFAULT 0, `Hardcore` integer NOT NULL DEFAULT 0, `PlayerFOV` integer NOT NULL DEFAULT 90, `SKEYS_RED_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_GREEN_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_BLUE_COLOR`  INTEGER NOT NULL DEFAULT 255)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
@@ -171,7 +170,7 @@ public SQL_OnLoadPlayerProfile(Handle:owner, Handle:hndl, const String:error[], 
 	{
 		//Bookmark
 		SQL_FetchRow(hndl);
-		new HP = SQL_FetchInt(hndl, 2), Ammo = SQL_FetchInt(hndl, 3), HC = SQL_FetchInt(hndl, 4), PlayerFOV = SQL_FetchInt(hndl, 5), red = SQL_FetchInt(hndl, 6), green = SQL_FetchInt(hndl, 7), blue = SQL_FetchInt(hndl, 8);
+		new Ammo = SQL_FetchInt(hndl, 2), HC = SQL_FetchInt(hndl, 3), PlayerFOV = SQL_FetchInt(hndl, 4), red = SQL_FetchInt(hndl, 5), green = SQL_FetchInt(hndl, 6), blue = SQL_FetchInt(hndl, 7);
 		//LogError("HP = %i, Ammo = %i, HC = %i, PlayerFOV = %i, red = %i, green = %i, blue = %i", HP, Ammo, HC, PlayerFOV, red, green, blue);
 
 		// Skeys hud color.
@@ -194,9 +193,8 @@ public SQL_OnLoadPlayerProfile(Handle:owner, Handle:hndl, const String:error[], 
 			if (IsClientConnected(client)) { FakeClientCommand(client, fovcmd); }
 		}
 
-		if (HP == 1) { g_bHPRegen[client] = true; } else { g_bHPRegen[client] = false; }
 		if (Ammo == 1) { g_bAmmoRegen[client] = true; } else { g_bAmmoRegen[client] = false; }
-		if (HC == 1) { g_bHardcore[client] = true, g_bHPRegen[client] = false, g_bAmmoRegen[client] = false; }
+		if (HC == 1) { g_bHardcore[client] = true, g_bAmmoRegen[client] = false; }
 
 		g_bLoadedPlayerSettings[client] = true;
 		return true;
@@ -222,7 +220,6 @@ public SQL_OnCreatePlayerProfile(Handle:owner, Handle:hndl, const String:error[]
 		return false;
 	}
 
-	g_bHPRegen[client] = false;
 	g_bHardcore[client] = false;
 	g_bLoadedPlayerSettings[client] = true;
 	return true;
@@ -478,7 +475,6 @@ LoadPlayerProfile(client, String:SteamID[])
 		SQL_TQuery(g_hDatabase, SQL_OnLoadPlayerProfile, query, client);
 	}else
 	{
-		g_bHPRegen[client] = false;
 		g_bAmmoRegen[client] = false;
 		g_bHardcore[client] = false;
 		g_bLoadedPlayerSettings[client] = true;
@@ -506,7 +502,7 @@ LoadMapCFG()
 CreatePlayerProfile(client, String:SteamID[])
 {
 	decl String:query[1024];
-	Format(query, sizeof(query), "INSERT INTO `player_profiles` values(null, '%s', '0', '0', '0', '70', '255', '255', '255')", SteamID);
+	Format(query, sizeof(query), "INSERT INTO `player_profiles` values(null, '%s', '0', '0', '70', '255', '255', '255')", SteamID);
 
 	SQL_TQuery(g_hDatabase, SQL_OnCreatePlayerProfile, query, client);
 }
@@ -564,17 +560,15 @@ public Action:cmdSetMy(client, args)
 
 			if (StrEqual(arg2[0], "off", false))
 			{
-				Format(query, sizeof(query), "UPDATE `player_profiles` SET Health=0, SET Ammo=0, Hardcore=0 WHERE SteamID = '%s'", SteamID);
+				Format(query, sizeof(query), "UPDATE `player_profiles` SET SET Ammo=0, Hardcore=0 WHERE SteamID = '%s'", SteamID);
 				SQL_TQuery(g_hDatabase, SQL_OnSetMy, query, client);
 				g_bHardcore[client] = false;
-				g_bHPRegen[client] = false;
 				g_bAmmoRegen[client] = false;
 			} else if (StrEqual(arg2[0], "on", false))
 			{
-				Format(query, sizeof(query), "UPDATE `player_profiles` SET Health=0, Ammo=0, Hardcore=1 WHERE SteamID = '%s'", SteamID);
+				Format(query, sizeof(query), "UPDATE `player_profiles` SET Ammo=0, Hardcore=1 WHERE SteamID = '%s'", SteamID);
 				SQL_TQuery(g_hDatabase, SQL_OnSetMy, query, client);
 				g_bHardcore[client] = true;
-				g_bHPRegen[client] = false;
 				g_bAmmoRegen[client] = false;
 			} else {
 				PrintToChat(client, "\x01[\x03JA\x01] %t", "SetMy_Hardcore_Help");

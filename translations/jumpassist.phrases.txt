@@ -81,16 +81,6 @@
 	{
 		"en"			"You will no longer get additional regen."
 	}
-	
-	"Regen_HealthOnlyOn"
-	{
-		"en"			"You will now get additional health regeneration."
-	}
-
-	"Regen_HealthOnlyOff"
-	{
-		"en"			"Health regeneration is now off."
-	}
 
 	"Regen_AmmoOnlyOn"
 	{
@@ -336,10 +326,6 @@
 	{
 		"en"			"Red Team"
 	}
-	"Speedrun_Active"
-	{
-		"en"			"You can't do that while doing a speed run."
-	}
 	
 	"Regen_DisplayAmmoOn"
 	{
@@ -349,16 +335,6 @@
 	"Regen_DisplayAmmoOff"
 	{
 		"en"			"You currently have ammo regeneration off."
-	}
-	
-	"Regen_DisplayHealthOn"
-	{
-		"en"			"You currently have health regeneration on."
-	}
-
-	"Regen_DisplayHealthOff"
-	{
-		"en"			"You currently have health regeneration off."
 	}
 	
 	"Regen_UnkillableOn"
@@ -386,10 +362,6 @@
 		"en"			"You have no save to restore at this time."
 	}
 	
-	"Save_UndoSpeedRun"
-	{
-		"en"			"You can't do that while doing a speed run."
-	}
 	
 	"ShowKeys_SpecOnly"
 	{
@@ -421,21 +393,6 @@
 		"en"			"Teleport location was saved successfully."
 	}
 	
-	"Battle_Reason"
-	{
-		"en"			"You failed to listen to the warnings"
-	}
-	
-	"Battle_Warning"
-	{
-		"en"			"Do not attack other players. Keep this up, and you will be removed."
-	}
-	
-	"General_Busy"
-	{
-		"en"			"You cannot do that while doing a speed run."
-	}
-	
 	"New_CapPoint"
 	{
 		"en"			"You have sucessfully created a new cap point."
@@ -454,38 +411,6 @@
 	"Goto_Avail"
 	{
 		"en"			"Congratulations! You can now use !goto."
-	}
-	
-	"JumpTele_Help"
-	{
-		"en"			"Usage: !jtele <name> <jump name>"
-	}
-
-	"JumpTele_Success"
-	{
-		"#format"		"{1:s},{2:c},{3:c},{4:s},{5:c},{6:c}"
-		"en"			"Teleported {2}{1}{3} to {5}{4}{6}"
-	}
-	
-	"JumpTele_NoneFound"
-	{
-		"en"			"There are no saved teleport locations for this map."
-	}
-	
-	"JumpTele_NoMatch"
-	{
-		"#format"		"{1:s},{2:c},{3:c}"
-		"en"			"There aren't any teleports matching that match the name '{2}{1}{3}'."
-	}
-	
-	"JumpTele_NoMatchingClient"
-	{
-		"en"			"No client was found by that name."
-	}
-
-	"Caber_Nocando"
-	{
-		"en"			"You can't do that while doing a speedrun."
 	}
 	
 	"Caber_On"

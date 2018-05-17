@@ -2636,7 +2636,6 @@ public Action:eventPlayerChangeClass(Handle:event, const String:name[], bool:don
 	{
 		if (class != g_iMapClass)
 		{
-			g_bHPRegen[client] = true;
 			g_bAmmoRegen[client] = true;
 			g_bHardcore[client] = false;
 			PrintToChat(client, "\x01[\x03JA\x01] %t", "Designed_For", cLightGreen, g_sClass, cDefault);
