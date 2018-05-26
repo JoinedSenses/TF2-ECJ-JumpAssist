@@ -275,6 +275,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_save", cmdSave, "Saves your current position.");
 	RegConsoleCmd("sm_undo", cmdUndo, "Restores your last saved position.");
 	RegConsoleCmd("sm_t", cmdTele, "Teleports you to your current saved location.");
+	RegConsoleCmd("sm_regen", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_ammo", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_tele", cmdTele, "Teleports you to your current saved location.");
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a clients key's.");
