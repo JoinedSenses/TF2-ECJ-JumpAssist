@@ -1,25 +1,25 @@
 /*
-			 *     ,MMM8&&&.            *
-				  MMMM88&&&&&    .
+			 *	   ,MMM8&&&.			*
+				  MMMM88&&&&&	 .
 				 MMMM88&&&&&&&
-	 *           MMM88&&&&&&&&
+	 *			 MMM88&&&&&&&&
 				 MMM88&&&&&&&&
 				 'MMM88&&&&&&'
-				   'MMM8&&&'      *
+				   'MMM8&&&'	  *
 		  |\___/|
-		  )     (             .              '
-		 =\     /=
-		   )===(       *
-		  /     \
-		  |     |
-		 /       \
-		 \       /
+		  )		(			  .				 '
+		 =\		/=
+		   )===(	   *
+		  /		\
+		  |		|
+		 /		 \
+		 \		 /
   _/\_/\_/\__  _/_/\_/\_/\_/\_/\_/\_/\_/\_/\_
-  |  |  |  |( (  |  |  |  |  |  |  |  |  |  |
-  |  |  |  | ) ) |  |  |  |  |  |  |  |  |  |
-  |  |  |  |(_(  |  |  |  |  |  |  |  |  |  |
-  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+  |	 |	|  |( (	 |	|  |  |	 |	|  |  |	 |	|
+  |	 |	|  | ) ) |	|  |  |	 |	|  |  |	 |	|
+  |	 |	|  |(_(	 |	|  |  |	 |	|  |  |	 |	|
+  |	 |	|  |  |	 |	|  |  |	 |	|  |  |	 |	|
+  |	 |	|  |  |	 |	|  |  |	 |	|  |  |	 |	|
   -----------SHOUTOUT TO MEOWMEOW------------
 																TODO
 	**********************************************************************************************************************************
@@ -80,7 +80,7 @@
 	*		- Sounds should play properly
 	*		- r_info added
 	*		- r_spec added
-	* 		- r_set added
+	*		- r_set added
 	*
 	* 0.7.7 - Can invite multiple people at once with the r_inv command
 	*		- Fixed server_race bug
@@ -105,10 +105,15 @@
 	*
 	*
 	* 0.8.0 - Moved upater to github repository
-		  - imported jumptracer
-		  - added cvar ja_update_branch for server operators to select updating from
-		  - from dev or master.  Must be set in server.cfg.
+	*	  - imported jumptracer
+	*	  - added cvar ja_update_branch for server operators to select updating from
+	*	  - from dev or master.	 Must be set in server.cfg.
 	*
+	* 1.0.0 - Lots of changes from JoinedSenses
+	*	  - Removed everything related to speedruns
+	*	  - Repaired sentry level 3 auto buildings
+	*	  - Removed health regen since that is stock
+	*	  - Countless other stuff that I dont really remember.
 	* TODO:
 	* give race a better UI
 	* R_LIST TIMES AFTER PLAYER DC
@@ -117,12 +122,10 @@
 	* maybe leave race when not leader of old race to start new one not work?
 	* Plugin cvar enabled for all functions
 	* ADD CVAR TO TOGGLE FINISH ALERT TO SERVER / FIX SPAM POSSIBLITY - SPEC POINTS REACHED BUG THING
-	* PLAYER GOT TO CP IN TIME NOT JUST PLAYER GOT TO CP - WOULD MAKE THE TIME PART GOODOODOOODOD
 	* TEST RACE SPEC AND ADD FUNCTIONALITY FOR ONLY SHOWING PEOPLE IN A RACE WHEN ATTACK1 AND 2 ARE USED
 	* rematch typa thing
 	* save pos before start of race then restore after
 	* Polish for release.
-	* Support for jtele with one argument
 	* Support for sequence of cps
 	*
 	*
@@ -133,11 +136,11 @@
 	*	Dropped <name> from server (Disconnect by user.)
 	*	L 12/02/2014 - 23:07:57: [SM] Native "ChangeClientTeam" reported: Client 2 is not in game
 	*	L 12/02/2014 - 23:07:57: [SM] Displaying call stack trace for plugin "jumpassist.smx":
-	*	L 12/02/2014 - 23:07:57: [SM]   [0]  Line 1590, scripting\jumpassist.sp::timerTeam()
+	*	L 12/02/2014 - 23:07:57: [SM]	[0]	 Line 1590, scripting\jumpassist.sp::timerTeam()
 	* Change to spec during race
 	*
 	* Race with 3 people - 2 finish - leader is one of them and starts new race inviting the other finisher and starts
-	* Race keeps other person in it - may not have transfered leadership/may not leave race on !race if you are in one    --- I think i fixed this bug but is is difficult to test
+	* Race keeps other person in it - may not have transfered leadership/may not leave race on !race if you are in one	  --- I think i fixed this bug but is is difficult to test
 	*
 	*
 	*
@@ -175,15 +178,15 @@
 	* Once the database is set up, an example configuration would look like:
 	*
 	* "jumpassist"
-	*     {
-	*             "driver"                        "default"
-	*             "host"                          "127.0.0.1"
-	*             "database"                      "jumpassist"
-	*             "user"                          "tf2server"
-	*             "pass"                          "tf2serverpassword"
-	*             //"timeout"                     "0"
-	*             //"port"                        "0"
-	*     }
+	*	  {
+	*			  "driver"			"default"
+	*			  "host"				"127.0.0.1"
+	*			  "database"		"jumpassist"
+	*			  "user"				"tf2server"
+	*			  "pass"				"tf2serverpassword"
+	*			  //"timeout"		"0"
+	*			  //"port"				"0"
+	*	  }
 	*
 	*
 	**********************************************************************************************************************************
@@ -200,10 +203,10 @@
 #define AUTOLOAD_EXTENSIONS
 #endif
 
-#define PLUGIN_VERSION "0.9.0"
+#define PLUGIN_VERSION "1.0.0"
 #define PLUGIN_NAME "[TF2] Jump Assist"
-#define PLUGIN_AUTHOR "rush - Updated by nolem, happs"
-#define cDefault    0x01
+#define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
+#define cDefault	0x01
 #define cLightGreen 0x03
 /*
 	Core Includes
@@ -214,7 +217,7 @@ new g_bRaceStatus[MAXPLAYERS+1];
 	//2 - 3 2 1 countdown
 	//3 - racing
 	//4 - waiting for players to finish
-	//  - Only updated for the lobby host
+	//	- Only updated for the lobby host
 new Float:g_bRaceStartTime[MAXPLAYERS+1];
 new Float:g_bRaceTime[MAXPLAYERS+1];
 new Float:g_bRaceTimes[MAXPLAYERS+1][MAXPLAYERS];
@@ -233,7 +236,6 @@ new g_iLastTeleport[MAXPLAYERS+1];
 new Handle:g_hWelcomeMsg;
 new Handle:g_hCriticals;
 new Handle:g_hSuperman;
-new Handle:g_hSentryLevel;
 new Handle:g_hCheapObjects;
 new Handle:g_hAmmoCheat;
 new Handle:g_hFastBuild;
@@ -261,10 +263,9 @@ public OnPluginStart()
 	g_hWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NOTIFY);
 	g_hFastBuild = CreateConVar("ja_fastbuild", "1", "Allows engineers near instant buildings.", FCVAR_NOTIFY);
 	g_hAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_NOTIFY);
-	g_hCheapObjects = CreateConVar("ja_cheapobjects", "0", "No metal cost on buildings.", FCVAR_NOTIFY);
+	g_hCheapObjects = CreateConVar("ja_cheapobjects", "1", "No metal cost on buildings.", FCVAR_NOTIFY);
 	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
 	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_NOTIFY);
-	g_hSentryLevel = CreateConVar("ja_sglevel", "1", "Sets the default sentry level (1-3)", FCVAR_NOTIFY);
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
 	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Sends you back to the beginning without deleting your save..");
 	RegConsoleCmd("sm_r", cmdReset, "Sends you back to the beginning without deleting your save..");
@@ -312,17 +313,15 @@ public OnPluginStart()
 	HookEvent("player_death", eventPlayerDeath);
 	HookEvent("player_hurt", eventPlayerHurt);
 	HookEvent("controlpoint_starttouch", eventTouchCP);
-	HookEvent("player_builtobject", eventPlayerBuiltObj);
-	HookEvent("player_upgradedobject", eventPlayerUpgradedObj);
 	HookEvent("teamplay_round_start", eventRoundStart);
 	HookEvent("post_inventory_application", eventInventoryUpdate);
+	HookEvent("player_builtobject", eventObjectBuilt);
 	// ConVar Hooks
 	HookConVarChange(g_hFastBuild, cvarFastBuildChanged);
 	HookConVarChange(g_hCheapObjects, cvarCheapObjectsChanged);
 	HookConVarChange(g_hAmmoCheat, cvarAmmoCheatChanged);
 	HookConVarChange(g_hWelcomeMsg, cvarWelcomeMsgChanged);
 	HookConVarChange(g_hSuperman, cvarSupermanChanged);
-	HookConVarChange(g_hSentryLevel, cvarSentryLevelChanged);
 	HookUserMessage(GetUserMessageId("VoiceSubtitle"), HookVoice, true);
 
 	LoadTranslations("jumpassist.phrases");
@@ -358,278 +357,21 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 	g_bLateLoad = late;
 	return APLRes_Success;
 }
-enum TFGameType {
-	TFGame_Unknown,
-	TFGame_CaptureTheFlag,
-	TFGame_CapturePoint,
-	TFGame_Payload,
-	TFGame_Arena,
-};
 TF2_SetGameType()
 {
 	GameRules_SetProp("m_nGameType", 2);
 }
-
-	enum TFExtObjectType
-	{
-		TFExtObject_Unknown = -1,
-		TFExtObject_CartDispenser = 0,
-		TFExtObject_Dispenser = 0,
-		TFExtObject_Teleporter = 1,
-		TFExtObject_Sentry = 2,
-		TFExtObject_Sapper = 3,
-		TFExtObject_TeleporterEntry,
-		TFExtObject_TeleporterExit,
-		TFExtObject_MiniSentry,
-		TFExtObject_Amplifier,
-		TFExtObject_RepairNode
-	};
-	stock const String:TF2_ObjectClassNames[TFExtObjectType][] =
-	{
-		"obj_dispenser",
-		"obj_teleporter",
-		"obj_sentrygun",
-		"obj_sapper",
-		"obj_teleporter", // _entrance
-		"obj_teleporter", // _exit
-		"obj_sentrygun",  // minisentry
-		"obj_dispenser",  // amplifier
-		"obj_dispenser"   // repair_node
-	};
-	stock const String:TF2_ObjectNames[TFExtObjectType][] =
-	{
-		"Dispenser",
-		"Teleporter",
-		"Sentry Gun",
-		"Sapper",
-		"Teleporter Entrance",
-		"Teleporter Exit",
-		"Mini Sentry Gun",
-		"Amplifier",
-		"Repair Node"
-	};
-	stock TF2_ObjectModes[TFExtObjectType] =
-	{
-		-1, // dispenser
-		-1, // teleporter (either)
-		-1, // sentrygun
-		-1, // sapper
-		 0, // telporter_entrance
-		 1, // teleporter_exit
-		-1, // minisentry
-		-1, // amplifier
-		-1  // repair_node
-	};
-	// Max Sentry Ammo for Level:         mini,   1,   2,   3, max
-	stock const TF2_MaxSentryShells[]  = { 150, 100, 120, 144,  255 };
-	stock const TF2_MaxSentryRockets[] = {   0,   0,   0,  20,   63 };
-	stock const TF2_SentryHealth[]     = { 100, 150, 180, 216, 8191 };
-	stock const TF2_MaxUpgradeMetal    = 200;
-	stock const TF2_MaxDispenserMetal  = 400;
-	
-stock BuildSentry(hBuilder, const Float:fOrigin[3], const Float:fAngle[3], iLevel=1,
-				  bool:bDisabled=false, bool:bMini=false, bool:bShielded=false,
-				  iHealth=-1, iMaxHealth=-1, iShells=-1, iRockets=-1,
-				  Float:flPercentage=1.0)
-{
-	static const Float:fBuildMaxs[3] = { 24.0, 24.0, 66.0 };
-	//static const Float:fMdlWidth[3] = { 1.0, 0.5, 0.0 };
-	new iTeam = GetClientTeam(hBuilder);
-	new iSentryHealth;
-	new iMaxSentryShells;
-	new iMaxSentryRockets;
-	if (iLevel < 1 || bMini)
-	{
-		iLevel = 1;
-		iSentryHealth = TF2_SentryHealth[0];
-		iMaxSentryShells = TF2_MaxSentryShells[0];
-		iMaxSentryRockets = TF2_MaxSentryRockets[0];
-	}
-	else if (iLevel <= 3)
-	{
-		iSentryHealth = TF2_SentryHealth[iLevel];
-		iMaxSentryShells = TF2_MaxSentryShells[iLevel];
-		iMaxSentryRockets = TF2_MaxSentryRockets[iLevel];
-	}
-	else if (iLevel == 4)
-	{
-		iLevel = 3;
-		iSentryHealth = TF2_SentryHealth[3]+40;
-		iMaxSentryShells = (TF2_MaxSentryShells[3]+TF2_MaxSentryShells[4])/2;
-		iMaxSentryRockets = (TF2_MaxSentryRockets[3]+TF2_MaxSentryRockets[4])/2;
-	}
-	else
-	{
-		iLevel = 3;
-		iSentryHealth = TF2_SentryHealth[4];
-		iMaxSentryShells = TF2_MaxSentryShells[4];
-		iMaxSentryRockets = TF2_MaxSentryRockets[4];
-	}
-	if (iShells < 0)
-		iRockets = iMaxSentryRockets;
-	if (iShells < 0)
-		iShells = iMaxSentryShells;
-	if (iMaxHealth < 0)
-		iMaxHealth = iSentryHealth;
-	if (iHealth < 0 || iHealth > iMaxHealth)
-		iHealth = iMaxHealth;
-	new iSentry = CreateEntityByName(TF2_ObjectClassNames[TFExtObject_Sentry]);
-	if (iSentry > 0 && IsValidEdict(iSentry))
-	{
-		DispatchSpawn(iSentry);
-		TeleportEntity(iSentry, fOrigin, fAngle, NULL_VECTOR);
-		decl String:sModel[64];
-		if (bMini)
-			strcopy(sModel, sizeof(sModel),"models/buildables/sentry1.mdl");
-		else
-			Format(sModel, sizeof(sModel),"models/buildables/sentry%d.mdl", iLevel);
-		SetEntityModel(iSentry,sModel);
-		// m_bPlayerControlled is set to make m_bShielded work,
-		// but it gets reset almost immediately :(
-		SetEntProp(iSentry, Prop_Send, "m_iMaxHealth", 				        iMaxHealth, 4);
-		SetEntProp(iSentry, Prop_Send, "m_iHealth", 					    iHealth, 4);
-		SetEntProp(iSentry, Prop_Send, "m_bDisabled", 				        bDisabled, 2);
-		SetEntProp(iSentry, Prop_Send, "m_bShielded", 				        bShielded, 2);
-		SetEntProp(iSentry, Prop_Send, "m_bPlayerControlled", 				bShielded, 2);
-		SetEntProp(iSentry, Prop_Send, "m_bMiniBuilding", 				    bMini, 2);
-		SetEntProp(iSentry, Prop_Send, "m_iObjectType", 				    _:TFExtObject_Sentry, 1);
-		SetEntProp(iSentry, Prop_Send, "m_iUpgradeLevel", 			        iLevel, 4);
-		SetEntProp(iSentry, Prop_Send, "m_iAmmoRockets", 				    iRockets, 4);
-		SetEntProp(iSentry, Prop_Send, "m_iAmmoShells" , 				    iShells, 4);
-		SetEntProp(iSentry, Prop_Send, "m_iState" , 				        (bShielded ? 2 : 0), 4);
-		SetEntProp(iSentry, Prop_Send, "m_iObjectMode", 				    0, 2);
-		SetEntProp(iSentry, Prop_Send, "m_iUpgradeMetal", 			        0, 2);
-		SetEntProp(iSentry, Prop_Send, "m_bBuilding", 				        0, 2);
-		SetEntProp(iSentry, Prop_Send, "m_bPlacing", 					    0, 2);
-		SetEntProp(iSentry, Prop_Send, "m_iState", 					        1, 1);
-		SetEntProp(iSentry, Prop_Send, "m_bHasSapper", 				        0, 2);
-		SetEntProp(iSentry, Prop_Send, "m_nNewSequenceParity", 		        4, 4);
-		SetEntProp(iSentry, Prop_Send, "m_nResetEventsParity", 		        4, 4);
-		SetEntProp(iSentry, Prop_Send, "m_bServerOverridePlacement", 	    1, 1);
-		SetEntProp(iSentry, Prop_Send, "m_nSequence",                       0);
-		SetEntPropEnt(iSentry, Prop_Send, "m_hBuilder", 	                hBuilder);
-		SetEntPropFloat(iSentry, Prop_Send, "m_flPercentageConstructed", 	flPercentage);
-		SetEntPropFloat(iSentry, Prop_Send, "m_flModelWidthScale", 	        1.0);
-		SetEntPropFloat(iSentry, Prop_Send, "m_flPlaybackRate", 			1.0);
-		SetEntPropFloat(iSentry, Prop_Send, "m_flCycle", 					0.0);
-		SetEntPropVector(iSentry, Prop_Send, "m_vecOrigin", 			    fOrigin);
-		SetEntPropVector(iSentry, Prop_Send, "m_angRotation", 		        fAngle);
-		SetEntPropVector(iSentry, Prop_Send, "m_vecBuildMaxs", 		        fBuildMaxs);
-		//SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_flModelWidthScale"),	fMdlWidth, true);
-		if (bMini)
-		{
-			SetEntProp(iSentry, Prop_Send, "m_nSkin", 					    iTeam, 1);
-			SetEntProp(iSentry, Prop_Send, "m_nBody", 					    5, 1);
-		}
-		else
-		{
-			SetEntProp(iSentry, Prop_Send, "m_nSkin", 					    (iTeam-2), 1);
-			SetEntProp(iSentry, Prop_Send, "m_nBody", 					    0, 1);
-		}
-		SetVariantInt(iTeam);
-		AcceptEntityInput(iSentry, "TeamNum", -1, -1, 0);
-		SetVariantInt(iTeam);
-		AcceptEntityInput(iSentry, "SetTeam", -1, -1, 0);
-		SetVariantInt(hBuilder);
-		AcceptEntityInput(iSentry, "SetBuilder", -1, -1, 0);
-		new Handle:event = CreateEvent("player_builtobject");
-		if (event != INVALID_HANDLE)
-		{
-			SetEventInt(event, "userid", GetClientUserId(hBuilder));
-			SetEventInt(event, "object", _:TFExtObject_Sentry);
-			SetEventInt(event, "index", iSentry);
-			SetEventBool(event, "sourcemod", true);
-			FireEvent(event);
-		}
-		g_WasBuilt[iSentry] = true;
-		g_HasBuilt[hBuilder] |= HasBuiltSentry;
-	}
-	return iSentry;
-}
-SentryOnGameFrame(){
-	new i = -1;
-	while ((i = FindEntityByClassname(i, "obj_sentrygun")) != -1)
-	{
-		new level = GetEntProp(i, Prop_Send, "m_iUpgradeLevel");
-		new metal = GetEntProp(i, Prop_Send, "m_iUpgradeMetal");
-		if(level < 3 && metal > 0){
-			
-			// new iLevel = level + 1;
-			// new iSentry = i;
-			//     new Float:fBuildMaxs[3];
-		 //    fBuildMaxs[0] = 24.0;
-		 //    fBuildMaxs[1] = 24.0;
-		 //    fBuildMaxs[2] = 66.0;
-		 //    new Float:fMdlWidth[3];
-		 //    fMdlWidth[0] = 1.0;
-		 //    fMdlWidth[1] = 0.5;
-		 //    fMdlWidth[2] = 0.0;
-		    
-		 //    decl String:sModel[64];
-		  
-		    
-		 //    new iShells, iHealth, iRockets;
-		    
-		 //    if(iLevel == 1)
-		 //    {
-		 //        sModel = "models/buildables/sentry1.mdl";
-		 //        iShells = 100;
-		 //        iHealth = 150;
-		 //    }
-		 //    else if(iLevel == 2)
-		 //    {
-		 //        sModel = "models/buildables/sentry2.mdl";
-		 //        iShells = 120;
-		 //        iHealth = 180;
-		 //    }
-		 //    else if(iLevel == 3)
-		 //    {
-		 //        sModel = "models/buildables/sentry3.mdl";
-		 //        iShells = 144;
-		 //        iHealth = 216;
-		 //        iRockets = 20;
-		 //    }
-		    
-		    
-		
-		    
-		 //    SetEntityModel(iSentry,sModel);
-		    
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_flAnimTime"),                 51, 4 , true);
-		 //   // SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_nNewSequenceParity"),         4, 4 , true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_nResetEventsParity"),         4, 4 , true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iAmmoShells") ,                 iShells, 4, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iMaxHealth"),                 iHealth, 4, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iHealth"),                     iHealth, 4, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bBuilding"),                 0, 2, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bPlacing"),                     0, 2, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bDisabled"),                 0, 2, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iObjectType"),                 3, true);
-		 //   // SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iState"),                     1, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iUpgradeMetal"),             0, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bHasSapper"),                 0, 2, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bServerOverridePlacement"),     1, 1, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iUpgradeLevel"),             iLevel, 4, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iAmmoRockets"),                 iRockets, 4, true);
-		    
-		 //    //SetEntDataEnt2(iSentry, FindSendPropOffs("CObjectSentrygun","m_nSequence"), 0, true);
-		 //    //SetEntDataFloat(iSentry, FindSendPropOffs("CObjectSentrygun","m_flCycle"),                     0.0, true);
-		 //    //SetEntDataFloat(iSentry, FindSendPropOffs("CObjectSentrygun","m_flPlaybackRate"),             1.0, true);
-		 //    //SetEntDataFloat(iSentry, FindSendPropOffs("CObjectSentrygun","m_flPercentageConstructed"),     0.9, true);
-			// SetEntProp(iSentry, Prop_Send, "m_iHighestUpgradeLevel", iLevel);
-			// SetEntProp(iSentry, Prop_Send, "m_bBuilding", iLevel);
-		 //    SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_vecBuildMaxs"),         fBuildMaxs, true);
-		 //    SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_flModelWidthScale"),     fMdlWidth, true);
-		}
-	}
-}
 public OnGameFrame(){
 	SkeysOnGameFrame();
-
-	if(GetConVarBool(g_hFastBuild)){
-		SentryOnGameFrame();
-	}
 }
+public Action eventObjectBuilt(Event event, const char[] name, bool dontBroadcast){
+	int iObject = GetEventInt(event, "index");
+	int mini = GetEntProp(iObject, Prop_Send, "m_bMiniBuilding");
+	if (mini == 1) return Plugin_Continue;
+	DispatchKeyValue(iObject, "defaultupgrade", "2");
+	return Plugin_Continue;
+}
+
 // Support for beggers bazooka
 Hook_Func_regenerate()
 {
@@ -920,21 +662,21 @@ public AlertInviteAcceptOrDeny(client, client2, choice)
 public Action:RaceCountdown(Handle:timer, any:raceID)
 {
 	PrintToRace(raceID, "****************************");
-	PrintToRace(raceID, "             Starting race in: 3");
+	PrintToRace(raceID, "			  Starting race in: 3");
 	PrintToRace(raceID, "****************************");
 	CreateTimer(1.0, RaceCountdown2, raceID);
 }
 public Action:RaceCountdown2(Handle:timer, any:raceID)
 {
 	PrintToRace(raceID, "****************************");
-	PrintToRace(raceID, "                         2");
+	PrintToRace(raceID, "						  2");
 	PrintToRace(raceID, "****************************");
 	CreateTimer(1.0, RaceCountdown1, raceID);
 }
 public Action:RaceCountdown1(Handle:timer, any:raceID)
 {
 	PrintToRace(raceID, "****************************");
-	PrintToRace(raceID, "                         1");
+	PrintToRace(raceID, "						  1");
 	PrintToRace(raceID, "****************************");
 	CreateTimer(1.0, RaceCountdownGo, raceID);
 }
@@ -942,7 +684,7 @@ public Action:RaceCountdownGo(Handle:timer, any:raceID)
 {
 	UnlockRacePlayers(raceID);
 	PrintToRace(raceID, "****************************");
-	PrintToRace(raceID, "                        GO!");
+	PrintToRace(raceID, "						 GO!");
 	PrintToRace(raceID, "****************************");
 	new Float:time = GetEngineTime();
 	g_bRaceStartTime[raceID] = time;
@@ -1640,8 +1382,8 @@ public JAHelpHandler(Handle:menu, MenuAction:action, param1, param2){
 		DrawPanelText(panel, "!r_info - Provides info about the current race.");
 		DrawPanelText(panel, "!r_inv - Invite players to the race.");
 		DrawPanelText(panel, "!r_set - Change settings of a race.");
-		DrawPanelText(panel, "     <classforce|cf|ammo");
-		DrawPanelText(panel, "     <on|off>");
+		DrawPanelText(panel, "	   <classforce|cf|ammo");
+		DrawPanelText(panel, "	   <on|off>");
 		DrawPanelText(panel, "!r_list - Lists race players and their times");
 		DrawPanelText(panel, "!r_spec - Spectates a race.");
 		DrawPanelText(panel, "!r_start - Start the race.");
@@ -1982,17 +1724,21 @@ public Action:cmdJumpForums(client, args)
 }
 public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:angles[3], &weapon){
 	g_iButtons[client] = buttons; //FOR SKEYS AS WELL AS REGEN
+	int iMaxHealth = GetEntProp(client, Prop_Data, "m_iMaxHealth");
+	if (GetClientHealth(client) < iMaxHealth) {
+		SetEntityHealth(client, iMaxHealth);
+		return Plugin_Changed;
+	}
 	if ((g_iButtons[client] & IN_ATTACK) == IN_ATTACK || IN_ATTACK2)
 	{
+		if (TF2_GetPlayerClass(client) == TFClass_Engineer && GetEntProp(client, Prop_Data, "m_iAmmo") < 200){
+			SetEntProp(client, Prop_Data, "m_iAmmo", 200, 4, 3);
+		}
 		if (g_bAmmoRegen[client])
 		{
 			ReSupply(client, g_iClientWeapons[client][0]);
 			ReSupply(client, g_iClientWeapons[client][1]);
 			ReSupply(client, g_iClientWeapons[client][2]);
-			
-			if (TF2_GetPlayerClass(client) == TFClass_Engineer){
-				SetEntProp(client, Prop_Data, "m_iAmmo", 200, 4, 3);
-			}
 		}
 	}
 	if(g_bRaceLocked[client])
@@ -2468,32 +2214,7 @@ public Action:OnPlayerStartTouchFuncRegenerate(entity, other)
 #endif
 	return Plugin_Continue;
 }
-public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	new client = GetClientOfUserId(GetEventInt(event, "userid")), obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
-	if (obj == 2)
-	{
-		if (GetConVarInt(g_hSentryLevel) == 3)
-		{
-			//SetEntData(index, FindSendPropOffs("CObjectSentrygun", "m_iUpgradeLevel"), 3, 4);
-			//SetEntData(index, FindSendPropOffs("CObjectSentrygun", "m_iUpgradeMetal"), 200);
-		}
-	}
-	if (!g_bHardcore[client])
-	{
-		SetEntData(client, FindDataMapInfo(client, "m_iAmmo") + (3 * 4), 199, 4);
-	}
-}
-public Action:eventPlayerUpgradedObj(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	new client = GetClientOfUserId(GetEventInt(event, "userid")); //object = GetEventInt(event, "object"), index = GetEventInt(event, "index");
-	if (!g_bHardcore[client])
-	{
-		SetEntData(client, FindDataMapInfo(client, "m_iAmmo") + (3 * 4), 199, 4);
-	}
-}
+
 public Action:eventRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	decl String:currentMap[32]; GetCurrentMap(currentMap, sizeof(currentMap));
@@ -2792,13 +2513,6 @@ public cvarWelcomeMsgChanged(Handle:convar, const String:oldValue[], const Strin
 		SetConVarBool(g_hWelcomeMsg, false);
 	else
 		SetConVarBool(g_hWelcomeMsg, true);
-}
-public cvarSentryLevelChanged(Handle:convar, const String:oldValue[], const String:newValue[])
-{
-	if (StringToInt(newValue) == 0)
-		SetConVarBool(g_hSentryLevel, false);
-	else
-		SetConVarBool(g_hSentryLevel, true);
 }
 public cvarSupermanChanged(Handle:convar, const String:oldValue[], const String:newValue[])
 {
