@@ -196,6 +196,7 @@
 #include <tf2_stocks>
 #include <sdkhooks>
 #include <morecolors>
+#include <tf2attributes>
 #if !defined REQUIRE_PLUGIN
 #define REQUIRE_PLUGIN
 #endif
@@ -236,6 +237,7 @@ new g_iLastTeleport[MAXPLAYERS+1];
 new Handle:g_hWelcomeMsg;
 new Handle:g_hCriticals;
 new Handle:g_hSuperman;
+new Handle:g_hSentryLevel;
 new Handle:g_hCheapObjects;
 new Handle:g_hAmmoCheat;
 new Handle:g_hFastBuild;
@@ -266,6 +268,7 @@ public OnPluginStart()
 	g_hCheapObjects = CreateConVar("ja_cheapobjects", "1", "No metal cost on buildings.", FCVAR_NOTIFY);
 	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
 	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_NOTIFY);
+	g_hSentryLevel = CreateConVar("ja_sglevel", "1", "Sets the default sentry level (1-3)", FCVAR_NOTIFY);
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
 	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Sends you back to the beginning without deleting your save..");
 	RegConsoleCmd("sm_r", cmdReset, "Sends you back to the beginning without deleting your save..");
@@ -322,6 +325,7 @@ public OnPluginStart()
 	HookConVarChange(g_hAmmoCheat, cvarAmmoCheatChanged);
 	HookConVarChange(g_hWelcomeMsg, cvarWelcomeMsgChanged);
 	HookConVarChange(g_hSuperman, cvarSupermanChanged);
+	HookConVarChange(g_hSentryLevel, cvarSentryLevelChanged);
 	HookUserMessage(GetUserMessageId("VoiceSubtitle"), HookVoice, true);
 
 	LoadTranslations("jumpassist.phrases");
@@ -364,11 +368,42 @@ TF2_SetGameType()
 public OnGameFrame(){
 	SkeysOnGameFrame();
 }
+public TF2Items_OnGiveNamedItem_Post(client, String:classname[], index, level, quality, entity)
+{
+	char szClassname[128];
+	GetEntityClassname(entity, szClassname, sizeof(szClassname));				//Grab the weapon's classname
+	
+	//Rocket Launchers
+	if (!StrContains(szClassname, "tf_weapon_wrench") || !StrContains(szClassname, "tf_weapon_robot_arm")) //Check for wrench
+	{
+		switch (index)
+		{
+			default:
+			{
+				TF2Attrib_SetByDefIndex(entity, 464, 100.0);
+				TF2Attrib_SetByDefIndex(entity, 465, 100.0);
+				TF2Attrib_SetByDefIndex(entity, 321, 100.0);
+				TF2Attrib_SetByDefIndex(entity, 2043, 100.0);
+			}
+		}
+	}
+} 
 public Action eventObjectBuilt(Event event, const char[] name, bool dontBroadcast){
-	int iObject = GetEventInt(event, "index");
-	int mini = GetEntProp(iObject, Prop_Send, "m_bMiniBuilding");
-	if (mini == 1) return Plugin_Continue;
-	DispatchKeyValue(iObject, "defaultupgrade", "2");
+	int obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
+	if (obj == 2) {
+		int mini = GetEntProp(index, Prop_Send, "m_bMiniBuilding");
+		if (mini == 1) return Plugin_Continue;
+		
+		if (GetConVarInt(g_hSentryLevel) == 2)
+			DispatchKeyValue(index, "defaultupgrade", "1");
+		else if (GetConVarInt(g_hSentryLevel) == 3)
+			DispatchKeyValue(index, "defaultupgrade", "2");
+		else 
+			DispatchKeyValue(index, "defaultupgrade", "0");
+	}
+	else {
+		DispatchKeyValue(index, "defaultupgrade", "2");
+	}
 	return Plugin_Continue;
 }
 
@@ -2513,6 +2548,13 @@ public cvarWelcomeMsgChanged(Handle:convar, const String:oldValue[], const Strin
 		SetConVarBool(g_hWelcomeMsg, false);
 	else
 		SetConVarBool(g_hWelcomeMsg, true);
+}
+public cvarSentryLevelChanged(Handle:convar, const String:oldValue[], const String:newValue[])
+{
+	if (StringToInt(newValue) == 0)
+		SetConVarBool(g_hSentryLevel, false);
+	else
+		SetConVarBool(g_hSentryLevel, true);
 }
 public cvarSupermanChanged(Handle:convar, const String:oldValue[], const String:newValue[])
 {
