@@ -207,7 +207,7 @@ int g_bRaceSpec[MAXPLAYERS+1], g_iLastTeleport[MAXPLAYERS+1];
 #include "jumpassist/skeys.sp"
 #include "jumpassist/database.sp"
 #include "jumpassist/sound.sp"
-ConVar g_hWelcomeMsg, g_hCriticals, g_hSuperman, g_hCheapObjects, g_hAmmoCheat, g_hFastBuild, waitingForPlayers;
+ConVar g_hWelcomeMsg, g_hCriticals, g_hSuperman, g_hAmmoCheat, waitingForPlayers;
 char szWebsite[128] = "http://www.jump.tf/", szForum[128] = "http://tf2rj.com/forum/", szJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0";
 Handle hArray_NoFuncRegen;
 
@@ -227,12 +227,10 @@ public void OnPluginStart() {
 	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	g_hPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NOTIFY);
 	g_hWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NOTIFY);
-	g_hFastBuild = CreateConVar("ja_fastbuild", "1", "Allows engineers near instant buildings.", FCVAR_NOTIFY);
 	g_hAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_NOTIFY);
-	g_hCheapObjects = CreateConVar("ja_cheapobjects", "1", "No metal cost on buildings.", FCVAR_NOTIFY);
 	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
 	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_NOTIFY);
-	// g_hSentryLevel = CreateConVar("ja_sglevel", "1", "Sets the default sentry level (1-3)", FCVAR_NOTIFY);
+
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
 	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Sends you back to the beginning without deleting your save..");
 	RegConsoleCmd("sm_r", cmdReset, "Sends you back to the beginning without deleting your save..");
@@ -282,13 +280,12 @@ public void OnPluginStart() {
 	HookEvent("controlpoint_starttouch", eventTouchCP);
 	HookEvent("teamplay_round_start", eventRoundStart);
 	HookEvent("post_inventory_application", eventInventoryUpdate);
+	
 	// ConVar Hooks
-	HookConVarChange(g_hFastBuild, cvarFastBuildChanged);
-	HookConVarChange(g_hCheapObjects, cvarCheapObjectsChanged);
 	HookConVarChange(g_hAmmoCheat, cvarAmmoCheatChanged);
 	HookConVarChange(g_hWelcomeMsg, cvarWelcomeMsgChanged);
 	HookConVarChange(g_hSuperman, cvarSupermanChanged);
-	// HookConVarChange(g_hSentryLevel, cvarSentryLevelChanged);
+	
 	HookUserMessage(GetUserMessageId("VoiceSubtitle"), HookVoice, true);
 
 	LoadTranslations("jumpassist.phrases");
@@ -1725,7 +1722,7 @@ stock void ReSupply(int client, int weapon) {
 
 stock void SetAmmo(int client, int weapon, int ammo) {
 	int ammoType = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
-	if(ammoType != -1) SetEntProp(client, Prop_Data, "m_ammo", ammo, _, ammoType);
+	if(ammoType != -1) SetEntProp(client, Prop_Data, "m_iAmmo", ammo, _, ammoType);
 }
 
 void EraseLocs(int client) {
@@ -1858,10 +1855,6 @@ stock void SetCvarValues() {
 		 return;
 	if (!GetConVarBool(g_hCriticals))
 		SetConVarInt(FindConVar("tf_weapon_criticals"), 0, true, false);
-	if (GetConVarBool(g_hFastBuild))
-		SetConVarInt(FindConVar("tf_fastbuild"), 1, false, false);
-	if (GetConVarBool(g_hCheapObjects))
-		SetConVarInt(FindConVar("tf_cheapobjects"), 1, false, false);
 	if (GetConVarBool(g_hAmmoCheat))
 		SetConVarInt(FindConVar("tf_sentrygun_ammocheat"), 1, false, false);
 }
@@ -2168,20 +2161,6 @@ public Action WelcomePlayer(Handle timer, any client) {
 /*****************************************************************************************************************
 											ConVars Hooks
 *****************************************************************************************************************/
-public void cvarFastBuildChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
-	if (StringToInt(newValue) == 0)
-		SetConVarInt(FindConVar("tf_fastbuild"), 0);
-	else
-		SetConVarInt(FindConVar("tf_fastbuild"), 1);
-}
-
-public void cvarCheapObjectsChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
-	if (StringToInt(newValue) == 0)
-		SetConVarInt(FindConVar("tf_cheapobjects"), 0);
-	else
-		SetConVarInt(FindConVar("tf_cheapobjects"), 1);
-}
-
 public void cvarAmmoCheatChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
 	if (StringToInt(newValue) == 0)
 		SetConVarInt(FindConVar("tf_sentrygun_ammocheat"), 0);
