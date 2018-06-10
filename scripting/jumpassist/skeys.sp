@@ -1,5 +1,3 @@
-#pragma semicolon 1
-#pragma newdecls required
 Handle HudDisplayForward, HudDisplayASD, HudDisplayDuck, HudDisplayJump, HudDisplayM1, HudDisplayM2;
 bool g_bGetClientKeys[MAXPLAYERS+1];
 int g_iButtons[MAXPLAYERS+1], g_iSkeysRed[MAXPLAYERS+1], g_iSkeysGreen[MAXPLAYERS+1], g_iSkeysBlue[MAXPLAYERS+1];

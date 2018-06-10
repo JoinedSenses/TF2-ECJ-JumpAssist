@@ -1,5 +1,3 @@
-#pragma semicolon 1
-#pragma newdecls required
 int g_iClientWeapons[MAXPLAYERS+1][3];
 
 public Action HookVoice(UserMsg msg_id, BfRead bf, const int[] players, int playersNum, bool reliable, bool init) {

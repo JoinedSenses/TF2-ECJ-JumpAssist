@@ -1,5 +1,3 @@
-#pragma semicolon 1
-#pragma newdecls required
 Handle g_hDatabase = INVALID_HANDLE,  g_hProfileLoaded = INVALID_HANDLE;
 ConVar g_hHostname, g_hPluginEnabled;
 bool g_bCPTouched[MAXPLAYERS+1][32], g_bAmmoRegen[MAXPLAYERS+1], g_bHardcore[MAXPLAYERS+1], g_bLoadedPlayerSettings[MAXPLAYERS+1];
@@ -397,7 +395,7 @@ void LoadMapCFG() {
 
 void CreatePlayerProfile(int client, char[] SteamID) {
 	char query[1024];
-	Format(query, sizeof(query), "INSERT INTO `player_profiles` values(null, '%s', '0', '0', '70', '255', '255', '255')", SteamID);
+	Format(query, sizeof(query), "INSERT INTO `player_profiles` values(null, '%s', '0', '0', '90', '255', '255', '255')", SteamID);
 	SQL_TQuery(g_hDatabase, SQL_OnCreatePlayerProfile, query, client);
 }
 

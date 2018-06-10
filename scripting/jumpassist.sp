@@ -183,6 +183,7 @@
 #if !defined REQUIRE_PLUGIN
 #define REQUIRE_PLUGIN
 #endif
+
 #if !defined AUTOLOAD_EXTENSIONS
 #define AUTOLOAD_EXTENSIONS
 #endif
