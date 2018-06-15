@@ -277,7 +277,6 @@ public void OnPluginStart() {
 	HookEvent("player_changeclass", eventPlayerChangeClass);
 	HookEvent("player_spawn", eventPlayerSpawn);
 	HookEvent("player_death", eventPlayerDeath);
-	HookEvent("player_hurt", eventPlayerHurt);
 	HookEvent("controlpoint_starttouch", eventTouchCP);
 	HookEvent("teamplay_round_start", eventRoundStart);
 	HookEvent("post_inventory_application", eventInventoryUpdate);
@@ -2094,17 +2093,6 @@ public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcas
 		 return;
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	CreateTimer(0.1, timerRespawn, client);
-}
-
-public Action eventPlayerHurt(Event event, const char[] name, bool dontBroadcast) {
-	if (!GetConVarBool(g_hPluginEnabled))
-		 return;
-	int client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if (g_bAmmoRegen[client]) {
-		ReSupply(client, g_iClientWeapons[client][0]);
-		ReSupply(client, g_iClientWeapons[client][1]);
-		ReSupply(client, g_iClientWeapons[client][2]);
-	}
 }
 
 public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
