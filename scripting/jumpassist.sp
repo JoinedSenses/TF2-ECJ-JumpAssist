@@ -557,12 +557,9 @@ char[] GetCPNameByIndex(int index) {
 
 Menu PlayerMenu(int client) {
 	Menu menu = new Menu(Menu_InvitePlayers, MenuAction_Select|MenuAction_End);
-	char
-		buffer[128]
-		, clientName[128];
+	char buffer[128], clientName[128];
 	SetMenuExitBackButton(menu, true);	
 	menu.AddItem("*[Begin Race]*","*[Begin Race]*");
-	//SHOULDNT SHOW CURRENT PLAYER AND ALSO PLAYERS ALREADY IN A RACE BUT I NEED THAT FOR TESTING FOR NOW
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsValidClient(i) && client != i && !waitingInvite[i] && g_bRace[i] == 0) {
 			IntToString(i, buffer, sizeof(buffer));
@@ -593,7 +590,6 @@ public int Menu_InvitePlayers(Menu menu, MenuAction action, int param1, int para
 			return;
 		}
 		PrintToChat(param1, "\x01[\x03JA\x01] You have invited %s to race.", client2Name);
-		menu.GetItem(param2, info, sizeof(info));
 		Format(buffer, sizeof(buffer), "You have been invited to race to %s by %s", GetCPNameByIndex(g_bRaceEndPoint[param1]), clientName);
 		
 		Panel panel = new Panel();
