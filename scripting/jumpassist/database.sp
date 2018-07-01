@@ -77,10 +77,10 @@ public void SQL_OnMapSettingsUpdated(Handle owner, Handle hndl, const char[] err
 	int client = data;
 	if (hndl == INVALID_HANDLE){
 		LogError("Query failed! %s", error);
-		PrintToChat(client, "\x01[\x03JA\x01] %t (%s)", "Mapset_Not_Saved", cLightGreen, cDefault, error);
+		ReplyToCommand(client, "\x01[\x03JA\x01] %t (%s)", "Mapset_Not_Saved", cLightGreen, cDefault, error);
 		return;
 	}
-	PrintToChat(client, "\x01[\x03JA\x01] %t", "Mapset_Saved", cLightGreen, cDefault);
+	ReplyToCommand(client, "\x01[\x03JA\x01] %t", "Mapset_Saved", cLightGreen, cDefault);
 }
 
 public void SQL_OnMapSettingsLoad(Handle owner, Handle hndl, const char[] error, any data){
@@ -426,7 +426,7 @@ public Action cmdSetMy(int client, int args) {
 		PrintToChat(client, "This feature is not supported without a database configuration");
 		return Plugin_Handled;
 	}
-	if (!GetConVarBool(g_hPluginEnabled))
+	if (!g_hPluginEnabled.BoolValue)
 		 return Plugin_Handled;
 	if (args < 1) {
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "SetMy_Help");
@@ -512,7 +512,7 @@ public Action cmdMapSet(int client, int args) {
 		PrintToChat(client, "This feature is not supported without a database configuration");
 		return Plugin_Handled;
 	}
-	if (!GetConVarBool(g_hPluginEnabled))
+	if (!g_hPluginEnabled.BoolValue)
 		 return Plugin_Handled;
 	if(args < 2) {
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Mapset_Help");
