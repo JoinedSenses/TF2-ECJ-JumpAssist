@@ -303,7 +303,7 @@ public void OnPluginStart() {
 	HookEvent("controlpoint_starttouch", eventTouchCP);
 	HookEvent("teamplay_round_start", eventRoundStart);
 	HookEvent("post_inventory_application", eventInventoryUpdate);
-
+	
 	// ConVar Hooks
 	HookConVarChange(g_hAmmoCheat, cvarAmmoCheatChanged);
 	HookConVarChange(g_hWelcomeMsg, cvarWelcomeMsgChanged);
@@ -580,6 +580,7 @@ public int Menu_InvitePlayers(Menu menu, MenuAction action, int param1, int para
 		{
 			cmdRaceStart(param1, 0);
 			delete menu;
+			return;
 		}
 		GetClientName(StringToInt(info), client2Name, sizeof(client2Name));
 		menu.RemoveItem(param2);
