@@ -2039,7 +2039,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetEventInt(event, "player"), area = GetEventInt(event, "area"), class = view_as<int>(TF2_GetPlayerClass(client)), entity;
 	char g_sClass[33], playerName[64], cpName[32];
 
-	if (g_bCPTouched[client][area] || g_bRace[client] == 0) {
+	if (!(!g_bCPTouched[client][area] || g_bRace[client] != 0)) {
 		return Plugin_Continue;
 	}
 	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(class));
