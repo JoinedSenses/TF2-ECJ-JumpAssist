@@ -189,7 +189,7 @@
 #define AUTOLOAD_EXTENSIONS
 #endif
 
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.1"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cDefault	0x01
@@ -408,8 +408,11 @@ public void OnClientCookiesCached(int client)
 
 public void OnClientDisconnect(int client) {
 	if (g_hPluginEnabled.BoolValue) {
-		g_bHardcore[client] = false, g_bLoadedPlayerSettings[client] = false, g_bBeatTheMap[client] = false;
-		g_bGetClientKeys[client] = false, g_bUnkillable[client] = false, Format(g_sCaps[client], sizeof(g_sCaps), "\0");
+		g_bHardcore[client] = false;
+		g_bLoadedPlayerSettings[client] = false;
+		g_bBeatTheMap[client] = false;
+		g_bGetClientKeys[client] = false;
+		g_bUnkillable[client] = false;
 		EraseLocs(client);
 	}
 	if (g_bRace[client] != 0)
@@ -437,7 +440,6 @@ public void OnClientPutInServer(int client) {
 		g_bBeatTheMap[client] = false;
 		g_bGetClientKeys[client] = false;
 		g_bUnkillable[client] = false;
-		Format(g_sCaps[client], sizeof(g_sCaps), "\0");
 	}
 }
 /*****************************************************************************************************************
@@ -1839,7 +1841,6 @@ void EraseLocs(int client) {
 		g_iCPsTouched[client] = 0;
 	}
 	g_bBeatTheMap[client] = false;
-	Format(g_sCaps[client], sizeof(g_sCaps), "\0");
 }
 
 void CheckTeams() {
@@ -2036,7 +2037,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	if (!g_hPluginEnabled.BoolValue)
 		 return Plugin_Continue;
 	int client = GetEventInt(event, "player"), area = GetEventInt(event, "area"), class = view_as<int>(TF2_GetPlayerClass(client)), entity;
-	char g_sClass[33], playerName[64], cpName[32], s_area[32];
+	char g_sClass[33], playerName[64], cpName[32];
 
 	if (g_bCPTouched[client][area] || g_bRace[client] == 0) {
 		return Plugin_Continue;
@@ -2139,11 +2140,6 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	}
 	g_bCPTouched[client][area] = true;
 	g_iCPsTouched[client]++;
-	IntToString(area, s_area, sizeof(s_area));
-	if (g_sCaps[client] != -1)
-		 Format(g_sCaps[client], sizeof(g_sCaps), "%s%s", g_sCaps[client], s_area);
-	else
-		Format(g_sCaps[client], sizeof(g_sCaps), "%s", s_area);
 	return Plugin_Continue;
 }
 

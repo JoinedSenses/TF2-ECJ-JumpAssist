@@ -1,10 +1,30 @@
-Handle g_hDatabase = INVALID_HANDLE,  g_hProfileLoaded = INVALID_HANDLE;
-ConVar g_hHostname, g_hPluginEnabled;
-bool g_bCPTouched[MAXPLAYERS+1][32], g_bAmmoRegen[MAXPLAYERS+1], g_bHardcore[MAXPLAYERS+1], g_bLoadedPlayerSettings[MAXPLAYERS+1];
-bool  g_bBeatTheMap[MAXPLAYERS+1], g_bUsedReset[MAXPLAYERS+1], g_bUnkillable[MAXPLAYERS+1], g_bLateLoad = false, databaseConfigured;
-int g_iCPs, g_iForceTeam = 1, g_iCPsTouched[MAXPLAYERS+1], g_iMapClass = -1, g_iLockCPs = 1;
-float g_fOrigin[MAXPLAYERS+1][3], g_fAngles[MAXPLAYERS+1][3], g_fLastSavePos[MAXPLAYERS+1][3], g_fLastSaveAngles[MAXPLAYERS+1][3];
-char g_sCaps[MAXPLAYERS+1];
+Handle
+	g_hDatabase
+	,  g_hProfileLoaded;
+ConVar
+	g_hHostname
+	, g_hPluginEnabled;
+bool
+	g_bCPTouched[MAXPLAYERS+1][32]
+	, g_bAmmoRegen[MAXPLAYERS+1]
+	, g_bHardcore[MAXPLAYERS+1]
+	, g_bLoadedPlayerSettings[MAXPLAYERS+1]
+	, g_bBeatTheMap[MAXPLAYERS+1]
+	, g_bUsedReset[MAXPLAYERS+1]
+	, g_bUnkillable[MAXPLAYERS+1]
+	, g_bLateLoad
+	, databaseConfigured;
+int
+	g_iCPs
+	, g_iForceTeam = 1
+	, g_iCPsTouched[MAXPLAYERS+1]
+	, g_iMapClass = -1
+	, g_iLockCPs = 1;
+float
+	g_fOrigin[MAXPLAYERS+1][3]
+	, g_fAngles[MAXPLAYERS+1][3]
+	, g_fLastSavePos[MAXPLAYERS+1][3]
+	, g_fLastSaveAngles[MAXPLAYERS+1][3];
 
 void JA_SendQuery(char[] query, int client) {
 	SQL_TQuery(g_hDatabase, SQL_OnSetMy, query, client);
@@ -23,7 +43,7 @@ void RunDBCheck() {
 	SQL_ReadDriver(g_hDatabase, ident, sizeof ident);
 	bool isMysql = StrEqual(ident, "mysql", false);
 
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_saves` (`RecID` INTEGER NOT NULL PRIMARY KEY %s, `steamID` VARCHAR(32) NOT NULL, `playerClass` INT(1) NOT NULL, `playerTeam` INT(1) NOT NULL, `playerMap` VARCHAR(32) NOT NULL, `save1` INT(25) NOT NULL, `save2` INT(25) NOT NULL, `save3` INT(25) NOT NULL, `save4` INT(25) NOT NULL, `save5` INT(25) NOT NULL, `save6` INT(25) NOT NULL, `Capped` VARCHAR(32))", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_saves` (`RecID` INTEGER NOT NULL PRIMARY KEY %s, `steamID` VARCHAR(32) NOT NULL, `playerClass` INT(1) NOT NULL, `playerTeam` INT(1) NOT NULL, `playerMap` VARCHAR(32) NOT NULL, `save1` INT(25) NOT NULL, `save2` INT(25) NOT NULL, `save3` INT(25) NOT NULL, `save4` INT(25) NOT NULL, `save5` INT(25) NOT NULL, `save6` INT(25) NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query)) {
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (player_saves) (error: %s)", error);
@@ -193,8 +213,6 @@ public void SQL_OnReloadPlayerData(Handle owner, Handle hndl, const char[] error
 		g_fAngles[client][1] = SQL_FetchFloat(hndl, 4);
 		g_fAngles[client][2] = SQL_FetchFloat(hndl, 5);
 
-		SQL_FetchString(hndl, 6, g_sCaps[client], sizeof(g_sCaps));
-
 		g_bUsedReset[client] = false;
 	}
 }
@@ -212,8 +230,6 @@ public void SQL_OnLoadPlayerData(Handle owner, Handle hndl, const char[] error, 
 		g_fAngles[client][0] = SQL_FetchFloat(hndl, 3);
 		g_fAngles[client][1] = SQL_FetchFloat(hndl, 4);
 		g_fAngles[client][2] = SQL_FetchFloat(hndl, 5);
-
-		SQL_FetchString(hndl, 6, g_sCaps[client], sizeof(g_sCaps));
 
 		if (!g_bHardcore[client] && !IsClientRacing(client)) {
 			Teleport(client);
@@ -292,7 +308,7 @@ void SavePlayerData(int client) {
 	GetCurrentMap(sMap, sizeof(sMap));
 	GetClientAbsOrigin(client, SavePos1[client]);
 	GetClientAbsAngles(client, SavePos2[client]);
-	Format(sQuery, sizeof(sQuery), "INSERT INTO `player_saves` VALUES(null, '%s', '%i', '%i', '%s', '%f', '%f', '%f', '%f', '%f', '%f', '%s')", sSteamID, class, sTeam, sMap, SavePos1[client][0], SavePos1[client][1], SavePos1[client][2], SavePos2[client][0], SavePos2[client][1], SavePos2[client][2], g_sCaps[client]);
+	Format(sQuery, sizeof(sQuery), "INSERT INTO `player_saves` VALUES(null, '%s', '%i', '%i', '%s', '%f', '%f', '%f', '%f', '%f', '%f')", sSteamID, class, sTeam, sMap, SavePos1[client][0], SavePos1[client][1], SavePos1[client][2], SavePos2[client][0], SavePos2[client][1], SavePos2[client][2]);
 
 	SavePos1[client][0] = 0.0;
 	SavePos1[client][1] = 0.0;
@@ -314,7 +330,7 @@ void UpdatePlayerData(int client) {
 	GetCurrentMap(sMap, sizeof(sMap));
 	GetClientAbsOrigin(client, SavePos1[client]);
 	GetClientAbsAngles(client, SavePos2[client]);
-	Format(sQuery, sizeof(sQuery), "UPDATE `player_saves` SET save1 = '%f', save2 = '%f', save3 = '%f', save4 = '%f', save5 = '%f', save6 = '%f', Capped = '%s' where steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", SavePos1[client][0], SavePos1[client][1], SavePos1[client][2], SavePos2[client][0], SavePos2[client][1], SavePos2[client][2],  g_sCaps[client], sSteamID, sTeam, class, sMap);
+	Format(sQuery, sizeof(sQuery), "UPDATE `player_saves` SET save1 = '%f', save2 = '%f', save3 = '%f', save4 = '%f', save5 = '%f', save6 = '%f' where steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", SavePos1[client][0], SavePos1[client][1], SavePos1[client][2], SavePos2[client][0], SavePos2[client][1], SavePos2[client][2], sSteamID, sTeam, class, sMap);
 
 	SavePos1[client][0] = 0.0;
 	SavePos1[client][1] = 0.0;
@@ -345,7 +361,7 @@ void ReloadPlayerData(int client) {
 	
 	GetClientAuthId(client, AuthId_Steam2, sSteamID, sizeof(sSteamID));
 	GetCurrentMap(pMap, sizeof(pMap));
-	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
+	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6 FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
 	SQL_TQuery(g_hDatabase, SQL_OnReloadPlayerData, sQuery, client, DBPrio_High);
 }
 
@@ -357,7 +373,7 @@ void LoadPlayerData(int client) {
 	
 	GetClientAuthId(client, AuthId_Steam2, SteamID, sizeof(SteamID));
 	GetCurrentMap(pMap, sizeof(pMap));
-	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", SteamID, sTeam, class, pMap);
+	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6 FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", SteamID, sTeam, class, pMap);
 	SQL_TQuery(g_hDatabase, SQL_OnLoadPlayerData, sQuery, client, DBPrio_High);
 }
 

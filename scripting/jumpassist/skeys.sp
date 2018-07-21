@@ -1,8 +1,25 @@
-Handle HudDisplayForward, HudDisplayASD, HudDisplayDuck, HudDisplayJump, HudDisplayM1, HudDisplayM2;
-bool g_bGetClientKeys[MAXPLAYERS+1];
-int g_iButtons[MAXPLAYERS+1], g_iSkeysRed[MAXPLAYERS+1], g_iSkeysGreen[MAXPLAYERS+1], g_iSkeysBlue[MAXPLAYERS+1];
-float g_iSkeysXLoc[MAXPLAYERS+1], g_iSkeysYLoc[MAXPLAYERS+1], defaultXLoc = 0.54, defaultYLoc = 0.40;
-char wasBack[MAXPLAYERS+1], wasMoveRight[MAXPLAYERS+1], wasMoveLeft[MAXPLAYERS+1];
+Handle
+	HudDisplayForward
+	, HudDisplayASD
+	, HudDisplayDuck
+	, HudDisplayJump
+	, HudDisplayM1
+	, HudDisplayM2;
+bool
+	g_bGetClientKeys[MAXPLAYERS+1];
+int
+	g_iButtons[MAXPLAYERS+1]
+	, g_iSkeysRed[MAXPLAYERS+1]
+	, g_iSkeysGreen[MAXPLAYERS+1]
+	, g_iSkeysBlue[MAXPLAYERS+1];
+float
+	g_iSkeysXLoc[MAXPLAYERS+1]
+	, g_iSkeysYLoc[MAXPLAYERS+1]
+	, defaultXLoc = 0.54, defaultYLoc = 0.40;
+char
+	wasBack[MAXPLAYERS+1]
+	, wasMoveRight[MAXPLAYERS+1]
+	, wasMoveLeft[MAXPLAYERS+1];
 
 public void OnProfileLoaded(int client, int red, int green, int blue) {
 	g_iSkeysRed[client] = red;
