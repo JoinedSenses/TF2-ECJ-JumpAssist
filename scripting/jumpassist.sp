@@ -2259,7 +2259,7 @@ public Action eventPlayerChangeClass(Event event, const char[] name, bool dontBr
 
 	TF2_RespawnPlayer(client);
 	g_bUnkillable[client] = false;
-	g_clientClass[client] = view_as<TFClassType>(event.GetInt("class"));
+	//g_clientClass[client] = view_as<TFClassType>(event.GetInt("class"));
 	ResetPositionVector(g_fLastSavePos[client]);
 	for (int i = 0; i <= 2; i++) {
 		g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
@@ -2319,6 +2319,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 		g_bHardcore[client] = false;
 	}
 	// Disable func_regenerate if player is using beggers bazooka
+	g_clientClass[client] = TF2_GetPlayerClass(client);
 	CheckBeggers(client);
 	if (g_bUsedReset[client]) {
 		if (databaseConfigured) {
