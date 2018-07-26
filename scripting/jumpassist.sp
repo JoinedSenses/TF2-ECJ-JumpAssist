@@ -182,47 +182,47 @@
 #include <clientprefs>
 
 int
-	g_bRace[MAXPLAYERS+1]
-	, g_bRaceStatus[MAXPLAYERS+1]
-	, g_bRaceFinishedPlayers[MAXPLAYERS+1][MAXPLAYERS]
-	, g_bRaceEndPoint[MAXPLAYERS+1] = {-1, ...}
-	, g_bRaceInvitedTo[MAXPLAYERS+1]
-	, g_bRaceSpec[MAXPLAYERS+1]
+	g_iRaceID[MAXPLAYERS+1]
+	, g_iRaceStatus[MAXPLAYERS+1]
+	, g_iRaceFinishedPlayers[MAXPLAYERS+1][MAXPLAYERS]
+	, g_iRaceEndPoint[MAXPLAYERS+1] = {-1, ...}
+	, g_iRaceInvitedTo[MAXPLAYERS+1]
+	, g_iRaceSpec[MAXPLAYERS+1]
 	, g_iLastTeleport[MAXPLAYERS+1]
-	, g_clientTeam[MAXPLAYERS+1];
+	, g_iClientTeam[MAXPLAYERS+1];
 float
-	g_bRaceStartTime[MAXPLAYERS+1]
-	, g_bRaceTime[MAXPLAYERS+1]
-	, g_bRaceTimes[MAXPLAYERS+1][MAXPLAYERS]
-	, g_bRaceFirstTime[MAXPLAYERS+1];
+	g_fRaceStartTime[MAXPLAYERS+1]
+	, g_fRaceTime[MAXPLAYERS+1]
+	, g_fRaceTimes[MAXPLAYERS+1][MAXPLAYERS]
+	, g_fRaceFirstTime[MAXPLAYERS+1];
 bool
 	g_bRaceLocked[MAXPLAYERS+1]
 	, g_bRaceAmmoRegen[MAXPLAYERS+1]
 	, g_bRaceClassForce[MAXPLAYERS+1]
-	, waitingInvite[MAXPLAYERS+1]
-	, hideMessage[MAXPLAYERS+1];
+	, g_bWaitingInvite[MAXPLAYERS+1]
+	, g_bHideMessage[MAXPLAYERS+1];
 ConVar
-	g_hWelcomeMsg
-	, g_hCriticals
-	, g_hSuperman
-	, g_hAmmoCheat
-	, waitingForPlayers;
+	g_cvarWelcomeMsg
+	, g_cvarCriticals
+	, g_cvarSuperman
+	, g_cvarAmmoCheat
+	, g_cvarWaitingForPlayers;
 char
-	szWebsite[128] = "http://www.jump.tf/"
-	, szForum[128] = "http://tf2rj.com/forum/"
-	, szJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0"
-	, currentMap[64]
-	, clientSteamID[MAXPLAYERS+1][32];
+	g_sWebsite[128] = "http://www.jump.tf/"
+	, g_sForum[128] = "http://tf2rj.com/forum/"
+	, g_sJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0"
+	, g_sCurrentMap[64]
+	, g_sClientSteamID[MAXPLAYERS+1][32];
 Handle
 	g_hJAMessageCookie;
 ArrayList
-	g_alNoFuncRegen;
+	g_AL_NoFuncRegen;
 Database
 	g_Database;
 TFClassType
-	g_clientClass[MAXPLAYERS+1];
+	g_TFClientClass[MAXPLAYERS+1];
 
-#define PLUGIN_VERSION "1.1.0"
+#define PLUGIN_VERSION "1.1.1"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cDefault 0x01
@@ -242,12 +242,12 @@ public Plugin myinfo = {
 public void OnPluginStart() {
 	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	g_cvarHostname = FindConVar("hostname");
-	waitingForPlayers = FindConVar("mp_waitingforplayers_time");
+	g_cvarWaitingForPlayers = FindConVar("mp_waitingforplayers_time");
 	g_cvarPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NOTIFY);
-	g_hWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NOTIFY);
-	g_hAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_NOTIFY);
-	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
-	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_NOTIFY);
+	g_cvarWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NOTIFY);
+	g_cvarAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_NOTIFY);
+	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
+	g_cvarSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_NOTIFY);
 
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
 	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Sends you back to the beginning without deleting your save..");
@@ -261,7 +261,7 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_regen", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_ammo", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_tele", cmdTele, "Teleports you to your current saved location.");
-	RegConsoleCmd("sm_hidemessage", cmdHideMessage, "Toggles display of JA messages, such as save and teleport");
+	RegConsoleCmd("sm_g_bHideMessage", cmdg_bHideMessage, "Toggles display of JA messages, such as save and teleport");
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a clients key's.");
 	RegConsoleCmd("sm_skeys_color", cmdChangeSkeysColor, "Changes the color of the text for skeys."); //cannot whether the database is configured or not
 	RegConsoleCmd("sm_skeys_loc", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
@@ -301,9 +301,9 @@ public void OnPluginStart() {
 	HookEvent("post_inventory_application", eventInventoryUpdate);
 	HookEvent("player_disconnect", eventPlayerDisconnect);
 	
-	HookConVarChange(g_hAmmoCheat, cvarAmmoCheatChanged);
-	HookConVarChange(g_hWelcomeMsg, cvarWelcomeMsgChanged);
-	HookConVarChange(g_hSuperman, cvarSupermanChanged);
+	HookConVarChange(g_cvarAmmoCheat, cvarAmmoCheatChanged);
+	HookConVarChange(g_cvarWelcomeMsg, cvarWelcomeMsgChanged);
+	HookConVarChange(g_cvarSuperman, cvarSupermanChanged);
 	
 	HookUserMessage(GetUserMessageId("VoiceSubtitle"), HookVoice, true);
 	
@@ -312,14 +312,14 @@ public void OnPluginStart() {
 	LoadTranslations("jumpassist.phrases");
 	LoadTranslations("common.phrases");
 
-	HudDisplayForward = CreateHudSynchronizer();
-	HudDisplayASD = CreateHudSynchronizer();
-	HudDisplayDuck = CreateHudSynchronizer();
-	HudDisplayJump = CreateHudSynchronizer();
-	HudDisplayM1 = CreateHudSynchronizer();
-	HudDisplayM2 = CreateHudSynchronizer();
+	g_hHudDisplayForward = CreateHudSynchronizer();
+	g_hHudDisplayASD = CreateHudSynchronizer();
+	g_hHudDisplayDuck = CreateHudSynchronizer();
+	g_hHudDisplayJump = CreateHudSynchronizer();
+	g_hHudDisplayM1 = CreateHudSynchronizer();
+	g_hHudDisplayM2 = CreateHudSynchronizer();
 
-	g_alNoFuncRegen = new ArrayList();
+	g_AL_NoFuncRegen = new ArrayList();
 
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsValidClient(i)) {
@@ -334,12 +334,12 @@ public void OnPluginStart() {
 	ConnectToDatabase();
 	
 	if (g_bLateLoad) {
-		GetCurrentMap(currentMap, sizeof(currentMap));
+		GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 		for (int client = 1; client <= MaxClients; client++) {
 			if (IsValidClient(client)) {
-				GetClientAuthId(client, AuthId_Steam2, clientSteamID[client], sizeof(clientSteamID[]));
-				g_clientTeam[client] = GetClientTeam(client);
-				g_clientClass[client] = TF2_GetPlayerClass(client);
+				GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]));
+				g_iClientTeam[client] = GetClientTeam(client);
+				g_TFClientClass[client] = TF2_GetPlayerClass(client);
 			}
 		}
 	}
@@ -382,7 +382,7 @@ public void OnMapStart() {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
-	GetCurrentMap(currentMap, sizeof(currentMap));
+	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 	for (int i = 1; i <= MaxClients ; i++) {
 		ResetRace(i);
 		g_iLastTeleport[i] = 0;
@@ -390,7 +390,7 @@ public void OnMapStart() {
 	if (g_Database != null) {
 		LoadMapCFG();
 	}
-	waitingForPlayers.SetInt(0);
+	g_cvarWaitingForPlayers.SetInt(0);
 	PrecacheSound("misc/freeze_cam.wav");
 	PrecacheSound("misc/killstreak.wav");
 
@@ -407,7 +407,7 @@ public void OnMapStart() {
 public void OnClientCookiesCached(int client) {
 	char sValue[8];
 	GetClientCookie(client, g_hJAMessageCookie, sValue, sizeof(sValue));
-	hideMessage[client] = (sValue[0] != '\0' && StringToInt(sValue));
+	g_bHideMessage[client] = (sValue[0] != '\0' && StringToInt(sValue));
 }
 
 public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadcast) {
@@ -423,16 +423,16 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 		, idx;
 	
 	g_bHardcore[client] = g_bLoadedPlayerSettings[client] = g_bBeatTheMap[client] = g_bGetClientKeys[client] = g_bUnkillable[client] = false;
-	clientSteamID[client] = "";
+	g_sClientSteamID[client] = "";
 	EraseLocs(client);
 	
-	if (g_bRace[client] != 0) {
+	if (g_iRaceID[client] != 0) {
 		LeaveRace(client);
 	}
 	SetSkeysDefaults(client);
 
-	if ((idx = g_alNoFuncRegen.FindValue(client)) != -1) {
-		g_alNoFuncRegen.Erase(idx);
+	if ((idx = g_AL_NoFuncRegen.FindValue(client)) != -1) {
+		g_AL_NoFuncRegen.Erase(idx);
 	}
 }
 
@@ -447,11 +447,11 @@ public void OnClientPostAdminCheck(int client) {
 	}
 
 	// Load the player profile.
-	GetClientAuthId(client, AuthId_Steam2, clientSteamID[client], sizeof(clientSteamID[]));
+	GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]));
 	LoadPlayerProfile(client);
 
 	// Welcome message. 15 seconds seems to be a good number.
-	if (g_hWelcomeMsg.BoolValue) {
+	if (g_cvarWelcomeMsg.BoolValue) {
 		CreateTimer(15.0, WelcomePlayer, client);
 	}
 	g_bHardcore[client] = g_bLoadedPlayerSettings[client] = g_bBeatTheMap[client] = g_bGetClientKeys[client] = g_bUnkillable[client] = false;
@@ -460,14 +460,14 @@ public void OnClientPostAdminCheck(int client) {
 												Functions
 *****************************************************************************************************************/
 //I SHOULD MAKE THIS DO A PAGED MENU IF IT DOESNT ALREADY IDK ANY MAPS WITH THAT MANY CPS ANYWAY
-public Action cmdRaceInitialize(int client, int args) {
+Action cmdRaceInitialize(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
-	if (g_clientTeam[client] < 2 || !IsPlayerAlive(client)) {
+	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
 		ReplyToCommand(client, "\x01[\x03JA\x01] Must be alive and on a team to use this command.");
 		return Plugin_Handled;
 	}
@@ -475,12 +475,12 @@ public Action cmdRaceInitialize(int client, int args) {
 		PrintToChat(client, "\x01[\x03JA\x01] You may only race on maps with control points.");
 		return Plugin_Handled;
 	}
-	if (IsClientRacing(client) || g_bRace[client] != 0) {
+	if (IsClientRacing(client) || g_iRaceID[client] != 0) {
 		PrintToChat(client, "\x01[\x03JA\x01] You are already in a race. Wait for it to finish or type /r_leave to leave.");
 		return Plugin_Handled;
 	}
-	g_bRace[client] = client;
-	g_bRaceStatus[client] = 1;
+	g_iRaceID[client] = client;
+	g_iRaceStatus[client] = 1;
 	g_bRaceClassForce[client] = true;
 	char
 		cpName[32]
@@ -505,26 +505,26 @@ int ControlPointSelector(Menu menu, MenuAction action, int param1, int param2) {
 	if (action == MenuAction_Select) {
 		char info[32];
 		menu.GetItem(param2, info, sizeof(info));
-		g_bRaceEndPoint[param1] = StringToInt(info);
+		g_iRaceEndPoint[param1] = StringToInt(info);
 		cmdRaceInvite(param1, 0);
 		delete menu;
 		return;
 	}
 	else if (action == MenuAction_Cancel) {
-		g_bRace[param1] = 0;
+		g_iRaceID[param1] = 0;
 		PrintToChat(param1, "\x01[\x03JA\x01] The race has been cancelled.");
 	}
 	else {
-		g_bRace[param1] = 0;
+		g_iRaceID[param1] = 0;
 		return;
 	}
 }
 
-public Action cmdRaceInvite(int client, int args) {
+Action cmdRaceInvite(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
-	if (g_clientTeam[client] < 2 || !IsPlayerAlive(client)) {
+	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
 		ReplyToCommand(client, "\x01[\x03JA\x01] Must be alive and on a team to use this command.");
 		return Plugin_Handled;
 	}
@@ -532,7 +532,7 @@ public Action cmdRaceInvite(int client, int args) {
 		PrintToChat(client, "\x01[\x03JA\x01] You have not started a race.");
 		return Plugin_Handled;
 	}
-	if (!IsRaceLeader(client, g_bRace[client])) {
+	if (!IsRaceLeader(client, g_iRaceID[client])) {
 		PrintToChat(client, "\x01[\x03JA\x01] You are not the race lobby leader.");
 		return Plugin_Handled;
 	}
@@ -558,26 +558,26 @@ public Action cmdRaceInvite(int client, int args) {
 		GetCmdArg(i, arg1, sizeof(arg1));
 		target = FindTarget(client, arg1, true, false);
 		GetClientName(target, client2Name, sizeof(client2Name));
-		if (target != -1 && g_bRace[target] > 1 && !waitingInvite[target] && g_bRaceEndPoint[client] != -1 ) {
+		if (target != -1 && g_iRaceID[target] > 1 && !g_bWaitingInvite[target] && g_iRaceEndPoint[client] != -1 ) {
 			PrintToChat(client, "\x01[\x03JA\x01] You have invited\x03 %s\x01 to race.", client2Name);
-			Format(buffer, sizeof(buffer), "You have been invited to race to %s by %s", GetCPNameByIndex(g_bRaceEndPoint[client]), clientName);
+			Format(buffer, sizeof(buffer), "You have been invited to race to %s by %s", GetCPNameByIndex(g_iRaceEndPoint[client]), clientName);
 			
 			panel = new Panel();
 			panel.SetTitle(buffer);
 			panel.DrawItem("Accept");
 			panel.DrawItem("Decline");
-			g_bRaceInvitedTo[target] = client;
+			g_iRaceInvitedTo[target] = client;
 			panel.Send(target, InviteHandler, 15);
 			
 			delete panel;
 		}
-		if (g_bRaceEndPoint[client] == -1) {
+		if (g_iRaceEndPoint[client] == -1) {
 			ReplyToCommand(client, "\x01[\x03JA\x01] You must\x03 select a point\x01 first with /race before inviting others");
 		}
-		else if (g_bRace[target]) {
+		else if (g_iRaceID[target]) {
 			ReplyToCommand(client, "\x01[\x03JA\x01]\x03 %s\x01 is already in a race", client2Name);
 		}
-		else if (waitingInvite[target]) {
+		else if (g_bWaitingInvite[target]) {
 			ReplyToCommand(client, "\x01[\x03JA\x01]\x03 %s\x01 has a\x03 pending\x01 race invite.", client2Name);
 		}
 	}
@@ -603,7 +603,7 @@ Menu PlayerMenu(int client) {
 	menu.ExitBackButton = true;	
 	menu.AddItem("*[Begin Race]*","*[Begin Race]*");
 	for (int i = 1; i <= MaxClients; i++) {
-		if (IsValidClient(i) && i != client && !waitingInvite[i] && g_bRace[i] < 1) {
+		if (IsValidClient(i) && i != client && !g_bWaitingInvite[i] && g_iRaceID[i] < 1) {
 			IntToString(i, buffer, sizeof(buffer));
 			GetClientName(i, clientName, sizeof(clientName));
 			menu.AddItem(buffer, clientName);
@@ -631,27 +631,27 @@ int Menu_InvitePlayers(Menu menu, MenuAction action, int param1, int param2) {
 		}
 		GetClientName(StringToInt(info), client2Name, sizeof(client2Name));
 		menu.RemoveItem(param2);
-		if (waitingInvite[StringToInt(info)])
+		if (g_bWaitingInvite[StringToInt(info)])
 		{
 			ReplyToCommand(param1, "\x01[\x03JA\x01] %s has already been invited", client2Name);
 			menu.DisplayAt(param1, GetMenuSelectionPosition(), MENU_TIME_FOREVER);
 			return;
 		}
 		PrintToChat(param1, "\x01[\x03JA\x01] You have invited %s to race.", client2Name);
-		Format(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %s", GetCPNameByIndex(g_bRaceEndPoint[param1]), clientName);
+		Format(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %s", GetCPNameByIndex(g_iRaceEndPoint[param1]), clientName);
 		
 		Panel panel = new Panel();
 		panel.SetTitle(buffer);
 		panel.DrawItem("Accept");
 		panel.DrawItem("Decline");
 		
-		g_bRaceInvitedTo[StringToInt(info)] = param1;
+		g_iRaceInvitedTo[StringToInt(info)] = param1;
 		panel.Send(StringToInt(info), InviteHandler, 15);
-		waitingInvite[StringToInt(info)] = true;
+		g_bWaitingInvite[StringToInt(info)] = true;
 		menu.DisplayAt(param1, GetMenuSelectionPosition(), MENU_TIME_FOREVER);
 	}
 	else if (param2 == MenuCancel_ExitBack) {
-		g_bRace[param1] = 0;
+		g_iRaceID[param1] = 0;
 		cmdRaceInitialize(param1, 0);
 		return;
 	}
@@ -659,37 +659,37 @@ int Menu_InvitePlayers(Menu menu, MenuAction action, int param1, int param2) {
 		int iparam1 = param1;
 		PrintToChatAll("Debug: param1 = %i", iparam1);
 		PrintToChat(param1, "\x01[\x03JA\x01] The race has been\x03 cancelled\x01.");
-		g_bRace[param1] = 0;
+		g_iRaceID[param1] = 0;
 		return;
 	}
 }
 
 int InviteHandler(Menu menu, MenuAction action, int param1, int param2) {
-	AlertInviteAcceptOrDeny(g_bRaceInvitedTo[param1], param1, param2);
+	AlertInviteAcceptOrDeny(g_iRaceInvitedTo[param1], param1, param2);
 }
 
 void AlertInviteAcceptOrDeny(int client, int client2, int choice) {
 	char clientName[128];
 	GetClientName(client2, clientName, sizeof(clientName));
 	if (choice == 1) {
-		waitingInvite[client2] = false;
+		g_bWaitingInvite[client2] = false;
 		if (HasRaceStarted(client)) {
 			PrintToChat(client, "\x01[\x03JA\x01] This race has already started.");			
 			return;
 		}
 		LeaveRace(client2);
-		g_bRace[client2] = client;
+		g_iRaceID[client2] = client;
 		PrintToChat(client, "\x01[\x03JA\x01] %s has accepted your request to race", clientName);
 	}
 	else if (choice < 1) {
-		g_bRace[client2] = 0;
+		g_iRaceID[client2] = 0;
 		PrintToChat(client, "\x01[\x03JA\x01] %s failed to respond to your invitation", clientName);
 	}
 	else {
-		g_bRace[client2] = 0;
+		g_iRaceID[client2] = 0;
 		PrintToChat(client, "\x01[\x03JA\x01] %s has\x03 declined\x01 your request to race", clientName);
 	}
-	waitingInvite[client2] = false;
+	g_bWaitingInvite[client2] = false;
 }
 
 char
@@ -724,8 +724,8 @@ Action RaceCountdownGo(Handle timer, any raceID) {
 	PrintToRace(raceID, sMessage);
 	sMessage = "";
 	float time = GetEngineTime();
-	g_bRaceStartTime[raceID] = time;
-	g_bRaceStatus[raceID] = 3;
+	g_fRaceStartTime[raceID] = time;
+	g_iRaceStatus[raceID] = 3;
 	return Plugin_Handled;
 }
 
@@ -755,7 +755,7 @@ void DisplayRaceTimes(int client) {
 		iClientToShow = client;
 	}
 	int
-		race = g_bRace[iClientToShow];
+		race = g_iRaceID[iClientToShow];
 	char
 		leader[32]
 		, leaderFormatted[32]
@@ -766,7 +766,7 @@ void DisplayRaceTimes(int client) {
 	bool
 		space;
 
-	GetClientName(g_bRace[iClientToShow], leader, sizeof(leader));
+	GetClientName(g_iRaceID[iClientToShow], leader, sizeof(leader));
 	Format(leaderFormatted, sizeof(leaderFormatted), "%s's Race", leader);
 	
 	Panel panel = new Panel();
@@ -774,14 +774,14 @@ void DisplayRaceTimes(int client) {
 	panel.DrawText(" ");
 	
 	for (int i = 1; i <= MaxClients; i++) {
-		if (g_bRaceFinishedPlayers[race][i] == 0) {
+		if (g_iRaceFinishedPlayers[race][i] == 0) {
 			break;
 		}
 		space = true;
-		GetClientName(g_bRaceFinishedPlayers[race][i], racerNames, sizeof(racerNames));
-		racerTimes = TimeFormat(g_bRaceTimes[race][i] - g_bRaceStartTime[race]);
-		if (g_bRaceFirstTime[race] != g_bRaceTimes[race][i]) {
-			racerDiff = TimeFormat(g_bRaceTimes[race][i] - g_bRaceFirstTime[race]);
+		GetClientName(g_iRaceFinishedPlayers[race][i], racerNames, sizeof(racerNames));
+		racerTimes = TimeFormat(g_fRaceTimes[race][i] - g_fRaceStartTime[race]);
+		if (g_fRaceFirstTime[race] != g_fRaceTimes[race][i]) {
+			racerDiff = TimeFormat(g_fRaceTimes[race][i] - g_fRaceFirstTime[race]);
 		}
 		else {
 			racerDiff = "00:00:000";
@@ -806,7 +806,7 @@ void DisplayRaceTimes(int client) {
 	delete panel;
 }
 
-public Action cmdRaceInfo(int client, int args) {
+Action cmdRaceInfo(int client, int args) {
 	if (!IsValidClient(client)) {
 		return;
 	}
@@ -842,7 +842,7 @@ public Action cmdRaceInfo(int client, int args) {
 		, ammoRegen[32]
 		, classForce[32];
 
-	GetClientName(g_bRace[iClientToShow], leader, sizeof(leader));
+	GetClientName(g_iRaceID[iClientToShow], leader, sizeof(leader));
 	Format(leaderFormatted, sizeof(leaderFormatted), "Race Host: %s", leader);
 
 	if (GetRaceStatus(iClientToShow) == 1) {
@@ -857,7 +857,7 @@ public Action cmdRaceInfo(int client, int args) {
 	else if (GetRaceStatus(iClientToShow) == 4) {
 		status = "Race Status: Waiting for finishers";
 	}
-	if (g_bRaceClassForce[g_bRace[iClientToShow]]) {
+	if (g_bRaceClassForce[g_iRaceID[iClientToShow]]) {
 		classForce = "Class Force: Enabled";
 	}
 	else {
@@ -880,15 +880,15 @@ public Action cmdRaceInfo(int client, int args) {
 int InfoHandler(Menu menu, MenuAction action, int param1, int param2) {
 }
 
-public Action cmdRaceStart(int client, int args) {
+Action cmdRaceStart(int client, int args) {
 	if (!IsValidClient(client)) {
 		return;
 	}
-	if (g_bRace[client] == 0) {
+	if (g_iRaceID[client] == 0) {
 		PrintToChat(client, "\x01[\x03JA\x01] You are not hosting a race!");
 		return;
 	}
-	if (!IsRaceLeader(client, g_bRace[client])) {
+	if (!IsRaceLeader(client, g_iRaceID[client])) {
 		PrintToChat(client, "\x01[\x03JA\x01] You are not the race lobby leader.");
 		return;
 	}
@@ -899,9 +899,9 @@ public Action cmdRaceStart(int client, int args) {
 	}
 	LockRacePlayers(client);
 	ApplyRaceSettings(client);
-	g_bRaceStatus[client] = 2;
+	g_iRaceStatus[client] = 2;
 	CreateTimer(1.0, RaceCountdown, client);
-	SendRaceToStart(client, g_clientClass[client], g_clientTeam[client]);
+	SendRaceToStart(client, g_TFClientClass[client], g_iClientTeam[client]);
 	PrintToRace(client, "\x01[\x03JA\x01] Teleporting to race start!");
 }
 
@@ -920,10 +920,10 @@ void SendRaceToStart(int raceID, TFClassType class, int team) {
 		if (IsClientInRace(i, raceID)) {
 			if (g_bRaceClassForce[raceID]) {
 				TF2_SetPlayerClass(i, class);
-				g_clientClass[i] = class;
+				g_TFClientClass[i] = class;
 			}
 			ChangeClientTeam(i, team);
-			g_clientTeam[i] = team;
+			g_iClientTeam[i] = team;
 			SendToStart(i);
 		}
 	}
@@ -945,7 +945,7 @@ void UnlockRacePlayers(int raceID) {
 	}
 }
 
-public Action cmdRaceLeave(int client, int args) {
+Action cmdRaceLeave(int client, int args) {
 	if (!IsClientRacing(client)) {
 		PrintToChat(client, "\x01[\x03JA\x01] You are not in a race.");
 		return Plugin_Handled;
@@ -955,11 +955,11 @@ public Action cmdRaceLeave(int client, int args) {
 	return Plugin_Handled;
 }
 
-public Action cmdRaceInitializeServer(int client, int args) {
+Action cmdRaceInitializeServer(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
-	if (g_clientTeam[client] < 2 || !IsPlayerAlive(client)) {
+	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
 		ReplyToCommand(client, "\x01[\x03JA\x01] Must be\x03 alive\x01 and on a\x03 team\x01 to use this command.");
 		return Plugin_Handled;
 	}
@@ -980,8 +980,8 @@ public Action cmdRaceInitializeServer(int client, int args) {
 	int
 		entity;
 
-	g_bRace[client] = client;
-	g_bRaceStatus[client] = 1;
+	g_iRaceID[client] = client;
+	g_iRaceStatus[client] = 1;
 	g_bRaceClassForce[client] = true;
 
 	Menu menu = new Menu(ControlPointSelectorServer, MENU_ACTIONS_DEFAULT);
@@ -1009,24 +1009,24 @@ int ControlPointSelectorServer(Menu menu, MenuAction action, int param1, int par
 			cmdRaceStart(param1, 0);
 			delete menu;
 		}
-		g_bRaceEndPoint[param1] = StringToInt(info);
+		g_iRaceEndPoint[param1] = StringToInt(info);
 		GetClientName(param1, clientName, sizeof(clientName));
 		for (int i = 1; i <= MaxClients; i++) {
-			if (IsValidClient(i) && param1 != i && !waitingInvite[i] && g_bRace[i] == 0) {
-				Format(buffer, sizeof(buffer), "\x01[\x03JA\x01] You have been \x03invited \x01to race to\x03 %s \x01by\x03 %s", GetCPNameByIndex(g_bRaceEndPoint[param1]), clientName);
+			if (IsValidClient(i) && param1 != i && !g_bWaitingInvite[i] && g_iRaceID[i] == 0) {
+				Format(buffer, sizeof(buffer), "\x01[\x03JA\x01] You have been \x03invited \x01to race to\x03 %s \x01by\x03 %s", GetCPNameByIndex(g_iRaceEndPoint[param1]), clientName);
 				
 				Panel panel = new Panel();
 				panel.SetTitle(buffer);
 				panel.DrawItem("Accept");
 				panel.DrawItem("Decline");
-				g_bRaceInvitedTo[i] = param1;
+				g_iRaceInvitedTo[i] = param1;
 				panel.Send(i, InviteHandler, 15);
 				delete panel;
 			}
 		}
 	}
 	else if (action == MenuAction_Cancel) {
-		g_bRace[param1] = 0;
+		g_iRaceID[param1] = 0;
 		PrintToChat(param1, "\x01[\x03JA\x01] The race has been \x03cancelled\x01.");
 	}
 	else if (action == MenuAction_End) {
@@ -1034,7 +1034,7 @@ int ControlPointSelectorServer(Menu menu, MenuAction action, int param1, int par
 	}
 }
 
-public Action cmdRaceSpec(int client, int args) {
+Action cmdRaceSpec(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
@@ -1067,17 +1067,17 @@ public Action cmdRaceSpec(int client, int args) {
 		}
 		if (!IsClientObserver(client)) {
 			ChangeClientTeam(client, 1);
-			g_clientTeam[client] = 1;
+			g_iClientTeam[client] = 1;
 			ForcePlayerSuicide(client);
 		}
-		g_bRaceSpec[client] = g_bRace[target];
-		SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_bRace[target]);
+		g_iRaceSpec[client] = g_iRaceID[target];
+		SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_iRaceID[target]);
 		SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
 	}
 	return Plugin_Continue;
 }
 
-public Action cmdRaceSet(int client, int args) {
+Action cmdRaceSet(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
@@ -1085,7 +1085,7 @@ public Action cmdRaceSet(int client, int args) {
 		PrintToChat(client, "\x01[\x03JA\x01] You are not in a race.");
 		return Plugin_Handled;
 	}
-	if (!IsRaceLeader(client, g_bRace[client])) {
+	if (!IsRaceLeader(client, g_iRaceID[client])) {
 		PrintToChat(client, "\x01[\x03JA\x01] You are not the leader of this race.");
 		return Plugin_Handled;
 	}
@@ -1130,7 +1130,7 @@ public Action cmdRaceSet(int client, int args) {
 void ApplyRaceSettings(int race) {
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsClientInRace(i, race)) {
-			g_bAmmoRegen[i] = g_bRaceAmmoRegen[g_bRace[i]];
+			g_bAmmoRegen[i] = g_bRaceAmmoRegen[g_iRaceID[i]];
 		}
 	}
 }
@@ -1159,7 +1159,7 @@ int GetPlayersStillRacing(int raceID) {
 }
 
 void LeaveRace(int client, bool raceFinished = false) {
-	int raceID = g_bRace[client];
+	int raceID = g_iRaceID[client];
 	if (raceID == 0) {
 		return;
 	}
@@ -1177,20 +1177,20 @@ void LeaveRace(int client, bool raceFinished = false) {
 						int newRace = i;
 						int emptyInt[32];
 						float emptyFloat[32];
-						g_bRaceStatus[i] = g_bRaceStatus[raceID];
-						g_bRaceEndPoint[i] = g_bRaceEndPoint[raceID];
-						g_bRaceStartTime[i] = g_bRaceStartTime[raceID];
-						g_bRaceFirstTime[i] = g_bRaceFirstTime[raceID];
+						g_iRaceStatus[i] = g_iRaceStatus[raceID];
+						g_iRaceEndPoint[i] = g_iRaceEndPoint[raceID];
+						g_fRaceStartTime[i] = g_fRaceStartTime[raceID];
+						g_fRaceFirstTime[i] = g_fRaceFirstTime[raceID];
 						g_bRaceAmmoRegen[i] = g_bRaceAmmoRegen[raceID];
 						g_bRaceClassForce[i] = g_bRaceClassForce[raceID];
-						g_bRaceTimes[i] = g_bRaceTimes[raceID];
-						g_bRaceFinishedPlayers[i] = g_bRaceFinishedPlayers[raceID];
-						g_bRace[client] = 0;
-						g_bRaceFinishedPlayers[client] = emptyInt;
-						g_bRaceTime[client] = g_bRaceFirstTime[client] = g_bRaceStartTime[raceID] = 0.0;
-						g_bRaceTimes[client] = emptyFloat;
+						g_fRaceTimes[i] = g_fRaceTimes[raceID];
+						g_iRaceFinishedPlayers[i] = g_iRaceFinishedPlayers[raceID];
+						g_iRaceID[client] = 0;
+						g_iRaceFinishedPlayers[client] = emptyInt;
+						g_fRaceTime[client] = g_fRaceFirstTime[client] = g_fRaceStartTime[raceID] = 0.0;
+						g_fRaceTimes[client] = emptyFloat;
 						g_bRaceLocked[client] = false;
-						g_bRaceEndPoint[client] = -1;
+						g_iRaceEndPoint[client] = -1;
 
 						if (GetPlayersStillRacing(raceID) == 0) {
 							ResetRace(raceID);
@@ -1199,7 +1199,7 @@ void LeaveRace(int client, bool raceFinished = false) {
 						// assign race to someone else if leader has left
 						for (int j = 1; j <= MaxClients; j++) {
 							if (IsClientRacing(j) && !IsRaceLeader(j, raceID)) {
-								g_bRace[j] = newRace;
+								g_iRaceID[j] = newRace;
 							}
 						}
 						return;
@@ -1213,10 +1213,10 @@ void LeaveRace(int client, bool raceFinished = false) {
 		}
 	}
 	else {
-		g_bRace[client] = 0;
-		g_bRaceTime[client] = g_bRaceFirstTime[client] = g_bRaceStartTime[client] = 0.0;
+		g_iRaceID[client] = 0;
+		g_fRaceTime[client] = g_fRaceFirstTime[client] = g_fRaceStartTime[client] = 0.0;
 		g_bRaceLocked[client] = false;
-		g_bRaceEndPoint[client] = -1;
+		g_iRaceEndPoint[client] = -1;
 	}
 	if (!raceFinished) {
 		char clientName[128], buffer[128];
@@ -1228,25 +1228,25 @@ void LeaveRace(int client, bool raceFinished = false) {
 
 void ResetRace(int raceID) {
 	for (int i = 1; i <= MaxClients; i++) {
-		if (g_bRace[i] == raceID) {
-			g_bRace[i] = g_bRaceStatus[i] = 0;
-			g_bRaceTime[i] = g_bRaceFirstTime[i] = g_bRaceStartTime[i] = 0.0;
+		if (g_iRaceID[i] == raceID) {
+			g_iRaceID[i] = g_iRaceStatus[i] = 0;
+			g_fRaceTime[i] = g_fRaceFirstTime[i] = g_fRaceStartTime[i] = 0.0;
 			g_bRaceLocked[i] = g_bRaceAmmoRegen[i] = false;
-			g_bRaceEndPoint[i] = -1;
+			g_iRaceEndPoint[i] = -1;
 			g_bRaceClassForce[i] = true;
 			PrintToChat(i, "\x01[\x03JA\x01] Race has \x03ended\x01.");
 		}
-		g_bRaceTimes[raceID][i] = 0.0;
-		g_bRaceFinishedPlayers[raceID][i] = 0;
+		g_fRaceTimes[raceID][i] = 0.0;
+		g_iRaceFinishedPlayers[raceID][i] = 0;
 	}
 }
 
 bool IsClientRacing(int client) {
-	return (g_bRace[client] != 0);
+	return (g_iRaceID[client] != 0);
 }
 
 bool IsClientInRace(int client, int race) {
-	return (g_bRace[client] == race);
+	return (g_iRaceID[client] == race);
 }
 
 bool IsRaceLeader(int client, int race) {
@@ -1254,15 +1254,15 @@ bool IsRaceLeader(int client, int race) {
 }
 
 int GetRaceStatus(int client) {
-	return g_bRaceStatus[g_bRace[client]];
+	return g_iRaceStatus[g_iRaceID[client]];
 }
 
 bool HasRaceStarted(int client) {
-	return (1 < g_bRaceStatus[g_bRace[client]] < 5);
+	return (1 < g_iRaceStatus[g_iRaceID[client]] < 5);
 }
 
 bool IsPlayerFinishedRacing(int client) {
-	return (g_bRaceTime[client] != 0.0);
+	return (g_fRaceTime[client] != 0.0);
 }
 
 bool IsClientSpectatingRace(int client, int race) {
@@ -1328,7 +1328,7 @@ char[] FormatTimeComponent(int time) {
 	return final;
 }
 
-public Action cmdToggleAmmo(int client, int args) {
+Action cmdToggleAmmo(int client, int args) {
 	if (!IsValidClient(client)) {
 		return;
 	}
@@ -1339,7 +1339,7 @@ public Action cmdToggleAmmo(int client, int args) {
 	SetRegen(client, "Ammo");
 }
 
-public Action cmdToggleHardcore(int client, int args) {
+Action cmdToggleHardcore(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
@@ -1351,7 +1351,7 @@ public Action cmdToggleHardcore(int client, int args) {
 	return Plugin_Handled;
 }
 
-public Action cmdJAHelp(int client, int args) {
+Action cmdJAHelp(int client, int args) {
 	if (IsUserAdmin(client)) {
 		ReplyToCommand(client, "**********ADMIN COMMANDS**********\nmapset - Change map settings\naddtele - Add a teleport location\njatele - Teleport a user to a location");
 	}
@@ -1420,7 +1420,7 @@ bool IsUsingJumper(int client) {
 	if (!IsValidClient(client)) {
 		return false;
 	}
-	if (g_clientClass[client] == TFClass_Soldier) {
+	if (g_TFClientClass[client] == TFClass_Soldier) {
 		if (!IsValidWeapon(g_iClientWeapons[client][0])) {
 			return false;
 		}
@@ -1431,7 +1431,7 @@ bool IsUsingJumper(int client) {
 			}
 		}
 	}
-	else if (g_clientClass[client] == TFClass_DemoMan) {
+	else if (g_TFClientClass[client] == TFClass_DemoMan) {
 		if (!IsValidWeapon(g_iClientWeapons[client][1])) {
 			return false;
 		}
@@ -1447,29 +1447,29 @@ bool IsUsingJumper(int client) {
 
 void CheckBeggers(int client) {
 	int iWeapon = GetPlayerWeaponSlot(client, 0);
-	int index = g_alNoFuncRegen.FindValue(client);
+	int index = g_AL_NoFuncRegen.FindValue(client);
 	if (IsValidEntity(iWeapon) &&
 	GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex") == 730) {
 		if (index == -1) {
-			g_alNoFuncRegen.Push(client);
+			g_AL_NoFuncRegen.Push(client);
 #if defined DEBUG
 			LogMessage("Preventing player %d from touching func_regenerate");
 #endif
 		}
 	}
 	else if (index != -1) {
-	g_alNoFuncRegen.Erase(index);
+	g_AL_NoFuncRegen.Erase(index);
 #if defined DEBUG
 		LogMessage("Allowing player %d to touch func_regenerate");
 #endif
 	}
 }
 
-public Action cmdUnkillable(int client, int args) {
+Action cmdUnkillable(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
-	if (!g_hSuperman.BoolValue && !IsUserAdmin(client)) {
+	if (!g_cvarSuperman.BoolValue && !IsUserAdmin(client)) {
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Command_Locked");
 		return Plugin_Handled;
 	}
@@ -1480,7 +1480,7 @@ public Action cmdUnkillable(int client, int args) {
 	return Plugin_Handled;
 }
 
-public Action cmdUndo(int client, int args) {
+Action cmdUndo(int client, int args) {
 	if (!IsValidPosition(g_fLastSavePos[client])) {
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Save_UndoCant");
 		return Plugin_Handled;
@@ -1498,11 +1498,11 @@ public Action cmdUndo(int client, int args) {
 	}
 }
 
-public Action cmdSendPlayer(int client,int args) {
+Action cmdSendPlayer(int client,int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}	
-	if (!databaseConfigured) {
+	if (!g_bDatabaseConfigured) {
 		PrintToChat(client, "\x01[\x03JA\x01] This feature is not supported without a database configuration");
 		return Plugin_Handled;
 	}
@@ -1548,14 +1548,14 @@ public Action cmdSendPlayer(int client,int args) {
 	return Plugin_Handled;
 }
 
-public Action cmdHideMessage(int client, int args) {
-	hideMessage[client] = !hideMessage[client];
-	ReplyToCommand(client, "\x01[\x03JA\x01] Messages will now be\x03 %s", hideMessage[client] ? "hidden" : "displayed");
-	SetClientCookie(client, g_hJAMessageCookie, hideMessage[client] ? "1" : "0");
+Action cmdg_bHideMessage(int client, int args) {
+	g_bHideMessage[client] = !g_bHideMessage[client];
+	ReplyToCommand(client, "\x01[\x03JA\x01] Messages will now be\x03 %s", g_bHideMessage[client] ? "hidden" : "displayed");
+	SetClientCookie(client, g_hJAMessageCookie, g_bHideMessage[client] ? "1" : "0");
 	return Plugin_Handled;
 }
 
-public Action cmdReset(int client, int args) {
+Action cmdReset(int client, int args) {
 	if (g_cvarPluginEnabled.BoolValue) {
 		if (IsClientObserver(client)) {
 			return Plugin_Handled;
@@ -1567,7 +1567,7 @@ public Action cmdReset(int client, int args) {
 	return Plugin_Handled;
 }
 
-public Action cmdTele(int client, int args) {
+Action cmdTele(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
@@ -1576,7 +1576,7 @@ public Action cmdTele(int client, int args) {
 	return Plugin_Handled;
 }
 
-public Action cmdSave(int client, int args) {
+Action cmdSave(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
@@ -1591,7 +1591,7 @@ void Teleport(int client) {
 	if (!IsValidClient(client)) {
 		return;
 	}
-	if (g_bRace[client] && (g_bRaceStatus[g_bRace[client]] == 2 || g_bRaceStatus[g_bRace[client]] == 3) ) {
+	if (g_iRaceID[client] && (g_iRaceStatus[g_iRaceID[client]] == 2 || g_iRaceStatus[g_iRaceID[client]] == 3) ) {
 		PrintToChat(client, "\x01[\x03JA\x01] Cannot teleport while racing.");
 		return;
 	}
@@ -1602,11 +1602,11 @@ void Teleport(int client) {
 		g_vVelocity[3];
 
 	ResetPositionVector(g_vVelocity);
-	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(view_as<int>(g_clientClass[client])));
-	if (g_clientTeam[client] == 2) {
+	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(view_as<int>(g_TFClientClass[client])));
+	if (g_iClientTeam[client] == 2) {
 		Format(g_sTeam, sizeof(g_sTeam), "%T", "Red_Team", LANG_SERVER);
 	}
-	else if (g_clientTeam[client] == 3) {
+	else if (g_iClientTeam[client] == 3) {
 		Format(g_sTeam, sizeof(g_sTeam), "%T", "Blu_Team", LANG_SERVER);
 	}
 	if (g_bHardcore[client]) {
@@ -1620,7 +1620,7 @@ void Teleport(int client) {
 	}
 	else {
 		TeleportEntity(client, g_fOrigin[client], g_fAngles[client], g_vVelocity);
-		if (!hideMessage[client]) {
+		if (!g_bHideMessage[client]) {
 			PrintToChat(client, "\x01[\x03JA\x01] %t", "Teleport_Self");
 		}
 	}
@@ -1649,10 +1649,10 @@ void SaveLoc(int client) {
 		}
 		GetClientAbsOrigin(client, g_fOrigin[client]);
 		GetClientAbsAngles(client, g_fAngles[client]);
-		if (databaseConfigured) {
+		if (g_bDatabaseConfigured) {
 			GetPlayerData(client);
 		}
-		if (!hideMessage[client]) {
+		if (!g_bHideMessage[client]) {
 			PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Location");
 		}
 	}
@@ -1718,27 +1718,27 @@ void SetRegen(int client, char[] RegenType) {
 	return;
 }
 
-public Action cmdJumpTF(int client, int args) {
+Action cmdJumpTF(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
-	ShowMOTDPanel(client, "Jump Assist Help", szWebsite, MOTDPANEL_TYPE_URL);
+	ShowMOTDPanel(client, "Jump Assist Help", g_sWebsite, MOTDPANEL_TYPE_URL);
 	return;
 }
 
-public Action cmdJumpAssist(int client, int args) {
+Action cmdJumpAssist(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
-	ShowMOTDPanel(client, "Jump Assist Help", szJumpAssist, MOTDPANEL_TYPE_URL);
+	ShowMOTDPanel(client, "Jump Assist Help", g_sJumpAssist, MOTDPANEL_TYPE_URL);
 	return;
 }
 
-public Action cmdJumpForums(int client, int args) {
+Action cmdJumpForums(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
-	ShowMOTDPanel(client, "Jump Assist Help", szForum, MOTDPANEL_TYPE_URL);
+	ShowMOTDPanel(client, "Jump Assist Help", g_sForum, MOTDPANEL_TYPE_URL);
 	return;
 }
 
@@ -1881,7 +1881,7 @@ void ReSupply(int client, int weapon) {
 				SetEntProp(weapon, Prop_Send, "m_iClip1", 6);
 			}
 		}
-		if (g_clientClass[client] == TFClass_Engineer) {
+		if (g_TFClientClass[client] == TFClass_Engineer) {
 			GivePlayerAmmo(client, 100, view_as<int>(TFWeaponSlot_Primary)+1, false); //Refill the player's ammo supply to whatever the weapon's max is.
 		}
 		else
@@ -1958,12 +1958,12 @@ void CheckTeams() {
 		return;
 	}
 	for (int i = 1; i <= MaxClients; i++) {
-		if (!IsClientInGame(i) || IsClientObserver(i) || g_clientTeam[i] == g_iForceTeam) {
+		if (!IsClientInGame(i) || IsClientObserver(i) || g_iClientTeam[i] == g_iForceTeam) {
 			continue;
 		}
 		else {
 			ChangeClientTeam(i, g_iForceTeam);
-			g_clientTeam[i]  = g_iForceTeam;
+			g_iClientTeam[i]  = g_iForceTeam;
 			PrintToChat(i, "\x01[\x03JA\x01] %t", "Switched_Teams");
 		}
 	}
@@ -1984,16 +1984,16 @@ void LockCPs() {
 	}
 }
 
-public Action cmdRestart(int client, int args) {
+Action cmdRestart(int client, int args) {
 	if (!IsValidClient(client) || IsClientObserver(client) || !g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
 	EraseLocs(client);
-	if (databaseConfigured) {
+	if (g_bDatabaseConfigured) {
 		ResetPlayerPos(client);
 	}
 	TF2_RespawnPlayer(client);
-	if (!hideMessage[client]) {
+	if (!g_bHideMessage[client]) {
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 	}
 	g_iLastTeleport[client] = 0;
@@ -2006,7 +2006,7 @@ void SendToStart(int client) {
 	}
 	g_bUsedReset[client] = true;
 	TF2_RespawnPlayer(client);
-	if (!hideMessage[client]) {
+	if (!g_bHideMessage[client]) {
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_SentToStart");
 	}
 }
@@ -2089,10 +2089,10 @@ void SetCvarValues() {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
-	if (!g_hCriticals.BoolValue) {
+	if (!g_cvarCriticals.BoolValue) {
 		FindConVar("tf_weapon_criticals").SetInt(0, true, false);
 	}
-	if (g_hAmmoCheat.BoolValue) {
+	if (g_cvarAmmoCheat.BoolValue) {
 		FindConVar("tf_sentrygun_ammocheat").SetInt(1, false, false);
 	}
 }
@@ -2100,7 +2100,7 @@ void SetCvarValues() {
 												Player Events
 *****************************************************************************************************************/
 public Action OnPlayerStartTouchFuncRegenerate(int entity, int other) {
-	if (other <= MaxClients && g_alNoFuncRegen.Length > 0 && g_alNoFuncRegen.FindValue(other) != -1) {
+	if (other <= MaxClients && g_AL_NoFuncRegen.Length > 0 && g_AL_NoFuncRegen.FindValue(other) != -1) {
 #if defined DEBUG_FUNC_REGEN
 		LogMessage("Entity %d touch %d Prevented", entity, other);
 #endif
@@ -2123,7 +2123,7 @@ public Action eventRoundStart(Handle event, const char[] name, bool dontBroadcas
 	SetCvarValues();
 }
 
-public Action cmdRaceList(int client, int args) {
+Action cmdRaceList(int client, int args) {
 	DisplayRaceTimes(client);
 	return Plugin_Handled;
 }
@@ -2141,19 +2141,19 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 		, playerName[64]
 		, cpName[32];
 
-	if (g_bCPTouched[client][area] && g_bRace[client] == 0) {
+	if (g_bCPTouched[client][area] && g_iRaceID[client] == 0) {
 		return Plugin_Continue;
 	}
 	
-	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(view_as<int>(g_clientClass[client])));
+	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(view_as<int>(g_TFClientClass[client])));
 	GetClientName(client, playerName, 64);
 	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1) {
 		int pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
-		int raceID = g_bRace[client];
+		int raceID = g_iRaceID[client];
 		if (pIndex != area) {
 			continue;
 		}
-		if (g_bRaceEndPoint[raceID] == pIndex && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)) {
+		if (g_iRaceEndPoint[raceID] == pIndex && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)) {
 			float
 				time
 				, timeTaken;
@@ -2163,23 +2163,23 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 				, buffer[128];
 				
 			time = GetEngineTime();
-			g_bRaceTime[client] = time;
-			timeTaken = time - g_bRaceStartTime[raceID];
+			g_fRaceTime[client] = time;
+			timeTaken = time - g_fRaceStartTime[raceID];
 			timeString = TimeFormat(timeTaken);
 			GetClientName(client, clientName, sizeof(clientName));
-			if (RoundToNearest(g_bRaceFirstTime[raceID]) == 0) {
+			if (RoundToNearest(g_fRaceFirstTime[raceID]) == 0) {
 				Format(buffer, sizeof(buffer), "\x01[\x03JA\x01]\x03 %s \x01won the race in\x03 %s\x01!", clientName, timeString);
-				g_bRaceFirstTime[raceID] = time;
-				g_bRaceStatus[raceID] = 4;
+				g_fRaceFirstTime[raceID] = time;
+				g_iRaceStatus[raceID] = 4;
 				for (int i = 1; i <= MaxClients; i++) {
-					if (g_bRaceFinishedPlayers[raceID][i] == 0) {
-						g_bRaceFinishedPlayers[raceID][i] = client;
-						g_bRaceTimes[raceID][i] = time;
+					if (g_iRaceFinishedPlayers[raceID][i] == 0) {
+						g_iRaceFinishedPlayers[raceID][i] = client;
+						g_fRaceTimes[raceID][i] = time;
 						break;
 					}
 				}
 				for (int j = 1; j <= MaxClients; j++) {
-					if (g_bRace[j] == raceID) {
+					if (g_iRaceID[j] == raceID) {
 						EmitSoundToClient(j, "misc/killstreak.wav");
 					}
 				}
@@ -2191,38 +2191,38 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 				char
 					diffFormatted[255];
 
-				firstTime = g_bRaceFirstTime[raceID];
+				firstTime = g_fRaceFirstTime[raceID];
 				diff = time - firstTime;
 				diffFormatted = TimeFormat(diff);
 				
 				for (int i = 1; i <= MaxClients; i++) {
-					if (g_bRaceFinishedPlayers[raceID][i] == 0) {
-						g_bRaceFinishedPlayers[raceID][i] = client;
-						g_bRaceTimes[raceID][i] = time;
+					if (g_iRaceFinishedPlayers[raceID][i] == 0) {
+						g_iRaceFinishedPlayers[raceID][i] = client;
+						g_fRaceTimes[raceID][i] = time;
 						break;
 					}
 				}
 				Format(buffer, sizeof(buffer), "\x01[\x03JA\x01]\x03 %s\x01 finished the race in\x03 %s \x01(\x03+%s\x01)!", clientName, timeString, diffFormatted);
 				for (int j = 1; j <= MaxClients; j++) {
-					if (g_bRace[j] == raceID) {
+					if (g_iRaceID[j] == raceID) {
 						EmitSoundToClient(j, "misc/freeze_cam.wav");
 					}
 				}				
 
 			}
-			if (RoundToZero(g_bRaceFirstTime[raceID]) == 0) {
-				g_bRaceFirstTime[raceID] = time;
+			if (RoundToZero(g_fRaceFirstTime[raceID]) == 0) {
+				g_fRaceFirstTime[raceID] = time;
 			}
 			PrintToRace(raceID, buffer);
 			if (GetPlayersStillRacing(raceID) == 0) {
 				PrintToRace(raceID, "\x01[\x03JA\x01] Everyone has finished the race.");
 				for (int player = 1; player <= MaxClients; player++) {
-					if (g_bRace[player] == raceID || IsClientSpectatingRace(player, raceID)) {
+					if (g_iRaceID[player] == raceID || IsClientSpectatingRace(player, raceID)) {
 						DisplayRaceTimes(player);
-						g_bRace[player] = 0;
+						g_iRaceID[player] = 0;
 					}
 				}
-				g_bRaceStatus[raceID] = 5;
+				g_iRaceStatus[raceID] = 5;
 			}
 		}
 		// If client has not yet touched the cap and also if they haven't used the teleport command within 10 seconds.
@@ -2250,16 +2250,15 @@ public Action eventPlayerChangeClass(Event event, const char[] name, bool dontBr
 		return Plugin_Continue;
 	}
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client) && g_bRaceClassForce[g_bRace[client]]) {
-		TF2_SetPlayerClass(client, g_clientClass[client]);
+	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client) && g_bRaceClassForce[g_iRaceID[client]]) {
+		TF2_SetPlayerClass(client, g_TFClientClass[client]);
 		PrintToChat(client, "\x01[\x03JA\x01] Cannot change class while racing.");
 		return Plugin_Continue;
 	}
 	EraseLocs(client);
 
-	TF2_RespawnPlayer(client);
+	//TF2_RespawnPlayer(client);
 	g_bUnkillable[client] = false;
-	//g_clientClass[client] = view_as<TFClassType>(event.GetInt("class"));
 	ResetPositionVector(g_fLastSavePos[client]);
 	for (int i = 0; i <= 2; i++) {
 		g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
@@ -2272,16 +2271,16 @@ public Action eventPlayerChangeTeam(Event event, const char[] name, bool dontBro
 		return Plugin_Handled;
 	}
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	int raceID = g_bRace[client];
+	int raceID = g_iRaceID[client];
 
-	g_clientTeam[client] = event.GetInt("team");
+	g_iClientTeam[client] = event.GetInt("team");
 
-	if (raceID && (g_bRaceStatus[raceID] == 2 || g_bRaceStatus[raceID] == 3)) {
+	if (raceID && (g_iRaceStatus[raceID] == 2 || g_iRaceStatus[raceID] == 3)) {
 		PrintToChat(client, "\x01[\x03JA\x01] You may not change teams during the race.");
 		return Plugin_Handled;
 	}
 	g_bUnkillable[client] = false;
-	if (g_clientTeam[client]  == 1 || g_iForceTeam == 1 || g_clientTeam[client]  == g_iForceTeam) {
+	if (g_iClientTeam[client]  == 1 || g_iForceTeam == 1 || g_iClientTeam[client]  == g_iForceTeam) {
 		ResetPositionVector(g_fOrigin[client]);
 		ResetPositionVector(g_fAngles[client]);
 	}
@@ -2305,7 +2304,8 @@ public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcas
 		return Plugin_Continue;
 	}
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	CreateTimer(0.1, timerRespawn, client);
+	//CreateTimer(0.1, timerRespawn, client);
+	RequestFrame(Respawn, client);
 	return Plugin_Continue;
 }
 
@@ -2319,46 +2319,44 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 		g_bHardcore[client] = false;
 	}
 	// Disable func_regenerate if player is using beggers bazooka
-	g_clientClass[client] = TF2_GetPlayerClass(client);
+	g_TFClientClass[client] = TF2_GetPlayerClass(client);
 	CheckBeggers(client);
 	if (g_bUsedReset[client]) {
-		if (databaseConfigured) {
+		if (g_bDatabaseConfigured) {
 			ReloadPlayerData(client);
 		}
-
 		g_bUsedReset[client] = false;
 		return Plugin_Continue;
 	}
-	if (databaseConfigured) {
+	if (g_bDatabaseConfigured) {
 		LoadPlayerData(client);
 	}
 
-	g_bRaceSpec[client] = 0;
+	g_iRaceSpec[client] = 0;
 	return Plugin_Continue;
 }
 /*****************************************************************************************************************
 												Timers
 *****************************************************************************************************************/
-public Action timerTeam(Handle timer, any client) {
+Action timerTeam(Handle timer, any client) {
 	if (client == 0) {
 		return Plugin_Handled;
 	}
 	EraseLocs(client);
 	if (IsClientInGame(client)) {
 		ChangeClientTeam(client, g_iForceTeam);
-		g_clientTeam[client] = g_iForceTeam;
+		g_iClientTeam[client] = g_iForceTeam;
 	}
 	return Plugin_Handled;
 }
 
-public Action timerRespawn(Handle timer, any client) {
-	if (IsValidClient(client)) {
+void Respawn(int client) {
+	if (IsValidClient(client) && !IsPlayerAlive(client) && GetClientTeam(client) > 1) {
 		TF2_RespawnPlayer(client);
 	}
-	return Plugin_Handled;
 }
 
-public Action WelcomePlayer(Handle timer, any client) {
+Action WelcomePlayer(Handle timer, any client) {
 	char sHostname[64];
 	g_cvarHostname.GetString(sHostname, sizeof(sHostname));
 	if (!IsClientInGame(client)) {
@@ -2383,9 +2381,9 @@ public void cvarAmmoCheatChanged(ConVar convar, const char[] oldValue, const cha
 }
 
 public void cvarWelcomeMsgChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
-	g_hWelcomeMsg.SetBool((StringToInt(newValue) == 0) ? false : true);
+	g_cvarWelcomeMsg.SetBool((StringToInt(newValue) == 0) ? false : true);
 }
 
 public void cvarSupermanChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
-	g_hSuperman.SetBool((StringToInt(newValue) == 0) ? false : true);
+	g_cvarSuperman.SetBool((StringToInt(newValue) == 0) ? false : true);
 }

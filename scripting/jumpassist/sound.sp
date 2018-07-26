@@ -10,11 +10,11 @@ public Action HookVoice(UserMsg msg_id, BfRead bf, const int[] players, int play
 		, vMenu2 = BfReadByte(bf);
 
 	if (IsPlayerAlive(client) && IsValidClient(client) && g_cvarPluginEnabled.BoolValue) {
-		if ((vMenu1 == 0) && (vMenu2 == 0) && !g_bHardcore[client] && (!g_bRace[client] || g_bRaceTime[client] != 0.0)) {
+		if ((vMenu1 == 0) && (vMenu2 == 0) && !g_bHardcore[client] && (!g_iRaceID[client] || g_fRaceTime[client] != 0.0)) {
 			for (int i = 0; i <= 2; i++) {
 				ReSupply(client, g_iClientWeapons[client][i]);
 			}
-			if (g_clientClass[client] == TFClass_Engineer) {
+			if (g_TFClientClass[client] == TFClass_Engineer) {
 				SetEntProp(client, Prop_Data, "m_iAmmo", 200, 4, 3);
 			}
 		}
