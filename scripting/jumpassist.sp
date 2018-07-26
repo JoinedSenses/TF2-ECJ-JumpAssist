@@ -329,7 +329,6 @@ public void OnPluginStart() {
 		}
 		g_iLastTeleport[i] = 0;
 	}
-
 	SetAllSkeysDefaults();
 	ConnectToDatabase();
 	

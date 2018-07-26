@@ -44,6 +44,7 @@ void SQL_OnConnect(Database db, const char[] error, any data) {
 				if (IsValidClient(client)) {
 					GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]));
 					ReloadPlayerData(client);
+					LoadPlayerProfile(client);
 				}
 			}
 		}
