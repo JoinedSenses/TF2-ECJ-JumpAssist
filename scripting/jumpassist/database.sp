@@ -266,7 +266,6 @@ void LoadPlayerProfile(int client) {
 		g_Database.Query(SQL_OnLoadPlayerProfile, query, client);
 	}
 	else {
-		g_bAmmoRegen[client] = g_bHardcore[client] = false;
 		g_bLoadedPlayerSettings[client] = true;
 	}
 }
