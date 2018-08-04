@@ -178,7 +178,7 @@
 #include <sourcemod>
 #include <tf2_stocks>
 #include <sdkhooks>
-#include <morecolors>
+#include <color_literals>
 #include <clientprefs>
 
 int
@@ -230,11 +230,14 @@ TFClassType
 	g_TFClientClass[MAXPLAYERS+1]
 	, g_TFClientPreRaceClass[MAXPLAYERS+1];
 
-#define PLUGIN_VERSION "1.1.2"
+#define PLUGIN_VERSION "1.1.3"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cDefault 0x01
 #define cLightGreen 0x03
+#define cTheme1 "\x0769cfbc"
+#define cTheme2 "\x07a4e8dc"
+#define cHardcore "\x07FF4500"
 #include "jumpassist/skeys.sp"
 #include "jumpassist/database.sp"
 #include "jumpassist/sound.sp"
@@ -471,15 +474,15 @@ Action cmdRaceInitialize(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
-		ReplyToCommand(client, "\x01[\x03JA\x01] Must be alive and on a team to use this command.");
+		ReplyToCommand(client, "\x01[%sJA\x01] Must be alive and on a team to use this command.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (g_iCPs == 0) {
-		PrintToChat(client, "\x01[\x03JA\x01] You may only race on maps with control points.");
+		PrintColoredChat(client, "[%sJA\x01] You may only race on maps with control points.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (IsClientRacing(client) || g_iRaceID[client] != 0) {
-		PrintToChat(client, "\x01[\x03JA\x01] You are already in a race. Wait for it to finish or type /r_leave to leave.");
+		PrintColoredChat(client, "[%sJA\x01] You are already in a race. Wait for it to finish or type %s/r_leave\x01 to leave.", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
 	g_iRaceID[client] = client;
@@ -515,7 +518,7 @@ int ControlPointSelector(Menu menu, MenuAction action, int param1, int param2) {
 	}
 	else if (action == MenuAction_Cancel) {
 		g_iRaceID[param1] = 0;
-		PrintToChat(param1, "\x01[\x03JA\x01] The race has been cancelled.");
+		PrintColoredChat(param1, "[%sJA\x01] The race has been cancelled.", cTheme1);
 	}
 	else if (action == MenuAction_End) {
 		g_iRaceID[param1] = 0;
@@ -528,19 +531,19 @@ Action cmdRaceInvite(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
-		ReplyToCommand(client, "\x01[\x03JA\x01] Must be alive and on a team to use this command.");
+		ReplyToCommand(client, "\x01[%sJA\x01] Must be alive and on a team to use this command.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (!IsClientRacing(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] You have not started a race.");
+		PrintColoredChat(client, "[%sJA\x01] You have not started a race.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (!IsRaceLeader(client, g_iRaceID[client])) {
-		PrintToChat(client, "\x01[\x03JA\x01] You are not the race lobby leader.");
+		PrintColoredChat(client, "[%sJA\x01] You are not the race lobby leader.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (HasRaceStarted(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] The race has already started."); 
+		PrintColoredChat(client, "[%sJA\x01] The race has already started.", cTheme1); 
 		return Plugin_Handled;
 	}
 	if (args == 0) {
@@ -562,7 +565,7 @@ Action cmdRaceInvite(int client, int args) {
 		target = FindTarget(client, arg1, true, false);
 		GetClientName(target, client2Name, sizeof(client2Name));
 		if (target != -1 && g_iRaceID[target] > 1 && !g_bWaitingInvite[target] && g_iRaceEndPoint[client] != -1 ) {
-			PrintToChat(client, "\x01[\x03JA\x01] You have invited\x03 %s\x01 to race.", client2Name);
+			PrintColoredChat(client, "[%sJA\x01] You have invited%s %s\x01 to race.", cTheme1, cTheme2, client2Name);
 			Format(buffer, sizeof(buffer), "You have been invited to race to %s by %s", GetCPNameByIndex(g_iRaceEndPoint[client]), clientName);
 			
 			panel = new Panel();
@@ -575,13 +578,13 @@ Action cmdRaceInvite(int client, int args) {
 			delete panel;
 		}
 		if (g_iRaceEndPoint[client] == -1) {
-			ReplyToCommand(client, "\x01[\x03JA\x01] You must\x03 select a point\x01 first with /race before inviting others");
+			ReplyToCommand(client, "\x01[%sJA\x01] You must%s select a point\x01 first with /race before inviting others", cTheme1, cTheme2);
 		}
 		else if (g_iRaceID[target]) {
-			ReplyToCommand(client, "\x01[\x03JA\x01]\x03 %s\x01 is already in a race", client2Name);
+			ReplyToCommand(client, "\x01[%sJA\x01]%s %s\x01 is already in a race", cTheme1, cTheme2, client2Name);
 		}
 		else if (g_bWaitingInvite[target]) {
-			ReplyToCommand(client, "\x01[\x03JA\x01]\x03 %s\x01 has a\x03 pending\x01 race invite.", client2Name);
+			ReplyToCommand(client, "\x01[%sJA\x01]%s %s\x01 has a%s pending\x01 race invite.", cTheme1, cTheme2, cTheme2, client2Name);
 		}
 	}
 	return Plugin_Handled;
@@ -636,11 +639,11 @@ int Menu_InvitePlayers(Menu menu, MenuAction action, int param1, int param2) {
 		menu.RemoveItem(param2);
 		if (g_bWaitingInvite[StringToInt(info)])
 		{
-			ReplyToCommand(param1, "\x01[\x03JA\x01] %s has already been invited", client2Name);
+			ReplyToCommand(param1, "\x01[%sJA\x01]%s %s has already been invited", cTheme1, cTheme2, client2Name);
 			menu.DisplayAt(param1, GetMenuSelectionPosition(), MENU_TIME_FOREVER);
 			return;
 		}
-		PrintToChat(param1, "\x01[\x03JA\x01] You have invited %s to race.", client2Name);
+		PrintColoredChat(param1, "[%sJA\x01] You have invited%s %s to race.", cTheme1, cTheme2, client2Name);
 		Format(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %s", GetCPNameByIndex(g_iRaceEndPoint[param1]), clientName);
 		
 		Panel panel = new Panel();
@@ -659,9 +662,7 @@ int Menu_InvitePlayers(Menu menu, MenuAction action, int param1, int param2) {
 		return;
 	}
 	else if (param2 == MenuCancel_Exit) {
-		int iparam1 = param1;
-		PrintToChatAll("Debug: param1 = %i", iparam1);
-		PrintToChat(param1, "\x01[\x03JA\x01] The race has been\x03 cancelled\x01.");
+		PrintColoredChat(param1, "[%sJA\x01] The race has been%s cancelled\x01.", cTheme1, cTheme2);
 		g_iRaceID[param1] = 0;
 		return;
 	}
@@ -677,20 +678,20 @@ void AlertInviteAcceptOrDeny(int client, int client2, int choice) {
 	if (choice == 1) {
 		g_bWaitingInvite[client2] = false;
 		if (HasRaceStarted(client)) {
-			PrintToChat(client, "\x01[\x03JA\x01] This race has already started.");			
+			PrintColoredChat(client, "[%sJA\x01] This race has already%s started.", cTheme1, cTheme2);			
 			return;
 		}
 		LeaveRace(client2);
 		g_iRaceID[client2] = client;
-		PrintToChat(client, "\x01[\x03JA\x01] %s has accepted your request to race", clientName);
+		PrintColoredChat(client, "[%sJA\x01] %s has accepted your request to race", cTheme1, clientName);
 	}
 	else if (choice < 1) {
 		g_iRaceID[client2] = 0;
-		PrintToChat(client, "\x01[\x03JA\x01] %s failed to respond to your invitation", clientName);
+		PrintColoredChat(client, "[%sJA\x01]%s %s failed to respond to your invitation", cTheme1, cTheme2, clientName);
 	}
 	else {
 		g_iRaceID[client2] = 0;
-		PrintToChat(client, "\x01[\x03JA\x01] %s has\x03 declined\x01 your request to race", clientName);
+		PrintColoredChat(client, "[%sJA\x01]%s %s has%s declined\x01 your request to race", cTheme1, cTheme2, cTheme2, clientName);
 	}
 	g_bWaitingInvite[client2] = false;
 }
@@ -701,28 +702,28 @@ char
 	, sMessage[256];
 
 Action RaceCountdown(Handle timer, any raceID) {
-	Format(sMessage, sizeof(sMessage), "\x01\n \n%s \n \n%s\x03  3\x01\n \n%s", sAsterisk, sTab, sAsterisk);
+	Format(sMessage, sizeof(sMessage), "\n \n \n%s \n \n%s\x03  3\x01\n \n%s", sAsterisk, sTab, sAsterisk);
 	PrintToRace(raceID, sMessage);
 	CreateTimer(1.0, RaceCountdown2, raceID);
 	return Plugin_Handled;
 }
 
 Action RaceCountdown2(Handle timer, any raceID) {
-	Format(sMessage, sizeof(sMessage), "\x01\n \n%s \n \n%s\x03  2\x01\n \n%s", sAsterisk, sTab, sAsterisk);
+	Format(sMessage, sizeof(sMessage), "\n \n \n%s \n \n%s\x03  2\x01\n \n%s", sAsterisk, sTab, sAsterisk);
 	PrintToRace(raceID, sMessage);
 	CreateTimer(1.0, RaceCountdown1, raceID);
 	return Plugin_Handled;
 }
 
 Action RaceCountdown1(Handle timer, any raceID) {
-	Format(sMessage, sizeof(sMessage), "\x01\n \n%s \n \n%s\x03  1\x01\n \n%s", sAsterisk, sTab, sAsterisk);
+	Format(sMessage, sizeof(sMessage), "\n \n \n%s \n \n%s\x03  1\x01\n \n%s", sAsterisk, sTab, sAsterisk);
 	PrintToRace(raceID, sMessage);
 	CreateTimer(1.0, RaceCountdownGo, raceID);
 	return Plugin_Handled;
 }
 
 Action RaceCountdownGo(Handle timer, any raceID) {
-	Format(sMessage, sizeof(sMessage), "\x01\n \n%s \n \n%s\x03GO!\x01\n \n%s", sAsterisk, sTab, sAsterisk);
+	Format(sMessage, sizeof(sMessage), "\n \n \n%s \n \n%s\x03GO!\x01\n \n%s", sAsterisk, sTab, sAsterisk);
 	UnlockRacePlayers(raceID);
 	PrintToRace(raceID, sMessage);
 	sMessage = "";
@@ -743,14 +744,14 @@ void DisplayRaceTimes(int client) {
 			iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
 			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
 			if (!IsClientRacing(iClientToShow)) {
-				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!");
+				PrintColoredChat(client, "[%sJA\x01] This client is not in a race!", cTheme1);
 				return;
 			}
 			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6)
 				return;
 		}
 		else {
-			PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!");
+			PrintColoredChat(client, "[%sJA\x01] You are not in a race!", cTheme1);
 			return;
 		}
 	}
@@ -823,7 +824,7 @@ Action cmdRaceInfo(int client, int args) {
 			iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
 			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
 			if (!IsClientRacing(iClientToShow)) {
-				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!");
+				PrintColoredChat(client, "[%sJA\x01] This client is not in a race!", cTheme1);
 				return;
 			}
 			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) {
@@ -831,7 +832,7 @@ Action cmdRaceInfo(int client, int args) {
 			}
 		}
 		else {
-			PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!");
+			PrintColoredChat(client, "[%sJA\x01] You are not in a race!", cTheme1);
 			return;
 		}
 	}
@@ -892,7 +893,7 @@ void cmdRaceStart(int client) {
 	g_iRaceStatus[client] = 2;
 	CreateTimer(2.0, RaceCountdown, client);
 	SendRaceToStart(client, g_TFClientClass[client], g_iClientTeam[client]);
-	PrintToRace(client, "\x01[\x03JA\x01] Teleporting to race start!");
+	PrintToRace(client, "[%sJA\x01] Teleporting to race start!", cTheme1);
 }
 
 void PrintToRace(int raceID, char[] message, any ...) {
@@ -900,7 +901,7 @@ void PrintToRace(int raceID, char[] message, any ...) {
 	VFormat(output, sizeof(output), message, 3);
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsClientInRace(i, raceID) || IsClientSpectatingRace(i, raceID)) {
-			PrintToChat(i, "%s", output);
+			PrintColoredChat(i, "%s", output);
 		}
 	}
 }
@@ -937,11 +938,11 @@ void UnlockRacePlayers(int raceID) {
 
 Action cmdRaceLeave(int client, int args) {
 	if (!IsClientRacing(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] You are not in a race.");
+		PrintColoredChat(client, "[%sJA\x01] You are not in a race.", cTheme1);
 		return Plugin_Handled;
 	}
 	LeaveRace(client);
-	PrintToChat(client, "\x01[\x03JA\x01] You have\x03 left\x01 the race.");
+	PrintColoredChat(client, "[\%sJA\x01] You have%s left\x01 the race.", cTheme1, cTheme2);
 	PostRaceClientRestore(client);
 	return Plugin_Handled;
 }
@@ -951,18 +952,18 @@ Action cmdRaceInitializeServer(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
-		ReplyToCommand(client, "\x01[\x03JA\x01] Must be\x03 alive\x01 and on a\x03 team\x01 to use this command.");
+		ReplyToCommand(client, "\x01[%sJA\x01] Must be%s alive\x01 and on a%s team\x01 to use this command.", cTheme1, cTheme2, cTheme2);
 		return Plugin_Handled;
 	}
 	if (g_iCPs == 0) {
-		PrintToChat(client, "\x01[\x03JA\x01] You may only race on maps with control points.");
+		PrintColoredChat(client, "[%sJA\x01] You may only race on maps with control points.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (IsPlayerFinishedRacing(client)) {
 		LeaveRace(client);
 	}
 	if (IsClientRacing(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] You are already in a race. Type\x03 /r_leave\x01 to leave.");
+		PrintColoredChat(client, "[%sJA\x01] You are already in a race. Type%s /r_leave\x01 to leave.", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
 	char
@@ -1004,7 +1005,7 @@ int ControlPointSelectorServer(Menu menu, MenuAction action, int param1, int par
 		GetClientName(param1, clientName, sizeof(clientName));
 		for (int i = 1; i <= MaxClients; i++) {
 			if (IsValidClient(i) && param1 != i && !g_bWaitingInvite[i] && g_iRaceID[i] == 0) {
-				Format(buffer, sizeof(buffer), "\x01[\x03JA\x01] You have been \x03invited \x01to race to\x03 %s \x01by\x03 %s", GetCPNameByIndex(g_iRaceEndPoint[param1]), clientName);
+				Format(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %s", GetCPNameByIndex(g_iRaceEndPoint[param1]), clientName);
 				
 				Panel panel = new Panel();
 				panel.SetTitle(buffer);
@@ -1018,7 +1019,7 @@ int ControlPointSelectorServer(Menu menu, MenuAction action, int param1, int par
 	}
 	else if (action == MenuAction_Cancel) {
 		g_iRaceID[param1] = 0;
-		PrintToChat(param1, "\x01[\x03JA\x01] The race has been \x03cancelled\x01.");
+		PrintColoredChat(param1, "[%sJA\x01] The race has been %scancelled\x01.", cTheme1, cTheme2);
 	}
 	else if (action == MenuAction_End) {
 		delete menu;
@@ -1030,7 +1031,7 @@ Action cmdRaceSpec(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (args == 0) {
-		PrintToChat(client, "\x01[\x03JA\x01] No target race selected.");
+		PrintColoredChat(client, "[%sJA\x01] No target race selected.", cTheme1);
 		return Plugin_Handled;
 	}
 	char arg1[32];
@@ -1042,15 +1043,15 @@ Action cmdRaceSpec(int client, int args) {
 	}
 	else {
 		if (target == client) {
-			PrintToChat(client, "\x01[\x03JA\x01] You may not spectate yourself.");
+			PrintColoredChat(client, "[%sJA\x01] You may not spectate yourself.", cTheme1);
 			return Plugin_Handled;
 		}
 		if (!IsClientRacing(target)) {
-			PrintToChat(client, "\x01[\x03JA\x01] Target client is not in a race.");
+			PrintColoredChat(client, "[%sJA\x01] Target client is not in a race.", cTheme1);
 			return Plugin_Handled;
 		}
 		if (IsClientObserver(target)) {
-			PrintToChat(client, "\x01[\x03JA\x01] You may not spectate a spectator.");
+			PrintColoredChat(client, "[%sJA\x01] You may not spectate a spectator.", cTheme1);
 			return Plugin_Handled;
 		}
 		if (IsClientRacing(client)) {
@@ -1073,19 +1074,19 @@ Action cmdRaceSet(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (!IsClientRacing(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] You are not in a race.");
+		PrintColoredChat(client, "[%sJA\x01] You are not in a race.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (!IsRaceLeader(client, g_iRaceID[client])) {
-		PrintToChat(client, "\x01[\x03JA\x01] You are not the leader of this race.");
+		PrintColoredChat(client, "[%sJA\x01] You are not the leader of this race.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (HasRaceStarted(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] The race has already started.");
+		PrintColoredChat(client, "[%sJA\x01] The race has already started.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (args != 2) {
-		PrintToChat(client, "\x01[\x03JA\x01] This number of arguments is not supported.");
+		PrintColoredChat(client, "[%sJA\x01] This number of arguments is not supported.", cTheme1);
 		return Plugin_Handled;
 	}
 	
@@ -1098,7 +1099,7 @@ Action cmdRaceSet(int client, int args) {
 	GetCmdArg(2, arg2, sizeof(arg2));
 	PrintToServer(arg2);
 	if (!(StrEqual(arg2, "on", false) || StrEqual(arg2, "off", false))) {
-		PrintToChat(client, "\x01[\x03JA\x01] Your second argument is not valid.");
+		PrintColoredChat(client, "[%sJA\x01] Your second argument is not valid.", cTheme1);
 		return Plugin_Handled;
 	}
 	else {
@@ -1106,14 +1107,14 @@ Action cmdRaceSet(int client, int args) {
 	}
 	if (StrEqual(arg1, "ammo", false)) {
 		g_bRaceAmmoRegen[client] = toSet;
-		PrintToChat(client, "\x01[\x03JA\x01] Ammo regen has been set.");
+		PrintColoredChat(client, "[%sJA\x01] Ammo regen has been set.", cTheme1);
 	}
 	else if (StrEqual(arg1, "cf", false) || StrEqual(arg1, "classforce", false)) {
 		g_bRaceClassForce[client] = toSet;
-		PrintToChat(client, "\x01[\x03JA\x01] Class force has been set.");
+		PrintColoredChat(client, "[%sJA\x01] Class force has been set.", cTheme1);
 	}
 	else {
-		PrintToChat(client, "\x01[\x03JA\x01] Invalid setting.");
+		PrintColoredChat(client, "[%sJA\x01] Invalid setting.", cTheme1);
 	}
 	return Plugin_Handled;
 }
@@ -1144,13 +1145,14 @@ int GetPlayersStillRacing(int raceID) {
 		}
 	}
 	if (players != 0) {
-		PrintToRace(raceID, "\x01[\x03JA\x01] There are\x03 %i \x01players still racing.", players);
+		PrintToRace(raceID, "[%sJA\x01] There are%s %i \x01players still racing.", cTheme1, cTheme2, players);
 	}
 	return players;
 }
 
 void LeaveRace(int client, bool raceFinished = false) {
 	int raceID = g_iRaceID[client];
+	g_iRaceID[client] = 0;
 	if (raceID == 0) {
 		return;
 	}
@@ -1215,7 +1217,7 @@ void ResetRace(int raceID) {
 			g_iRaceEndPoint[i] = -1;
 			g_bRaceClassForce[i] = true;
 			CreateTimer(2.0, timerPostRace1, i);
-			PrintToChat(i, "\x01[\x03JA\x01] Race has \x03ended\x01.");
+			PrintColoredChat(i, "[\%sJA\x01] Race has %sended\x01.", cTheme1, cTheme2);
 		}
 		g_fRaceTimes[raceID][i] = 0.0;
 		g_iRaceFinishedPlayers[raceID][i] = 0;
@@ -1308,15 +1310,15 @@ Action cmdToggleAmmo(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] You may not change regen during a race");
+		PrintColoredChat(client, "[%sJA\x01] You may not change regen during a race", cTheme1);
 		return Plugin_Handled;
 	}
 	if (g_bHardcore[client]) {
-		PrintToChat(client, "\x01[\x03JA\x01] Cannot toggle ammo with \x03Hardcore\x01 enabled");
+		PrintColoredChat(client, "[%sJA\x01] Cannot toggle ammo with %s3Hardcore\x01 enabled", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
 	g_bAmmoRegen[client] = !g_bAmmoRegen[client];
-	PrintToChat(client, "\x01[\x03JA\x01] %t", g_bAmmoRegen[client] ? "Regen_AmmoOnlyOn" : "Regen_AmmoOnlyOff");
+	PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, g_bAmmoRegen[client] ? "Regen_AmmoOnlyOn" : "Regen_AmmoOnlyOff", cTheme2, cDefault);
 	return Plugin_Handled;
 }
 
@@ -1325,7 +1327,7 @@ Action cmdToggleHardcore(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (IsUsingJumper(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Jumper_Command_Disabled");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Jumper_Command_Disabled");
 		return Plugin_Handled;
 	}
 	Hardcore(client);
@@ -1451,19 +1453,19 @@ Action cmdUnkillable(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (!g_cvarSuperman.BoolValue && !IsUserAdmin(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Command_Locked");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Command_Locked");
 		return Plugin_Handled;
 	}
 	g_bUnkillable[client] = !g_bUnkillable[client];
 	SetEntProp(client, Prop_Data, "m_takedamage", g_bUnkillable[client] ? 1 : 2, 1);
-	PrintToChat(client, "\x01[\x03JA\x01] %t", g_bUnkillable[client] ? "Regen_UnkillableOn" : "Regen_UnkillableOff");
+	PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, g_bUnkillable[client] ? "Regen_UnkillableOn" : "Regen_UnkillableOff", cTheme2, cDefault);
 
 	return Plugin_Handled;
 }
 
 Action cmdUndo(int client, int args) {
 	if (!IsValidPosition(g_fLastSavePos[client])) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Save_UndoCant");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Save_UndoCant", cTheme2, cDefault);
 		return Plugin_Handled;
 	}
 	else {
@@ -1474,7 +1476,7 @@ Action cmdUndo(int client, int args) {
 		
 		g_fLastSavePos[client] = NULL_VECTOR;
 		
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Save_Undo");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Save_Undo", cTheme2, cDefault);
 		return Plugin_Handled;
 	}
 }
@@ -1484,11 +1486,11 @@ Action cmdSendPlayer(int client,int args) {
 		return Plugin_Handled;
 	}	
 	if (!g_bDatabaseConfigured) {
-		PrintToChat(client, "\x01[\x03JA\x01] This feature is not supported without a database configuration");
+		PrintColoredChat(client, "[%sJA\x01] This feature is not supported without a database configuration", cTheme1);
 		return Plugin_Handled;
 	}
 	if (args < 2) {
-		ReplyToCommand(client, "\x01[\x03JA\x01] %t", "SendPlayer_Help", LANG_SERVER);
+		ReplyToCommand(client, "\x01[%sJA\x01] %t", cTheme1, "SendPlayer_Help", cTheme2, cDefault, LANG_SERVER);
 		return Plugin_Handled;
 	}
 	char
@@ -1502,10 +1504,6 @@ Action cmdSendPlayer(int client,int args) {
 		, target2 = FindTarget2(client, arg2, false, false);
 
 	if (target1 < 0 || target2 < 0) {
-		return Plugin_Handled;
-	}
-	if (target1 == client) {
-		ReplyToCommand(client, "\x01[\x03JA\x01] %t", "SendPlayer_Self", cLightGreen, cDefault);
 		return Plugin_Handled;
 	}
 	if (!target1 || !target2)
@@ -1523,13 +1521,13 @@ Action cmdSendPlayer(int client,int args) {
 
 	GetClientName(target1, target1_name, sizeof(target1_name));
 	GetClientName(target2, target2_name, sizeof(target2_name));
-	ShowActivity2(client, "\x01[\x03JA\x01] ", "%t", "Send_Player", target1_name, target2_name);
+	ShowActivity2(client, "[%sJA\x01] ", cTheme1, "%t", "Send_Player", target1_name, target2_name, cTheme2, cTheme2, cDefault, cDefault);
 	return Plugin_Handled;
 }
 
 Action cmdg_bHideMessage(int client, int args) {
 	g_bHideMessage[client] = !g_bHideMessage[client];
-	ReplyToCommand(client, "\x01[\x03JA\x01] Messages will now be\x03 %s", g_bHideMessage[client] ? "hidden" : "displayed");
+	ReplyToCommand(client, "\x01[%sJA\x01] Messages will now be%s %s", cTheme1, cTheme2, g_bHideMessage[client] ? "hidden" : "displayed");
 	SetClientCookie(client, g_hJAMessageCookie, g_bHideMessage[client] ? "1" : "0");
 	return Plugin_Handled;
 }
@@ -1571,36 +1569,39 @@ void Teleport(int client) {
 		return;
 	}
 	if (g_iRaceID[client] && (g_iRaceStatus[g_iRaceID[client]] == 2 || g_iRaceStatus[g_iRaceID[client]] == 3) ) {
-		PrintToChat(client, "\x01[\x03JA\x01] Cannot teleport while racing.");
+		PrintColoredChat(client, "[%sJA\x01] Cannot teleport while racing.", cTheme1);
 		return;
 	}
 	char
-		g_sClass[32]
-		, g_sTeam[32];
+		sClass[32]
+		, sTeam[32]
+		, teamColor[16];
 	float
 		g_vVelocity[3];
 
 	g_vVelocity = NULL_VECTOR;
-	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(view_as<int>(g_TFClientClass[client])));
+	Format(sClass, sizeof(sClass), "%s", GetClassname(view_as<int>(g_TFClientClass[client])));
 	if (g_iClientTeam[client] == 2) {
-		Format(g_sTeam, sizeof(g_sTeam), "%T", "Red_Team", LANG_SERVER);
+		Format(sTeam, sizeof(sTeam), "%T", "Red_Team", LANG_SERVER);
+		teamColor= "\x07ba5353";
 	}
 	else if (g_iClientTeam[client] == 3) {
-		Format(g_sTeam, sizeof(g_sTeam), "%T", "Blu_Team", LANG_SERVER);
+		Format(sTeam, sizeof(sTeam), "%T", "Blu_Team", LANG_SERVER);
+		teamColor = "\x0782b6ff";
 	}
 	if (g_bHardcore[client]) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Teleports_Disabled");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Teleports_Disabled", cHardcore, cDefault, cTheme2, cDefault);
 	}
 	else if (!IsPlayerAlive(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Teleport_Dead");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Teleport_Dead");
 	}
 	else if (g_fOrigin[client][0] == 0.0) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Teleport_NoSave", g_sClass, g_sTeam, cLightGreen, cDefault, cLightGreen, cDefault);
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Teleport_NoSave", sClass, sTeam, cTheme2, cDefault, teamColor, cDefault);
 	}
 	else {
 		TeleportEntity(client, g_fOrigin[client], g_fAngles[client], g_vVelocity);
 		if (!g_bHideMessage[client]) {
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Teleport_Self");
+			PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Teleport_Self", cTheme2, cDefault);
 		}
 	}
 }
@@ -1610,16 +1611,20 @@ void SaveLoc(int client) {
 		return;
 	}
 	if (g_bHardcore[client]) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Disabled");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Saves_Disabled", cHardcore, cDefault, cTheme2, cDefault);
+		return;
 	}
 	else if (!IsPlayerAlive(client)) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Dead");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Saves_Dead", cTheme2, cDefault, cTheme2, cDefault);
+		return;
 	}
 	else if (!(GetEntityFlags(client) & FL_ONGROUND)) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_InAir");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Saves_InAir", cTheme2, cDefault, cTheme2, cDefault);
+		return;
 	}
 	else if (GetEntProp(client, Prop_Send, "m_bDucked") == 1) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Ducked");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Saves_Ducked", cTheme2, cDefault, cTheme2, cDefault);
+		return;
 	}
 	else {
 		for (int i = 0; i <= 2; i++) {
@@ -1632,7 +1637,7 @@ void SaveLoc(int client) {
 			GetPlayerData(client);
 		}
 		if (!g_bHideMessage[client]) {
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Location");
+			PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Saves_Location", cTheme2, cDefault);
 		}
 	}
 }
@@ -1646,7 +1651,7 @@ void PreRaceClientRetrieve(int client) {
 	GetClientAbsAngles(client, g_fClientPreRaceAngles[client]);
 	g_TFClientPreRaceClass[client] = TF2_GetPlayerClass(client);
 	g_iClientPreRaceTeam[client] = GetClientTeam(client);
-	PrintToChat(client, "\x01[\x03JA\x01]\x03 Saving\x01 pre-race status.");
+	PrintColoredChat(client, "[%s6JA\x01]%s Saving\x01 pre-race status.", cTheme1, cTheme2);
 }
 
 void PostRaceClientRestore(int client) {
@@ -1657,7 +1662,7 @@ void PostRaceClientRestore(int client) {
 	TF2_SetPlayerClass(client, g_TFClientPreRaceClass[client]);
 	ChangeClientTeam(client, g_iClientPreRaceTeam[client]);
 	TeleportEntity(client, g_fClientPreRaceOrigin[client], g_fClientPreRaceAngles[client], NULL_VECTOR);
-	PrintToChat(client, "\x01[\x03JA\x01] Pre-race status has been\x03 restored\x01.");
+	PrintColoredChat(client, "[%sJA\x01] Pre-race status has been%s restored\x01.", cTheme1, cTheme2);
 }
 
 void ResetPlayerPos(int client) {
@@ -1687,12 +1692,12 @@ void Hardcore(int client) {
 		g_bAmmoRegen[client] = false;
 		EraseLocs(client);
 		TF2_RespawnPlayer(client);
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Hardcore_On", cLightGreen, cDefault);
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Hardcore_On", cHardcore, cDefault, cTheme2, cDefault);
 	}
 	else {
 		g_bHardcore[client] = false;
 		LoadPlayerData(client);
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Hardcore_Off");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Hardcore_Off", cHardcore, cDefault, cTheme2, cDefault);
 	}
 }
 
@@ -1937,7 +1942,7 @@ void CheckTeams() {
 		else {
 			ChangeClientTeam(i, g_iForceTeam);
 			g_iClientTeam[i]  = g_iForceTeam;
-			PrintToChat(i, "\x01[\x03JA\x01] %t", "Switched_Teams");
+			PrintColoredChat(i, "[%sJA\x01] %t", cTheme1, "Switched_Teams", cTheme2, cDefault);
 		}
 	}
 }
@@ -1967,7 +1972,7 @@ Action cmdRestart(int client, int args) {
 	}
 	TF2_RespawnPlayer(client);
 	if (!g_bHideMessage[client]) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Player_Restarted", cTheme2, cDefault);
 	}
 	g_iLastTeleport[client] = 0;
 	return Plugin_Handled;
@@ -1980,7 +1985,7 @@ void SendToStart(int client) {
 	g_bUsedReset[client] = true;
 	TF2_RespawnPlayer(client);
 	if (!g_bHideMessage[client] && g_iRaceID[client] < 1) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_SentToStart");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Player_SentToStart");
 	}
 }
 
@@ -2049,7 +2054,7 @@ int FindTarget2(int client, const char[] target, bool nobots = false, bool immun
 		if (target_count == 0) {
 			return -1;
 		}
-		ReplyToCommand(client, "\x01[\x03JA\x01] %t", "No matching client");
+		ReplyToCommand(client, "\x01[%sJA\x01] %s", cTheme1, "No matching client");
 		return -1;
 	}
 }
@@ -2141,7 +2146,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 			timeString = TimeFormat(timeTaken);
 			GetClientName(client, clientName, sizeof(clientName));
 			if (RoundToNearest(g_fRaceFirstTime[raceID]) == 0) {
-				Format(buffer, sizeof(buffer), "\x01[\x03JA\x01]\x03 %s \x01won the race in\x03 %s\x01!", clientName, timeString);
+				Format(buffer, sizeof(buffer), "[%sJA\x01]%s %s \x01won the race in%s %s\x01!", cTheme1, cTheme2, clientName, cTheme2, timeString);
 				g_fRaceFirstTime[raceID] = time;
 				g_iRaceStatus[raceID] = 4;
 				for (int i = 1; i <= MaxClients; i++) {
@@ -2175,7 +2180,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 						break;
 					}
 				}
-				Format(buffer, sizeof(buffer), "\x01[\x03JA\x01]\x03 %s\x01 finished the race in\x03 %s \x01(\x03+%s\x01)!", clientName, timeString, diffFormatted);
+				Format(buffer, sizeof(buffer), "[%sJA\x01]%s %s\x01 finished the race in%s %s \x01(%s+%s\x01)!", cTheme1, cTheme2, clientName, cTheme2, timeString, cTheme2, diffFormatted);
 				for (int j = 1; j <= MaxClients; j++) {
 					if (g_iRaceID[j] == raceID) {
 						EmitSoundToClient(j, "misc/freeze_cam.wav");
@@ -2188,7 +2193,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 			}
 			PrintToRace(raceID, buffer);
 			if (GetPlayersStillRacing(raceID) == 0) {
-				PrintToRace(raceID, "\x01[\x03JA\x01] Everyone has finished the race.");
+				PrintToRace(raceID, "[%sJA\x01] Everyone has finished the race.", cTheme1);
 				for (int player = 1; player <= MaxClients; player++) {
 					if (g_iRaceID[player] == raceID || IsClientSpectatingRace(player, raceID)) {
 						DisplayRaceTimes(player);
@@ -2204,7 +2209,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 			GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 			for (int i = 1; i <= MaxClients; i++) {
 				if (IsClientInGame(i)) {
-					CPrintToChat(i, "{DEFAULT}[{LIGHTGREEN}JA{DEFAULT}] %s{LIGHTGREEN}%s{DEFAULT} has reached {LIGHTGREEN}%s{DEFAULT} as {LIGHTGREEN}%s{DEFAULT}.", g_bHardcore[client] ? "[{ORANGERED}Hardcore{DEFAULT}] " : "", playerName, cpName, g_sClass);
+					PrintColoredChat(i, "[%sJA\x01] %s%s%s\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", cTheme1, playerName, cTheme1, cpName, cTheme1, g_sClass);
 					EmitSoundToClient(i, "misc/freeze_cam.wav");
 				}
 			}
@@ -2228,7 +2233,7 @@ public Action eventPlayerChangeClass(Event event, const char[] name, bool dontBr
 
 	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client) && g_bRaceClassForce[g_iRaceID[client]]) {
 		TF2_SetPlayerClass(client, g_TFClientClass[client]);
-		PrintToChat(client, "\x01[\x03JA\x01] Cannot change class while racing.");
+		PrintColoredChat(client, "[%sJA\x01] Cannot change class while racing.", cTheme1);
 		return Plugin_Continue;
 	}
 	
@@ -2246,7 +2251,7 @@ public Action eventPlayerChangeTeam(Event event, const char[] name, bool dontBro
 	g_iClientTeam[client] = event.GetInt("team");
 
 	if (raceID && (g_iRaceStatus[raceID] == 2 || g_iRaceStatus[raceID] == 3)) {
-		PrintToChat(client, "\x01[\x03JA\x01] You may not change teams during the race.");
+		PrintColoredChat(client, "[%sJA\x01] You may not change teams during the race.", cTheme1);
 		return Plugin_Handled;
 	}
 	g_bUnkillable[client] = false;
@@ -2328,7 +2333,7 @@ Action timerTeam(Handle timer, any client) {
 }
 
 Action timerPostRace1(Handle timer, any client) {
-	PrintToChat(client, "\x01[\x03JA\x01]\x03 Restoring\x01 pre-race\x03 status\x01 in 5 seconds.");
+	PrintColoredChat(client, "[%sJA\x01]%s Restoring\x01 pre-race%s status\x01 in 5 seconds.", cTheme1, cTheme2, cTheme2);
 	CreateTimer(5.0, timerPostRace2, client);
 	return Plugin_Handled;
 }
@@ -2350,15 +2355,15 @@ Action WelcomePlayer(Handle timer, any client) {
 	if (!IsClientInGame(client)) {
 		return Plugin_Handled;
 	}
-	CPrintToChat(client, "{LIGHTGREEN}----------------------------------------------------------------");
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] Welcome to {ZPURPLE}%s{DEFAULT}", sHostname);
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] For help with [{LIGHTGREEN}TF2{DEFAULT}] {LIGHTGREEN}JumpAssist{DEFAULT}, type {ORANGE}!ja_help{DEFAULT}");
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] For server information, type {ORANGE}!help{DEFAULT}");
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] {LIGHTGREEN}Be nice to fellow jumpers");
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] {LIGHTGREEN}No trade chat");
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] {LIGHTGREEN}No complaining");
-	CPrintToChat(client, "{DEFAULT}[{LIGHTGREEN}+{DEFAULT}] {LIGHTGREEN}No chat/voice spam");
-	CPrintToChat(client, "{LIGHTGREEN}----------------------------------------------------------------");
+	PrintColoredChat(client, "\x03----------------------------------------------------------------");
+	PrintColoredChat(client, "[\x03+\x01] Welcome to\x079999FF %s", sHostname);
+	PrintColoredChat(client, "[\x03+\x01] For help with [\x03TF2\x01] \x03JumpAssist\x01, type\x07FFA500 !ja_help");
+	PrintColoredChat(client, "[\x03+\x01] For server information, type\x07FFA500 !help");
+	PrintColoredChat(client, "[\x03+\x01] \x03Be nice to fellow jumpers");
+	PrintColoredChat(client, "[\x03+\x01] \x03No trade chat");
+	PrintColoredChat(client, "[\x03+\x01] \x03No complaining");
+	PrintColoredChat(client, "[\x03+\x01] \x03No chat/voice spam");
+	PrintColoredChat(client, "\x03----------------------------------------------------------------");
 	return Plugin_Handled;
 }
 /*****************************************************************************************************************

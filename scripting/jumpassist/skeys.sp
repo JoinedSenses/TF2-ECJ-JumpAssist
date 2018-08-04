@@ -116,7 +116,7 @@ void SkeysOnGameFrame() {
 
 public Action cmdGetClientKeys(int client, int args) {
 	g_bGetClientKeys[client] = !g_bGetClientKeys[client];
-	PrintToChat(client, "\x01[\x03JA\x01] %t", g_bGetClientKeys[client] ? "Showkeys_On" : "Showkeys_Off");
+	PrintColoredChat(client, "[\x03JA\x01] %t", g_bGetClientKeys[client] ? "Showkeys_On" : "Showkeys_Off", cTheme2, cDefault);
 	return Plugin_Handled;
 }
 
@@ -139,7 +139,7 @@ public Action cmdChangeSkeysColor(int client, int args) {
 		, query[512];
 	
 	if (args < 1) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "SkeysColor_Help");
+		PrintColoredChat(client, "[\x03JA\x01] %t", "SkeysColor_Help");
 		return Plugin_Handled;
 	}
 	GetCmdArg(1, red, sizeof(red));
@@ -147,7 +147,7 @@ public Action cmdChangeSkeysColor(int client, int args) {
 	GetCmdArg(3, blue, sizeof(blue));
 
 	if (!IsStringNumeric(red) || !IsStringNumeric(blue) || !IsStringNumeric(green)) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Numeric_Invalid");
+		PrintColoredChat(client, "[\x03JA\x01] %t", "Numeric_Invalid");
 		return Plugin_Handled;
 	}
 	g_iSkeysRed[client] = StringToInt(red);
@@ -163,7 +163,7 @@ public Action cmdChangeSkeysColor(int client, int args) {
 
 public Action cmdChangeSkeysLoc(int client, int args) {
 	if (args != 2) {
-		PrintToChat(client, "\x01[\x03JA\x01] This command requires 2 arguments");
+		PrintColoredChat(client, "[%sJA\x01] This command requires%s 2\x01 arguments", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
 	char
@@ -180,7 +180,7 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 	yLoc = StringToFloat(arg2);
 
 	if (xLoc >= 1.0 || yLoc >= 1.0 || xLoc <= 0.0 || yLoc <= 0.0) {
-		PrintToChat(client, "\x01[\x03JA\x01] Both arguments must be between 0 and 1");
+		PrintColoredChat(client, "[%sJA\x01] Both arguments must be between%s 0\x01 and%s 1", cTheme1, cTheme2, cTheme2);
 		return Plugin_Handled;
 	}
 	g_iSkeysXLoc[client] = xLoc;

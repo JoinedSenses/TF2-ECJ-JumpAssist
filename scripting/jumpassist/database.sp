@@ -82,10 +82,10 @@ void RunDBCheck() {
 void SQL_OnMapSettingsUpdated(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null) {
 		LogError("Query failed! %s", error);
-		ReplyToCommand(data, "\x01[\x03JA\x01] %t (%s)", "Mapset_Not_Saved", cLightGreen, cDefault, error);
+		ReplyToCommand(data, "\x01[%sJA\x01] %t (%s)", cTheme1, "Mapset_Not_Saved", cTheme2, cDefault, error);
 	}
 	else {
-		ReplyToCommand(data, "\x01[\x03JA\x01] %t", "Mapset_Saved", cLightGreen, cDefault);
+		ReplyToCommand(data, "\x01[%sJA\x01] %t", cTheme1, "Mapset_Saved", cTheme2, cDefault);
 	}
 }
 
@@ -106,7 +106,7 @@ void SQL_OnSetKeys(Database db, DBResultSet results, const char[] error, any dat
 	if (db == null) {
 		LogError("Query failed! %s", error);
 	}
-	PrintToChat(data, "\x01[\x03JA\x01] %t", (db == null) ? "SetMy_Failed" : "SetMy_Success");
+	PrintColoredChat(data, "\x01[%sJA\x01] %t", cTheme1, (db == null) ? "SetMy_Failed" : "SetMy_Success", cTheme2, cDefault);
 }
 
 void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] error, any data) {
@@ -294,11 +294,11 @@ Action cmdMapSet(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (!g_bDatabaseConfigured) {
-		PrintToChat(client, "This feature is not supported without a database configuration");
+		PrintColoredChat(client, "[%sJA\x01]This feature is not supported without a database configuration", cTheme1);
 		return Plugin_Handled;
 	}
 	if (args < 2) {
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Mapset_Help");
+		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Mapset_Help", cTheme2, cDefault);
 		return Plugin_Handled;
 	}
 	int
@@ -326,7 +326,7 @@ Action cmdMapSet(int client, int args) {
 			CheckTeams();
 		}
 		else {
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Mapset_Team_Help");
+			PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Mapset_Team_Help", cTheme1, cDefault);
 			return Plugin_Handled;	
 		}
 		g_Database.Format(query, sizeof(query), "UPDATE `map_settings` SET Team = '%i' WHERE Map = '%s'", g_iTeam, g_sCurrentMap);
@@ -340,7 +340,7 @@ Action cmdMapSet(int client, int args) {
 			g_iLock = 0;
 		}
 		else {
-			PrintToChat(client, "\x01[\x03JA\x01] %t", "Mapset_LockCP_Help");
+			PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Mapset_LockCP_Help", cTheme2, cDefault);
 			return Plugin_Handled;
 		}
 		g_Database.Format(query, sizeof(query), "UPDATE `map_settings` SET LockCPs = '%i' WHERE Map = '%s'", g_iLock, g_sCurrentMap);
