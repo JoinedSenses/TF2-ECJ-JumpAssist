@@ -230,7 +230,7 @@ TFClassType
 	g_TFClientClass[MAXPLAYERS+1]
 	, g_TFClientPreRaceClass[MAXPLAYERS+1];
 
-#define PLUGIN_VERSION "1.1.1"
+#define PLUGIN_VERSION "1.1.2"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cDefault 0x01
@@ -1126,15 +1126,15 @@ void ApplyRaceSettings(int race) {
 	}
 }
 
-int GetPlayersInRace(int raceID) {
-	int players;
-	for (int i = 1; i <= MaxClients; i++) {
-		if (IsClientInRace(i, raceID)) {
-			players++;
-		}
-	}
-	return players;
-}
+//int GetPlayersInRace(int raceID) {
+//	int players;
+//	for (int i = 1; i <= MaxClients; i++) {
+//		if (IsClientInRace(i, raceID)) {
+//			players++;
+//		}
+//	}
+//	return players;
+//}
 
 int GetPlayersStillRacing(int raceID) {
 	int players;
@@ -1257,13 +1257,7 @@ bool IsClientSpectatingRace(int client, int race) {
 	iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
 	iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
 
-	if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) {
-		return false;
-	}
-	if (IsClientInRace(iClientToShow, race)) {
-		return true;
-	}
-	return false;
+	return (IsValidClient(client) && IsValidClient(iClientToShow) && iObserverMode != 6 && IsClientInRace(iClientToShow, race));
 }
 
 char[] TimeFormat(float timeTaken) {
@@ -2229,20 +2223,16 @@ public Action eventPlayerChangeClass(Event event, const char[] name, bool dontBr
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Continue;
 	}
-	int client = GetClientOfUserId(event.GetInt("userid"));
+	int
+		client = GetClientOfUserId(event.GetInt("userid"));
+
 	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client) && g_bRaceClassForce[g_iRaceID[client]]) {
 		TF2_SetPlayerClass(client, g_TFClientClass[client]);
 		PrintToChat(client, "\x01[\x03JA\x01] Cannot change class while racing.");
 		return Plugin_Continue;
 	}
-	EraseLocs(client);
-
+	
 	//TF2_RespawnPlayer(client);
-	g_bUnkillable[client] = false;
-	g_fLastSavePos[client] = NULL_VECTOR;
-	for (int i = 0; i <= 2; i++) {
-		g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
-	}
 	return Plugin_Continue;
 }
 
@@ -2294,6 +2284,13 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 		return Plugin_Continue;
 	}
 	int client = GetClientOfUserId(event.GetInt("userid"));
+
+	EraseLocs(client);
+	g_bUnkillable[client] = false;
+	g_fLastSavePos[client] = NULL_VECTOR;
+	for (int i = 0; i <= 2; i++) {
+		g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
+	}
 	// Check if they have the jumper equipped, and hardcore is on for some reason.
 	if (IsUsingJumper(client) && g_bHardcore[client]) {
 		g_bHardcore[client] = false;
