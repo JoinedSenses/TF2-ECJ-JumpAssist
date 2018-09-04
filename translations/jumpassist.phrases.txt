@@ -172,7 +172,7 @@
 	}	
 	"Send_Player"
 	{
-		"#format"		"{1:s},{2:s},{3:s},{4:s}.{5:c},{6:c}"
+		"#format"		"{1:s},{2:s},{3:s},{4:s},{5:c},{6:c}"
 		"en"			"Sent {3}{1}{5} to {4}{2}{6}."
 	}
 	"Goto_Spectate"
