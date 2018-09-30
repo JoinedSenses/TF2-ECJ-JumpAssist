@@ -72,12 +72,10 @@ void RunDBCheck() {
 			... "playerClass TINYINT UNSIGNED NOT NULL, "
 			... "playerTeam TINYINT UNSIGNED NOT NULL, "
 			... "playerMap VARCHAR(32) NOT NULL, "
-			... "save1 INT NOT NULL, "
-			... "save2 INT NOT NULL, "
-			... "save3 INT NOT NULL, "
-			... "save4 INT NOT NULL, "
-			... "save5 INT NOT NULL, "
-			... "save6 INT NOT NULL"
+			... "origin1 SMALLINT NOT NULL, "
+			... "origin2 SMALLINT NOT NULL, "
+			... "origin3 SMALLINT NOT NULL, "
+			... "angle2 SMALLINT NOT NULL"
 		... ")"
 		, increment
 	);
@@ -186,10 +184,12 @@ void SQL_OnReloadPlayerData(Database db, DBResultSet results, const char[] error
 		LogError("OnreloadPlayerData() - Query failed! %s", error);
 	}
 	else if (results.FetchRow()) {
-		for (int i = 0; i <= 2; i++) {
-			 g_fOrigin[data][i] = results.FetchFloat(i);
-			 g_fAngles[data][i] = results.FetchFloat(i+3);
-		}
+		g_fOrigin[data][0] = results.FetchFloat(0);
+		g_fOrigin[data][1] = results.FetchFloat(1);
+		g_fOrigin[data][2] = results.FetchFloat(2);
+
+		g_fAngles[data][1] = results.FetchFloat(3);
+
 		g_bUsedReset[data] = false;
 	}
 }
@@ -199,10 +199,12 @@ void SQL_OnLoadPlayerData(Database db, DBResultSet results, const char[] error, 
 		LogError("OnLoadPlayerData() - Query failed! %s", error);
 	}
 	else if (results.FetchRow()) {
-		for (int i = 0; i <= 2; i++) {
-			 g_fOrigin[data][i] = results.FetchFloat(i);
-			 g_fAngles[data][i] = results.FetchFloat(i+3);
-		}
+		g_fOrigin[data][0] = results.FetchFloat(0);
+		g_fOrigin[data][1] = results.FetchFloat(1);
+		g_fOrigin[data][2] = results.FetchFloat(2);
+
+		g_fAngles[data][1] = results.FetchFloat(3);
+
 		if (!g_bHardcore[data] && !IsClientRacing(data)) {
 			Teleport(data);
 			g_iLastTeleport[data] = RoundFloat(GetEngineTime());
@@ -276,8 +278,6 @@ void SavePlayerData(int client) {
 			... "'%f', "
 			... "'%f', "
 			... "'%f', "
-			... "'%f', "
-			... "'%f', "
 			... "'%f'"
 		... ")"
 		, g_sClientSteamID[client]
@@ -287,9 +287,7 @@ void SavePlayerData(int client) {
 		, SavePos1[client][0]
 		, SavePos1[client][1]
 		, SavePos1[client][2]
-		, SavePos2[client][0]
 		, SavePos2[client][1]
-		, SavePos2[client][2]
 	);
 	g_Database.Query(SQL_OnDefaultCallback, sQuery, client);
 }
@@ -307,12 +305,10 @@ void UpdatePlayerData(int client) {
 		, sizeof(sQuery)
 		, "UPDATE player_saves "
 		... "SET "
-			... "save1 = '%f', "
-			... "save2 = '%f', "
-			... "save3 = '%f', "
-			... "save4 = '%f', "
-			... "save5 = '%f', "
-			... "save6 = '%f' "
+			... "origin1 = '%f', "
+			... "origin2 = '%f', "
+			... "origin3 = '%f', "
+			... "angle2 = '%f' "
 		... "WHERE steamID = '%s' "
 		... "AND playerTeam = '%i' "
 		... "AND playerClass = '%i' "
@@ -320,9 +316,7 @@ void UpdatePlayerData(int client) {
 		, SavePos1[client][0]
 		, SavePos1[client][1]
 		, SavePos1[client][2]
-		, SavePos2[client][0]
 		, SavePos2[client][1]
-		, SavePos2[client][2]
 		, g_sClientSteamID[client]
 		, g_iClientTeam[client]
 		, view_as<int>(g_TFClientClass[client])
@@ -359,7 +353,7 @@ void ReloadPlayerData(int client) {
 	g_Database.Format(
 		sQuery
 		, sizeof(sQuery)
-		, "SELECT save1, save2, save3, save4, save5, save6 "
+		, "SELECT origin1, origin2, origin3, angle2 "
 		... "FROM player_saves "
 		... "WHERE steamID = '%s' "
 		... "AND playerTeam = '%i' "
@@ -382,7 +376,7 @@ void LoadPlayerData(int client) {
 	g_Database.Format(
 		sQuery
 		, sizeof(sQuery)
-		, "SELECT save1, save2, save3, save4, save5, save6 "
+		, "SELECT origin1, origin2, origin3, angle2 "
 		... "FROM player_saves "
 		... "WHERE steamID = '%s' "
 		... "AND playerTeam = '%i' "
