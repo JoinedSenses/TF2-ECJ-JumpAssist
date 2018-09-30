@@ -69,8 +69,8 @@ void RunDBCheck() {
 		... "("
 			... "RecID INT NOT NULL PRIMARY KEY %s, "
 			... "steamID VARCHAR(32) NOT NULL, "
-			... "playerClass TINYINT NOT NULL, "
-			... "playerTeam TINYINT NOT NULL, "
+			... "playerClass TINYINT UNSIGNED NOT NULL, "
+			... "playerTeam TINYINT UNSIGNED NOT NULL, "
 			... "playerMap VARCHAR(32) NOT NULL, "
 			... "save1 INT NOT NULL, "
 			... "save2 INT NOT NULL, "
@@ -92,9 +92,9 @@ void RunDBCheck() {
 		... "("
 			... "ID INT PRIMARY KEY %s NOT NULL, "
 			... "SteamID TEXT NOT NULL, "
-			... "SKEYS_RED_COLOR TINYINT NOT NULL DEFAULT 255, "
-			... "SKEYS_GREEN_COLOR TINYINT NOT NULL DEFAULT 255, "
-			... "SKEYS_BLUE_COLOR TINYINT NOT NULL DEFAULT 255"
+			... "SKEYS_RED_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
+			... "SKEYS_GREEN_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
+			... "SKEYS_BLUE_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255"
 		... ")"
 		, increment
 	);
@@ -109,8 +109,8 @@ void RunDBCheck() {
 		... "("
 			... "ID INT PRIMARY KEY %s NOT NULL, "
 			... "Map TEXT NOT NULL, "
-			... "Team TINYINT NOT NULL, "
-			... "LockCPs TINYINT NOT NULL"
+			... "Team TINYINT UNSIGNED NOT NULL, "
+			... "LockCPs TINYINT UNSIGNED NOT NULL"
 		... ")"
 		, increment
 	);
@@ -382,8 +382,8 @@ void LoadPlayerData(int client) {
 	g_Database.Format(
 		sQuery
 		, sizeof(sQuery)
-		, "SELECT save1, save2, save3, save4, save5, "
-		... "save6 FROM player_saves "
+		, "SELECT save1, save2, save3, save4, save5, save6 "
+		... "FROM player_saves "
 		... "WHERE steamID = '%s' "
 		... "AND playerTeam = '%i' "
 		... "AND playerClass = '%i' "

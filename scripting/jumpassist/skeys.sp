@@ -156,7 +156,20 @@ public Action cmdChangeSkeysColor(int client, int args) {
 	g_iSkeysGreen[client] = StringToInt(green);
 
 	//This will throw a server error but its no big deal
-	g_Database.Format(query, sizeof(query), "UPDATE `player_profiles` SET SKEYS_RED_COLOR=%i, SKEYS_GREEN_COLOR=%i, SKEYS_BLUE_COLOR=%i WHERE steamid = '%s'", g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], g_sClientSteamID[client]);
+	g_Database.Format(
+		query
+		, sizeof(query)
+		, "UPDATE player_profiles "
+		... "SET "
+			... "SKEYS_RED_COLOR = %i, "
+			... "SKEYS_GREEN_COLOR = %i, "
+			... "SKEYS_BLUE_COLOR = %i "
+		... "WHERE steamid = '%s'"
+		, g_iSkeysRed[client]
+		, g_iSkeysGreen[client]
+		, g_iSkeysBlue[client]
+		, g_sClientSteamID[client]
+	);
 	JA_SendQuery(query, client);
 
 	return Plugin_Handled;
