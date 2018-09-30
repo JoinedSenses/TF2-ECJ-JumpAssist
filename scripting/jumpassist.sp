@@ -760,17 +760,17 @@ void DisplayRaceTimes(int client) {
 		return;
 	}
 	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS
-	int iClientToShow;
+	int clientToShow;
 	int iObserverMode;
 	if (!IsClientRacing(client)) {
 		if (IsClientObserver(client)) {
 			iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
-			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
-			if (!IsClientRacing(iClientToShow)) {
+			clientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
+			if (!IsClientRacing(clientToShow)) {
 				PrintColoredChat(client, "[%sJA\x01] This client is not in a race!", cTheme1);
 				return;
 			}
-			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6)
+			if (!IsValidClient(client) || !IsValidClient(clientToShow) || iObserverMode == 6)
 				return;
 		}
 		else {
@@ -779,9 +779,9 @@ void DisplayRaceTimes(int client) {
 		}
 	}
 	else {
-		iClientToShow = client;
+		clientToShow = client;
 	}
-	int race = g_iRaceID[iClientToShow];
+	int race = g_iRaceID[clientToShow];
 	char leader[32];
 	char leaderFormatted[32];
 	char racerEntryFormatted[255];
@@ -789,7 +789,7 @@ void DisplayRaceTimes(int client) {
 	char racerDiff[128];
 	bool space;
 
-	GetClientName(g_iRaceID[iClientToShow], leader, sizeof(leader));
+	GetClientName(g_iRaceID[clientToShow], leader, sizeof(leader));
 	Format(leaderFormatted, sizeof(leaderFormatted), "%s's Race", leader);
 	
 	Panel panel = new Panel();
@@ -831,18 +831,18 @@ Action cmdRaceInfo(int client, int args) {
 		return;
 	}
 	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS
-	int iClientToShow;
+	int clientToShow;
 	int iObserverMode;
 
 	if (!IsClientRacing(client)) {
 		if (IsClientObserver(client)) {
 			iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
-			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
-			if (!IsClientRacing(iClientToShow)) {
+			clientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
+			if (!IsClientRacing(clientToShow)) {
 				PrintColoredChat(client, "[%sJA\x01] This client is not in a race!", cTheme1);
 				return;
 			}
-			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) {
+			if (!IsValidClient(client) || !IsValidClient(clientToShow) || iObserverMode == 6) {
 				return;
 			}
 		}
@@ -852,7 +852,7 @@ Action cmdRaceInfo(int client, int args) {
 		}
 	}
 	else {
-		iClientToShow = client;
+		clientToShow = client;
 	}
 	char leader[32];
 	char leaderFormatted[64];
@@ -860,10 +860,10 @@ Action cmdRaceInfo(int client, int args) {
 	char ammoRegen[32];
 	char classForce[32];
 
-	GetClientName(g_iRaceID[iClientToShow], leader, sizeof(leader));
+	GetClientName(g_iRaceID[clientToShow], leader, sizeof(leader));
 	Format(leaderFormatted, sizeof(leaderFormatted), "Race Host: %s", leader);
 
-	switch (GetRaceStatus(iClientToShow)) {
+	switch (GetRaceStatus(clientToShow)) {
 		case STATUS_INVITING: {
 			status = "Race Status: Waiting for start";
 		}
@@ -877,7 +877,7 @@ Action cmdRaceInfo(int client, int args) {
 			status = "Race Status: Waiting for finishers";
 		}
 	}
-	Format(classForce, sizeof(classForce), "Class Force: %s", g_bRaceClassForce[g_iRaceID[iClientToShow]] ? "Enabled" : "Disabled");
+	Format(classForce, sizeof(classForce), "Class Force: %s", g_bRaceClassForce[g_iRaceID[clientToShow]] ? "Enabled" : "Disabled");
 		
 	Panel panel = new Panel();
 	panel.DrawText(leaderFormatted);
@@ -1212,7 +1212,7 @@ void LeaveRace(int client, bool raceFinished = false) {
 }
 
 void ResetRace(int raceID) {
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 0; i <= MaxClients; i++) {
 		if (g_iRaceID[i] == raceID) {	
 			DataPack dp = new DataPack();
 			dp.WriteCell(i);
@@ -1255,9 +1255,9 @@ bool IsClientSpectatingRace(int client, int race) {
 		return false;
 	}
 	int iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
-	int iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
+	int clientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
 
-	return (IsValidClient(client) && IsValidClient(iClientToShow) && iObserverMode != 6 && IsClientInRace(iClientToShow, race));
+	return (IsValidClient(client) && IsValidClient(clientToShow) && iObserverMode != 6 && IsClientInRace(clientToShow, race));
 }
 
 char[] TimeFormat(float timeTaken) {
