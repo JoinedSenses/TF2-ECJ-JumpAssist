@@ -1,29 +1,31 @@
 Handle
-	g_hHudDisplayForward
+	  g_hHudDisplayForward
 	, g_hHudDisplayASD
 	, g_hHudDisplayDuck
 	, g_hHudDisplayJump
 	, g_hHudDisplayM1
 	, g_hHudDisplayM2;
 bool
-	g_bGetClientKeys[MAXPLAYERS+1];
+	  g_bGetClientKeys[MAXPLAYERS+1];
 int
-	g_iButtons[MAXPLAYERS+1]
+	  g_iButtons[MAXPLAYERS+1]
 	, g_iSkeysRed[MAXPLAYERS+1]
 	, g_iSkeysGreen[MAXPLAYERS+1]
 	, g_iSkeysBlue[MAXPLAYERS+1];
 float
-	g_iSkeysXLoc[MAXPLAYERS+1]
+	  g_iSkeysXLoc[MAXPLAYERS+1]
 	, g_iSkeysYLoc[MAXPLAYERS+1]
-	, defaultXLoc = 0.54, defaultYLoc = 0.40;
+	, defaultXLoc = 0.54
+	, defaultYLoc = 0.40;
 char
-	wasBack[MAXPLAYERS+1]
+	  wasBack[MAXPLAYERS+1]
 	, wasMoveRight[MAXPLAYERS+1]
 	, wasMoveLeft[MAXPLAYERS+1];
 
 void SetAllSkeysDefaults() {
-	for(int i = 0; i < MAXPLAYERS+1; i++)
+	for(int i = 0; i < MAXPLAYERS+1; i++) {
 		SetSkeysDefaults(i);
+	}
 }
 
 void SetSkeysDefaults(int client) {
@@ -132,11 +134,10 @@ int IsStringNumeric(const char[] MyString) {
 }
 
 public Action cmdChangeSkeysColor(int client, int args) {
-	char
-		red[4]
-		, blue[4]
-		, green[4]
-		, query[512];
+	char red[4];
+	char blue[4];
+	char green[4];
+	char query[512];
 	
 	if (args < 1) {
 		PrintColoredChat(client, "[\x03JA\x01] %t", "SkeysColor_Help");
@@ -166,18 +167,14 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 		PrintColoredChat(client, "[%sJA\x01] This command requires%s 2\x01 arguments", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
-	char
-		arg1[16]
-		, arg2[16];
-	float
-		xLoc
-		, yLoc;
+	char arg1[16];
+	char arg2[16];
 
 	GetCmdArg(1, arg1, sizeof(arg1));
 	GetCmdArg(2, arg2, sizeof(arg2));
 
-	xLoc = StringToFloat(arg1);
-	yLoc = StringToFloat(arg2);
+	float xLoc = StringToFloat(arg1);
+	float yLoc = StringToFloat(arg2);
 
 	if (xLoc >= 1.0 || yLoc >= 1.0 || xLoc <= 0.0 || yLoc <= 0.0) {
 		PrintColoredChat(client, "[%sJA\x01] Both arguments must be between%s 0\x01 and%s 1", cTheme1, cTheme2, cTheme2);

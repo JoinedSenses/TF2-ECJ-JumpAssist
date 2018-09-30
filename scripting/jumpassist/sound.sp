@@ -4,10 +4,9 @@ public Action HookVoice(UserMsg msg_id, BfRead bf, const int[] players, int play
  	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Continue;
 	}
-	int
-		client = BfReadByte(bf)
-		, vMenu1 = BfReadByte(bf)
-		, vMenu2 = BfReadByte(bf);
+	int client = bf.ReadByte();
+	int vMenu1 = bf.ReadByte();
+	int vMenu2 = bf.ReadByte();
 
 	if (IsPlayerAlive(client) && IsValidClient(client) && g_cvarPluginEnabled.BoolValue) {
 		if ((vMenu1 == 0) && (vMenu2 == 0) && !g_bHardcore[client] && (!g_iRaceID[client] || g_fRaceTime[client] != 0.0)) {
