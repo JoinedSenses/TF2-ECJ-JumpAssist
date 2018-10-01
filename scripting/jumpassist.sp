@@ -185,11 +185,16 @@
 */
 #pragma newdecls required
 #pragma semicolon 1
+
 #include <sourcemod>
 #include <tf2_stocks>
 #include <sdkhooks>
 #include <color_literals>
 #include <clientprefs>
+#include "smlib/math.inc"
+
+#define XPOSDEFAULT 0.54
+#define YPOSDEFAULT 0.4
 
 enum RaceStatus {
 	STATUS_NONE,
@@ -197,6 +202,11 @@ enum RaceStatus {
 	STATUS_COUNTDOWN,
 	STATUS_RACING,
 	STATUS_WAITING
+}
+
+enum {
+	DISPLAY,
+	EDIT
 }
 
 int
@@ -295,9 +305,13 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_ammo", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_tele", cmdTele, "Teleports you to your current saved location.");
 	RegConsoleCmd("sm_g_bHideMessage", cmdg_bHideMessage, "Toggles display of JA messages, such as save and teleport");
+
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a clients key's.");
-	RegConsoleCmd("sm_skeys_color", cmdChangeSkeysColor, "Changes the color of the text for skeys."); //cannot whether the database is configured or not
-	RegConsoleCmd("sm_skeys_loc", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
+	RegConsoleCmd("sm_skeyscolor", cmdChangeSkeysColor, "Changes the color of the text for skeys.");
+	RegConsoleCmd("sm_skeyscolors", cmdChangeSkeysColor, "Changes the color of the text for skeys.");
+	RegConsoleCmd("sm_skeyspos", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
+	RegConsoleCmd("sm_skeysloc", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
+
 	RegConsoleCmd("sm_superman", cmdUnkillable, "Makes you strong like superman.");
 	RegConsoleCmd("sm_jumptf", cmdJumpTF, "Shows the jump.tf website.");
 	RegConsoleCmd("sm_forums", cmdJumpForums, "Shows the jump.tf forums.");
@@ -379,10 +393,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 void TF2_SetGameType() {
 	GameRules_SetProp("m_nGameType", 2);
-}
-
-public void OnGameFrame() {
-	SkeysOnGameFrame();
 }
 
 // Support for beggers bazooka
@@ -1724,18 +1734,94 @@ Action cmdJumpForums(int client, int args) {
 	return;
 }
 
-public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon) {
+public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
+ {
 	if (!IsValidClient(client)) {
 		return Plugin_Continue;
 	}
+	
 	g_iButtons[client] = buttons; //FOR SKEYS AS WELL AS REGEN
-	int iMaxHealth = GetEntProp(client, Prop_Data, "m_iMaxHealth");
-	if (GetClientHealth(client) < iMaxHealth) {
-		SetEntityHealth(client, iMaxHealth);
-		return Plugin_Changed;
+	switch (g_iSkeysMode[client]) {
+		case EDIT: {
+			g_iSkeysXLoc[client] = Math_Clamp(g_iSkeysXLoc[client] + 0.0005 * mouse[0], 0.0, 0.85);
+			g_iSkeysYLoc[client] = Math_Clamp(g_iSkeysYLoc[client]+ 0.0005 * mouse[1], 0.0, 0.90);
+
+			if (buttons & (IN_ATTACK|IN_ATTACK2)) {
+				g_iSkeysMode[client] = DISPLAY;
+
+				PrintColoredChat(client, "[%sJA\x01] Keys position updated", cTheme1);
+				CreateTimer(0.2, timerUnfreeze, client);
+			}
+			else if (buttons & (IN_ATTACK3|IN_JUMP)) {
+				g_iSkeysXLoc[client] = XPOSDEFAULT;
+				g_iSkeysYLoc[client] = YPOSDEFAULT;
+				
+				g_iSkeysMode[client] = DISPLAY;
+				PrintColoredChat(client, "[%sJA\x01] Key position set to default", cTheme1);
+				CreateTimer(0.2, timerUnfreeze, client);
+			}
+		}
 	}
+
+	char g_sButtons[64];
+	int iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
+	int iClientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
+	if (g_bGetClientKeys[client] && !(g_iButtons[client] & IN_SCORE) && (IsValidClient(iClientToShow) || iObserverMode != 6)) {
+		ClearSyncHud(client, g_hHudDisplayForward);
+		ClearSyncHud(client, g_hHudDisplayASD);
+		ClearSyncHud(client, g_hHudDisplayDuck);
+		ClearSyncHud(client, g_hHudDisplayJump);
+		ClearSyncHud(client, g_hHudDisplayM1);
+		ClearSyncHud(client, g_hHudDisplayM2);
+		
+		int buttonsToShow = g_iButtons[iClientToShow];
+		bool isEditing = g_iSkeysMode[client] == EDIT;
+		bool WEnabled = (buttonsToShow & IN_FORWARD || isEditing);
+
+		SetHudTextParams(g_iSkeysXLoc[client]+(WEnabled ? 0.047 : 0.052), g_iSkeysYLoc[client], 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
+		ShowSyncHudText(client, g_hHudDisplayForward, WEnabled ? "W" : "-");
+
+		if (buttonsToShow & (IN_BACK|IN_MOVELEFT|IN_MOVERIGHT) || isEditing) {
+			
+			bool AEnabled = (buttonsToShow & IN_MOVELEFT || isEditing);
+			bool SEnabled = (buttonsToShow & IN_BACK || isEditing);
+			bool DEnabled = (buttonsToShow & IN_MOVERIGHT || isEditing);
+
+			Format(wasMoveLeft[iClientToShow], sizeof(wasMoveLeft), AEnabled ? "A" : "-");
+			Format(wasBack[iClientToShow], sizeof(wasBack), SEnabled ? "S" : "-");
+			Format(wasMoveRight[iClientToShow], sizeof(wasMoveRight), DEnabled ? "D" : "-");
+
+			Format(g_sButtons, sizeof(g_sButtons), "%s %s %s", wasMoveLeft[iClientToShow], wasBack[iClientToShow], wasMoveRight[iClientToShow]);
+			SetHudTextParams(g_iSkeysXLoc[client] + 0.04 - (AEnabled ?  0.0042 : 0.0) - (SEnabled ? 0.0015 : 0.0), g_iSkeysYLoc[client]+0.05, 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
+			ShowSyncHudText(client, g_hHudDisplayASD, g_sButtons);
+		}
+		else {
+			Format(g_sButtons, sizeof(g_sButtons), "- - -");
+			SetHudTextParams(g_iSkeysXLoc[client]+0.04, g_iSkeysYLoc[client]+0.05, 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
+			ShowSyncHudText(client, g_hHudDisplayASD, g_sButtons);
+		}
+
+		if (buttonsToShow & IN_DUCK || isEditing) {
+			SetHudTextParams(g_iSkeysXLoc[client]+0.09, g_iSkeysYLoc[client]+0.05, 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
+			ShowSyncHudText(client, g_hHudDisplayDuck, "Duck");
+		}
+		if (buttonsToShow & IN_JUMP || isEditing) {
+			SetHudTextParams(g_iSkeysXLoc[client]+0.09, g_iSkeysYLoc[client], 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
+			ShowSyncHudText(client, g_hHudDisplayJump, "Jump");
+		}
+		if (buttonsToShow & IN_ATTACK || isEditing) {
+			SetHudTextParams(g_iSkeysXLoc[client], g_iSkeysYLoc[client], 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
+			ShowSyncHudText(client, g_hHudDisplayM1, "M1");
+		}
+		if (buttonsToShow & IN_ATTACK2 || isEditing) {
+			SetHudTextParams(g_iSkeysXLoc[client], g_iSkeysYLoc[client]+0.05, 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
+			ShowSyncHudText(client, g_hHudDisplayM2, "M2");
+		}
+		//.54 x def and .4 y def
+	}
+
 	if ((g_iButtons[client] & (IN_ATTACK|IN_ATTACK2)) > 0) {
-		if (g_bAmmoRegen[client]) {
+		if (!IsClientObserver(client) && g_bAmmoRegen[client]) {
 			for (int i = 0; i <= 2; i++) {
 				ReSupply(client, g_iClientWeapons[client][i]);
 			}
@@ -1744,7 +1830,18 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	if (g_bRaceLocked[client]) {
 		vel = NULL_VECTOR;
 	}
+
+	int iMaxHealth = GetEntProp(client, Prop_Data, "m_iMaxHealth");
+	if (!IsClientObserver(client) && GetClientHealth(client) < iMaxHealth) {
+		SetEntityHealth(client, iMaxHealth);
+		return Plugin_Changed;
+	}
+
 	return Plugin_Continue;
+}
+
+Action timerUnfreeze(Handle timer, int client) {
+	SetEntityFlags(client, GetEntityFlags(client) & ~(FL_ATCONTROLS | FL_FROZEN));
 }
 
 public void SDKHook_OnWeaponEquipPost(int client, int weapon) {

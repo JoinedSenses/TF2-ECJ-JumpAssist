@@ -11,7 +11,8 @@ int
 	  g_iButtons[MAXPLAYERS+1]
 	, g_iSkeysRed[MAXPLAYERS+1]
 	, g_iSkeysGreen[MAXPLAYERS+1]
-	, g_iSkeysBlue[MAXPLAYERS+1];
+	, g_iSkeysBlue[MAXPLAYERS+1]
+	, g_iSkeysMode[MAXPLAYERS+1];
 float
 	  g_iSkeysXLoc[MAXPLAYERS+1]
 	, g_iSkeysYLoc[MAXPLAYERS+1]
@@ -31,89 +32,6 @@ void SetAllSkeysDefaults() {
 void SetSkeysDefaults(int client) {
 	g_iSkeysXLoc[client] = defaultXLoc;
 	g_iSkeysYLoc[client] = defaultYLoc;
-}
-
-void SkeysOnGameFrame() {
-	int iClientToShow, iObserverMode;
-	for (int i = 1; i < MaxClients; i++) {
-		if (g_bGetClientKeys[i] && IsClientInGame(i)) {
-			ClearSyncHud(i, g_hHudDisplayForward);
-			ClearSyncHud(i, g_hHudDisplayASD);
-			ClearSyncHud(i, g_hHudDisplayDuck);
-			ClearSyncHud(i, g_hHudDisplayJump);
-			ClearSyncHud(i, g_hHudDisplayM1);
-			ClearSyncHud(i, g_hHudDisplayM2);
-
-			if (g_iButtons[i] & IN_SCORE) {
-				return;
-			}
-			iObserverMode = GetEntPropEnt(i, Prop_Send, "m_iObserverMode");
-			if (IsClientObserver(i)) {
-				iClientToShow = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");
-			}
-			else {
-				iClientToShow = i;
-			}
-			if (!IsValidClient(i) || !IsValidClient(iClientToShow) || iObserverMode == 6) {
-				return;
-			}
-			if (g_iButtons[iClientToShow] & IN_FORWARD) {
-				SetHudTextParams(g_iSkeysXLoc[i]+0.06, g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, g_hHudDisplayForward, "W");
-			}
-			else {
-				SetHudTextParams(g_iSkeysXLoc[i]+0.06, g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, g_hHudDisplayForward, "-");
-			}
-			if (g_iButtons[iClientToShow] & IN_BACK || g_iButtons[iClientToShow] & IN_MOVELEFT || g_iButtons[iClientToShow] & IN_MOVERIGHT) {
-				char g_sButtons[64];
-				if (g_iButtons[iClientToShow] & IN_BACK) {
-					Format(wasBack[iClientToShow], sizeof(wasBack), "S");
-				}
-				else {
-					Format(wasBack[iClientToShow], sizeof(wasBack), "-");
-				}
-				if (g_iButtons[iClientToShow] & IN_MOVELEFT) {
-					Format(wasMoveLeft[iClientToShow], sizeof(wasMoveLeft), "A");
-				}
-				else {
-					Format(wasMoveLeft[iClientToShow], sizeof(wasMoveLeft), "-");
-				}
-				if (g_iButtons[iClientToShow] & IN_MOVERIGHT) {
-					Format(wasMoveRight[iClientToShow], sizeof(wasMoveRight), "D");
-				}
-				else {
-					Format(wasMoveRight[iClientToShow], sizeof(wasMoveRight), "-");
-				}
-				Format(g_sButtons, sizeof(g_sButtons), "%s %s %s", wasMoveLeft[iClientToShow], wasBack[iClientToShow], wasMoveRight[iClientToShow]);
-				SetHudTextParams(g_iSkeysXLoc[i] + 0.04, g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, g_hHudDisplayASD, g_sButtons);
-			}
-			else {
-				char g_sButtons[64];
-				Format(g_sButtons, sizeof(g_sButtons), "- - -");
-				SetHudTextParams(g_iSkeysXLoc[i]+0.04, g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, g_hHudDisplayASD, g_sButtons);
-			}
-			if (g_iButtons[iClientToShow] & IN_DUCK) {
-				SetHudTextParams(g_iSkeysXLoc[i]+0.1, g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, g_hHudDisplayDuck, "Duck");
-			}
-			if (g_iButtons[iClientToShow] & IN_JUMP) {
-				SetHudTextParams(g_iSkeysXLoc[i] + 0.1, g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, g_hHudDisplayJump, "Jump");
-			}
-			if (g_iButtons[iClientToShow] & IN_ATTACK) {
-				SetHudTextParams(g_iSkeysXLoc[i], g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, g_hHudDisplayM1, "M1");
-			}
-			if (g_iButtons[iClientToShow] & IN_ATTACK2) {
-				SetHudTextParams(g_iSkeysXLoc[i], g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, g_hHudDisplayM2, "M2");
-			}
-			//.54 x def and .4 y def
-		}
-	}
 }
 
 public Action cmdGetClientKeys(int client, int args) {
@@ -155,7 +73,6 @@ public Action cmdChangeSkeysColor(int client, int args) {
 	g_iSkeysBlue[client] = StringToInt(blue);
 	g_iSkeysGreen[client] = StringToInt(green);
 
-	//This will throw a server error but its no big deal
 	g_Database.Format(
 		query
 		, sizeof(query)
@@ -176,25 +93,16 @@ public Action cmdChangeSkeysColor(int client, int args) {
 }
 
 public Action cmdChangeSkeysLoc(int client, int args) {
-	if (args != 2) {
-		PrintColoredChat(client, "[%sJA\x01] This command requires%s 2\x01 arguments", cTheme1, cTheme2);
-		return Plugin_Handled;
+	g_bGetClientKeys[client] = true;
+	switch (g_iSkeysMode[client]) {
+		case EDIT: {
+			g_iSkeysMode[client] = DISPLAY;
+			SetEntityFlags(client, GetEntityFlags(client) & ~(FL_ATCONTROLS | FL_FROZEN));
+		}
+		case DISPLAY: {
+			g_iSkeysMode[client] = EDIT;
+			SetEntityFlags(client, GetEntityFlags(client) | FL_ATCONTROLS | FL_FROZEN);
+		}
 	}
-	char arg1[16];
-	char arg2[16];
-
-	GetCmdArg(1, arg1, sizeof(arg1));
-	GetCmdArg(2, arg2, sizeof(arg2));
-
-	float xLoc = StringToFloat(arg1);
-	float yLoc = StringToFloat(arg2);
-
-	if (xLoc >= 1.0 || yLoc >= 1.0 || xLoc <= 0.0 || yLoc <= 0.0) {
-		PrintColoredChat(client, "[%sJA\x01] Both arguments must be between%s 0\x01 and%s 1", cTheme1, cTheme2, cTheme2);
-		return Plugin_Handled;
-	}
-	g_iSkeysXLoc[client] = xLoc;
-	g_iSkeysYLoc[client] = yLoc;
-
-	return Plugin_Continue;
+	return Plugin_Handled;
 }
