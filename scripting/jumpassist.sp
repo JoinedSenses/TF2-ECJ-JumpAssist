@@ -210,7 +210,7 @@ enum {
 }
 
 int
-	g_iRaceID[MAXPLAYERS+1]
+	  g_iRaceID[MAXPLAYERS+1]
 	, g_iRaceFinishedPlayers[MAXPLAYERS+1][MAXPLAYERS]
 	, g_iRaceEndPoint[MAXPLAYERS+1] = {-1, ...}
 	, g_iRaceInvitedTo[MAXPLAYERS+1]
@@ -221,14 +221,14 @@ int
 	, g_iClientPreRaceCPsTouched[MAXPLAYERS+1]
 	, g_iCountDown[MAXPLAYERS+1];
 float
-	g_fRaceStartTime[MAXPLAYERS+1]
+	  g_fRaceStartTime[MAXPLAYERS+1]
 	, g_fRaceTime[MAXPLAYERS+1]
 	, g_fRaceTimes[MAXPLAYERS+1][MAXPLAYERS]
 	, g_fRaceFirstTime[MAXPLAYERS+1]
 	, g_fClientPreRaceOrigin[MAXPLAYERS+1][3]
 	, g_fClientPreRaceAngles[MAXPLAYERS+1][3];
 bool
-	g_bRaceLocked[MAXPLAYERS+1]
+	  g_bRaceLocked[MAXPLAYERS+1]
 	, g_bRaceAmmoRegen[MAXPLAYERS+1]
 	, g_bRaceClassForce[MAXPLAYERS+1]
 	, g_bWaitingInvite[MAXPLAYERS+1]
@@ -237,32 +237,31 @@ bool
 	, g_bClientPreRaceAmmoRegen[MAXPLAYERS+1]
 	, g_bClientPreRaceCPTouched[MAXPLAYERS+1][32];
 ConVar
-	g_cvarWelcomeMsg
+	  g_cvarWelcomeMsg
 	, g_cvarCriticals
 	, g_cvarSuperman
 	, g_cvarAmmoCheat
 	, g_cvarWaitingForPlayers;
 char
-	g_sWebsite[128] = "http://www.jump.tf/"
+	  g_sWebsite[128] = "http://www.jump.tf/"
 	, g_sForum[128] = "http://tf2rj.com/forum/"
 	, g_sJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0"
 	, g_sCurrentMap[64]
 	, g_sClientSteamID[MAXPLAYERS+1][32];
 Handle
-	g_hJAMessageCookie;
+	  g_hJAMessageCookie;
 ArrayList
-	g_AL_NoFuncRegen;
+	  g_AL_NoFuncRegen;
 Database
-	g_Database;
+	  g_Database;
 TFClassType
-	g_TFClientClass[MAXPLAYERS+1]
+	  g_TFClientClass[MAXPLAYERS+1]
 	, g_TFClientPreRaceClass[MAXPLAYERS+1];
 RaceStatus
-	g_iRaceStatus[MAXPLAYERS+1];
+	  g_iRaceStatus[MAXPLAYERS+1];
 
 
-
-#define PLUGIN_VERSION "1.2.0"
+#define PLUGIN_VERSION "1.2.1"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cDefault 0x01
@@ -461,7 +460,7 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 	g_bHardcore[client] = false;
 	g_bLoadedPlayerSettings[client] = false;
 	g_bBeatTheMap[client] = false;
-	g_bGetClientKeys[client] = false;
+	g_bSKeysEnabled[client] = false;
 	g_bUnkillable[client] = false;
 	g_sClientSteamID[client] = "";
 	EraseLocs(client);
@@ -500,7 +499,7 @@ public void OnClientPostAdminCheck(int client) {
 	g_bHardcore[client] = false;
 	g_bLoadedPlayerSettings[client] = false;
 	g_bBeatTheMap[client] = false;
-	g_bGetClientKeys[client] = false;
+	g_bSKeysEnabled[client] = false;
 	g_bUnkillable[client] = false;
 }
 /*****************************************************************************************************************
@@ -512,7 +511,7 @@ Action cmdRaceInitialize(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
-		ReplyToCommand(client, "\x01[%sJA\x01] Must be alive and on a team to use this command.", cTheme1);
+		PrintColoredChat(client, "[%sJA\x01] Must be alive and on a team to use this command.", cTheme1);
 		return Plugin_Handled;
 	}
 	if (g_iCPs == 0) {
@@ -614,13 +613,13 @@ Action cmdRaceInvite(int client, int args) {
 			panel.Send(target, InviteHandler, 15);
 		}
 		if (g_iRaceEndPoint[client] == -1) {
-			ReplyToCommand(client, "\x01[%sJA\x01] You must%s select a point\x01 first with /race before inviting others", cTheme1, cTheme2);
+			PrintColoredChat(client, "[%sJA\x01] You must%s select a point\x01 first with /race before inviting others", cTheme1, cTheme2);
 		}
 		else if (g_iRaceID[target]) {
-			ReplyToCommand(client, "\x01[%sJA\x01]%s %N\x01 is already in a race", cTheme1, cTheme2, target);
+			PrintColoredChat(client, "[%sJA\x01]%s %N\x01 is already in a race", cTheme1, cTheme2, target);
 		}
 		else if (g_bWaitingInvite[target]) {
-			ReplyToCommand(client, "\x01[%sJA\x01]%s %N\x01 has a%s pending\x01 race invite.", cTheme1, cTheme2, cTheme2, target);
+			PrintColoredChat(client, "[%sJA\x01]%s %N\x01 has a%s pending\x01 race invite.", cTheme1, cTheme2, cTheme2, target);
 		}
 	}
 	return Plugin_Handled;
@@ -740,7 +739,6 @@ void AlertInviteAcceptOrDeny(int client, int client2, int choice) {
 char g_sAsterisk[] = "****************************";
 char g_sTab[] = "			   ";
 
-
 Action RaceCountDown(Handle timer, int raceID) {
 	char value[4];
 	char message[256];
@@ -774,13 +772,13 @@ void DisplayRaceTimes(int client) {
 	int iObserverMode;
 	if (!IsClientRacing(client)) {
 		if (IsClientObserver(client)) {
-			iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
+			iObserverMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
 			clientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
 			if (!IsClientRacing(clientToShow)) {
 				PrintColoredChat(client, "[%sJA\x01] This client is not in a race!", cTheme1);
 				return;
 			}
-			if (!IsValidClient(client) || !IsValidClient(clientToShow) || iObserverMode == 6)
+			if (!IsValidClient(client) || !IsValidClient(clientToShow) || iObserverMode == 7)
 				return;
 		}
 		else {
@@ -978,7 +976,7 @@ Action cmdRaceInitializeServer(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
-		ReplyToCommand(client, "\x01[%sJA\x01] Must be%s alive\x01 and on a%s team\x01 to use this command.", cTheme1, cTheme2, cTheme2);
+		PrintColoredChat(client, "[%sJA\x01] Must be%s alive\x01 and on a%s team\x01 to use this command.", cTheme1, cTheme2, cTheme2);
 		return Plugin_Handled;
 	}
 	if (g_iCPs == 0) {
@@ -1353,7 +1351,7 @@ Action cmdJAHelp(int client, int args) {
 	panel.DrawItem("Miscellaneous");
 	panel.DrawText(" ");
 	panel.DrawItem("Exit");
-	panel.Send(client, JAHelpHandler, 15);
+	panel.Send(client, JAHelpHandler, MENU_TIME_FOREVER);
 	delete panel;
 	return Plugin_Handled;
 }
@@ -1384,8 +1382,8 @@ int JAHelpHandler(Menu menu, MenuAction action, int param1, int param2) {
 			panel.SetTitle("Skeys Help");
 			panel.DrawText(
 				"!skeys - Shows key presses on the screen\n"
-				... "!skeys_color <R> <G> <B> - Skeys color\n"
-				... "!skeys_loc <X> <Y> - Sets skeys location with x and y values from 0 to 1"
+				... "!skeyscolor <R> <G> <B> - Skeys color\n"
+				... "!skeyspos - Sets skeys location with x and y values from 0 to 1"
 			);
 		}
 		case 4: {
@@ -1550,7 +1548,7 @@ Action cmdSendPlayer(int client,int args) {
 
 Action cmdg_bHideMessage(int client, int args) {
 	g_bHideMessage[client] = !g_bHideMessage[client];
-	ReplyToCommand(client, "\x01[%sJA\x01] Messages will now be%s %s", cTheme1, cTheme2, g_bHideMessage[client] ? "hidden" : "displayed");
+	PrintColoredChat(client, "[%sJA\x01] Messages will now be%s %s", cTheme1, cTheme2, g_bHideMessage[client] ? "hidden" : "displayed");
 	SetClientCookie(client, g_hJAMessageCookie, g_bHideMessage[client] ? "1" : "0");
 	return Plugin_Handled;
 }
@@ -1734,99 +1732,85 @@ Action cmdJumpForums(int client, int args) {
 	return;
 }
 
-public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
- {
+public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2]) {
 	if (!IsValidClient(client)) {
 		return Plugin_Continue;
 	}
-	
-	g_iButtons[client] = buttons; //FOR SKEYS AS WELL AS REGEN
+	//FOR SKEYS
+	g_iButtons[client] = buttons;
 	switch (g_iSkeysMode[client]) {
 		case EDIT: {
-			g_iSkeysXLoc[client] = Math_Clamp(g_iSkeysXLoc[client] + 0.0005 * mouse[0], 0.0, 0.85);
-			g_iSkeysYLoc[client] = Math_Clamp(g_iSkeysYLoc[client]+ 0.0005 * mouse[1], 0.0, 0.90);
+			g_fSkeysXLoc[client] = Math_Clamp(g_fSkeysXLoc[client] + 0.0005 * mouse[0], 0.0, 0.85);
+			g_fSkeysYLoc[client] = Math_Clamp(g_fSkeysYLoc[client]+ 0.0005 * mouse[1], 0.0, 0.90);
 
 			if (buttons & (IN_ATTACK|IN_ATTACK2)) {
 				g_iSkeysMode[client] = DISPLAY;
+				SaveKeyPos(client, g_fSkeysXLoc[client], g_fSkeysYLoc[client]);
 
-				PrintColoredChat(client, "[%sJA\x01] Keys position updated", cTheme1);
 				CreateTimer(0.2, timerUnfreeze, client);
 			}
 			else if (buttons & (IN_ATTACK3|IN_JUMP)) {
-				g_iSkeysXLoc[client] = XPOSDEFAULT;
-				g_iSkeysYLoc[client] = YPOSDEFAULT;
+				g_fSkeysXLoc[client] = XPOSDEFAULT;
+				g_fSkeysYLoc[client] = YPOSDEFAULT;
 				
 				g_iSkeysMode[client] = DISPLAY;
-				PrintColoredChat(client, "[%sJA\x01] Key position set to default", cTheme1);
+				SaveKeyPos(client, g_fSkeysXLoc[client], g_fSkeysYLoc[client]);
+
 				CreateTimer(0.2, timerUnfreeze, client);
 			}
 		}
 	}
 
-	char g_sButtons[64];
-	int iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
-	int iClientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
-	if (g_bGetClientKeys[client] && !(g_iButtons[client] & IN_SCORE) && (IsValidClient(iClientToShow) || iObserverMode != 6)) {
-		ClearSyncHud(client, g_hHudDisplayForward);
-		ClearSyncHud(client, g_hHudDisplayASD);
-		ClearSyncHud(client, g_hHudDisplayDuck);
-		ClearSyncHud(client, g_hHudDisplayJump);
-		ClearSyncHud(client, g_hHudDisplayM1);
-		ClearSyncHud(client, g_hHudDisplayM2);
-		
-		int buttonsToShow = g_iButtons[iClientToShow];
-		bool isEditing = g_iSkeysMode[client] == EDIT;
-		bool WEnabled = (buttonsToShow & IN_FORWARD || isEditing);
+	int observerMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
+	int clientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
+	if (IsValidClient(clientToShow) && g_bSKeysEnabled[client] && !(buttons & IN_SCORE) && observerMode != 7) {
+		int
+			  buttonsToShow = g_iButtons[clientToShow]
+			, R = g_iSkeysRed[client]
+			, G = g_iSkeysGreen[client]
+			, B = g_iSkeysBlue[client]
+			, alpha = 255;
+		bool
+			  isEditing = (g_iSkeysMode[client] == EDIT)
+			, W = (buttonsToShow & IN_FORWARD || isEditing)
+			, A = (buttonsToShow & IN_MOVELEFT || isEditing)
+			, S = (buttonsToShow & IN_BACK || isEditing)
+			, D = (buttonsToShow & IN_MOVERIGHT || isEditing)
+			, Duck = (buttonsToShow & IN_DUCK || isEditing)
+			, Jump = (buttonsToShow & IN_JUMP || isEditing)
+			, M1 = (buttonsToShow & IN_ATTACK || isEditing)
+			, M2 = (buttonsToShow & IN_ATTACK2 || isEditing);
+		float
+			  hold = 0.3
+			, X = g_fSkeysXLoc[client]
+			, Y = g_fSkeysYLoc[client];
 
-		SetHudTextParams(g_iSkeysXLoc[client]+(WEnabled ? 0.047 : 0.052), g_iSkeysYLoc[client], 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
-		ShowSyncHudText(client, g_hHudDisplayForward, WEnabled ? "W" : "-");
+		SetHudTextParams(X+(W?0.047:0.052), Y, hold, R, G, B, alpha, 0, 0.0, 0.0, 0.0);
+		ShowSyncHudText(client, g_hHudDisplayForward, (W?"W":"-"));
 
-		if (buttonsToShow & (IN_BACK|IN_MOVELEFT|IN_MOVERIGHT) || isEditing) {
-			
-			bool AEnabled = (buttonsToShow & IN_MOVELEFT || isEditing);
-			bool SEnabled = (buttonsToShow & IN_BACK || isEditing);
-			bool DEnabled = (buttonsToShow & IN_MOVERIGHT || isEditing);
+		SetHudTextParams(X+0.04-(A?0.0042:0.0)-(S?0.0015:0.0), Y+0.05, hold, R, G, B, alpha, 0, 0.0, 0.0, 0.0);
+		ShowSyncHudText(client, g_hHudDisplayASD, "%s %s %s", (A?"A":"-"), (S?"S":"-"), (D?"D":"-"));
 
-			Format(wasMoveLeft[iClientToShow], sizeof(wasMoveLeft), AEnabled ? "A" : "-");
-			Format(wasBack[iClientToShow], sizeof(wasBack), SEnabled ? "S" : "-");
-			Format(wasMoveRight[iClientToShow], sizeof(wasMoveRight), DEnabled ? "D" : "-");
+		SetHudTextParams(X+0.09, Y+0.05, hold, R, G, B, alpha, 0, 0.0, 0.0, 0.0);
+		ShowSyncHudText(client, g_hHudDisplayDuck, (Duck?"Duck":""));
 
-			Format(g_sButtons, sizeof(g_sButtons), "%s %s %s", wasMoveLeft[iClientToShow], wasBack[iClientToShow], wasMoveRight[iClientToShow]);
-			SetHudTextParams(g_iSkeysXLoc[client] + 0.04 - (AEnabled ?  0.0042 : 0.0) - (SEnabled ? 0.0015 : 0.0), g_iSkeysYLoc[client]+0.05, 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
-			ShowSyncHudText(client, g_hHudDisplayASD, g_sButtons);
-		}
-		else {
-			Format(g_sButtons, sizeof(g_sButtons), "- - -");
-			SetHudTextParams(g_iSkeysXLoc[client]+0.04, g_iSkeysYLoc[client]+0.05, 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
-			ShowSyncHudText(client, g_hHudDisplayASD, g_sButtons);
-		}
+		SetHudTextParams(X+0.09, Y, hold, R, G, B, alpha, 0, 0.0, 0.0, 0.0);
+		ShowSyncHudText(client, g_hHudDisplayJump, (Jump?"Jump":""));
 
-		if (buttonsToShow & IN_DUCK || isEditing) {
-			SetHudTextParams(g_iSkeysXLoc[client]+0.09, g_iSkeysYLoc[client]+0.05, 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
-			ShowSyncHudText(client, g_hHudDisplayDuck, "Duck");
-		}
-		if (buttonsToShow & IN_JUMP || isEditing) {
-			SetHudTextParams(g_iSkeysXLoc[client]+0.09, g_iSkeysYLoc[client], 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
-			ShowSyncHudText(client, g_hHudDisplayJump, "Jump");
-		}
-		if (buttonsToShow & IN_ATTACK || isEditing) {
-			SetHudTextParams(g_iSkeysXLoc[client], g_iSkeysYLoc[client], 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
-			ShowSyncHudText(client, g_hHudDisplayM1, "M1");
-		}
-		if (buttonsToShow & IN_ATTACK2 || isEditing) {
-			SetHudTextParams(g_iSkeysXLoc[client], g_iSkeysYLoc[client]+0.05, 0.3, g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], 255, 1, 0.0, 0.0, 0.01);
-			ShowSyncHudText(client, g_hHudDisplayM2, "M2");
-		}
+		SetHudTextParams(X, Y, hold, R, G, B, alpha, 0, 0.0, 0.0, 0.0);
+		ShowSyncHudText(client, g_hHudDisplayM1, (M1?"M1":""));
+
+		SetHudTextParams(X, Y+0.05, hold, R, G, B, alpha, 0, 0.0, 0.0, 0.0);
+		ShowSyncHudText(client, g_hHudDisplayM2, (M2?"M2":""));
 		//.54 x def and .4 y def
 	}
 
-	if ((g_iButtons[client] & (IN_ATTACK|IN_ATTACK2)) > 0) {
-		if (!IsClientObserver(client) && g_bAmmoRegen[client]) {
-			for (int i = 0; i <= 2; i++) {
-				ReSupply(client, g_iClientWeapons[client][i]);
-			}
+	if (g_bAmmoRegen[client] && buttons & (IN_ATTACK|IN_ATTACK2) && !IsClientObserver(client)) {
+		for (int i = 0; i <= 2; i++) {
+			ReSupply(client, g_iClientWeapons[client][i]);
 		}
 	}
+
 	if (g_bRaceLocked[client]) {
 		vel = NULL_VECTOR;
 	}

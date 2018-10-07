@@ -8,7 +8,7 @@ public Action HookVoice(UserMsg msg_id, BfRead bf, const int[] players, int play
 	int vMenu1 = bf.ReadByte();
 	int vMenu2 = bf.ReadByte();
 
-	if (IsPlayerAlive(client) && IsValidClient(client) && g_cvarPluginEnabled.BoolValue) {
+	if (g_cvarPluginEnabled.BoolValue && IsValidClient(client) && IsPlayerAlive(client)) {
 		if ((vMenu1 == 0) && (vMenu2 == 0) && !g_bHardcore[client] && (!g_iRaceID[client] || g_fRaceTime[client] != 0.0)) {
 			for (int i = 0; i <= 2; i++) {
 				ReSupply(client, g_iClientWeapons[client][i]);

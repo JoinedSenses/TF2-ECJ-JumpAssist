@@ -22,10 +22,6 @@ float
 	, g_fLastSavePos[MAXPLAYERS+1][3]
 	, g_fLastSaveAngles[MAXPLAYERS+1][3];
 
-void JA_SendQuery(char[] query, int client) {
-	g_Database.Query(SQL_OnSetKeys, query, client);
-}
-
 void ConnectToDatabase() {
 	Database.Connect(SQL_OnConnect, "jumpassist");
 }
@@ -92,7 +88,9 @@ void RunDBCheck() {
 			... "SteamID TEXT NOT NULL, "
 			... "SKEYS_RED_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
 			... "SKEYS_GREEN_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
-			... "SKEYS_BLUE_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255"
+			... "SKEYS_BLUE_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
+			... "SKEYSX DECIMAL(5,4) NOT NULL DEFAULT 0.54, "
+			... "SKEYSY DECIMAL(5,4) NOT NULL DEFAULT 0.40"
 		... ")"
 		, increment
 	);
@@ -155,7 +153,10 @@ void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] erro
 	else if (results.FetchRow()) {
 		g_iSkeysRed[data] = results.FetchInt(2);
 		g_iSkeysGreen[data] = results.FetchInt(3);
-		g_iSkeysBlue[data] = results.FetchInt(4);	
+		g_iSkeysBlue[data] = results.FetchInt(4);
+
+		g_fSkeysXLoc[data] = results.FetchFloat(5);
+		g_fSkeysYLoc[data] = results.FetchFloat(6);
 
 		g_bLoadedPlayerSettings[data] = true;
 	}
@@ -419,7 +420,7 @@ void LoadMapCFG() {
 
 void CreatePlayerProfile(int client) {
 	char query[1024];
-	Format(query, sizeof(query), "INSERT INTO player_profiles values(null, '%s', '255', '255', '255')", g_sClientSteamID[client]);
+	Format(query, sizeof(query), "INSERT INTO player_profiles values(null, '%s', '255', '255', '255', '0.54', '0.40')", g_sClientSteamID[client]);
 	g_Database.Query(SQL_OnCreatePlayerProfile, query, client);
 }
 
