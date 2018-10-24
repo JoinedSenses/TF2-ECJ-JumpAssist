@@ -436,13 +436,11 @@ Action cmdMapSet(int client, int args) {
 		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Mapset_Help", cTheme2, cDefault);
 		return Plugin_Handled;
 	}
-	int
-		g_iTeam
-		, g_iLock;
-	char
-		arg1[MAX_NAME_LENGTH]
-		, arg2[MAX_NAME_LENGTH]
-		, query[512];
+	int g_iTeam;
+	int g_iLock;
+	char arg1[16];
+	char arg2[16];
+	char query[512];
 
 	GetCmdArg(1, arg1, sizeof(arg1));
 	GetCmdArg(2, arg2, sizeof(arg2));

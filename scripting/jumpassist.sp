@@ -1,169 +1,4 @@
 /*
-             *     ,MMM8&&&.            *
-                  MMMM88&&&&&    .
-                 MMMM88&&&&&&&
-     *           MMM88&&&&&&&&
-                 MMM88&&&&&&&&
-                 'MMM88&&&&&&'
-                   'MMM8&&&'      *
-          |\___/|
-          )     (             .              '
-         =\     /=
-           )===(       *
-          /     \
-          |     |
-         /       \
-         \       /
-  _/\_/\_/\__  _/_/\_/\_/\_/\_/\_/\_/\_/\_/\_
-  |  |  |  |( (  |  |  |  |  |  |  |  |  |  |
-  |  |  |  | ) ) |  |  |  |  |  |  |  |  |  |
-  |  |  |  |(_(  |  |  |  |  |  |  |  |  |  |
-  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-  -----------SHOUTOUT TO MEOWMEOW------------
-	**********************************************************************************************************************************
-	*	CHANGE LOG
-	*
-	* Done:
-	* 0.6.1b - Minor performance improvement. (Constantly checking if the map had regen on every player profile loaded. Changed to check once per map.)
-	*
-	* 0.6.2b - JumpAssist NOW REQUIRES SDKHOOKS to be installed.
-	* 0.6.2b - Fixed !superman not displaying the correct text/action after a team/class change.
-	* 0.6.2b - Re-did the ammo resupply. Correctly supports both jumper weapons now, and other unlocks (Not all weapons added yet).
-	* 0.6.2b - Fixed a typo in CreatePlayerProfile where it defaulted the FOV to 90 instead of 70.
-	* 0.6.2b - Fixed a couple bugs in LoadPlayerProfile. Everything should load correctly now.
-	* 0.6.2b - Fixed a few missing pieces of text in the jumpassist translations file.
-	* 0.6.2b - Removed "battle protection" (server admins should make use of !mapset team <red|blu>)
-	*
-	* 0.6.3b - Re-worked the cap message stuff. Should be 99% better.
-	* 0.6.3b - Removed some unreleased stuff I was working on in JA.
-	*
-	* 0.6.4b - Players using the jumper weapons can no longer use !hardcore.
-	* 0.6.4b - Added more to the translations file.
-	*
-	* 0.6.5b - Added SteamTools
-	* 0.6.5b - Added ja_url make your own custom help file.
-	*
-	* 0.6.6b - Random bug fix
-	*
-	* 0.6.7b - Better error checking
-	*
-	* 0.6.8 - Added auto updating to jumpassist. Which makes SteamTools a solid requirement.
-	*
-	* 0.6.9 - Changed the code around to be more easily maintained.
-	*
-	* 0.7.0 - Added both options for sqlite and mysql data storage.
-	*
-	* UNOFFICIAL UPDATES BY TALKINGMELON
-	* 0.7.1 
-	*		- Regen is working better and skeys has less delay. Control points should work properly.
-	*       - JA can now be used without a database configured.
-	*       - Restart works properly.
-	*       - The system for saving locations for admins is now working properly
-	*       - Also general bugfixes
-	*
-	* 0.7.2
-	*		- Moved skeys and added m1/m2 support
-	*		- Changed how commands are recognized to the way that is normally supported
-	*		- General bugfixes
-	*
-	* 0.7.3
-	*		- Added support for updater plugin
-	*
-	* 0.7.4
-	*		- Added race functionality
-	*
-	* 0.7.5
-	*		- Fixed a number of racing bugs
-	*
-	* 0.7.6
-	*		- Racing now displays time in HH:MM:SS:MS or just MM:SS:MS if the time is short enough
-	*		- Reorganized code to make it more readable and understandable
-	*		- Spectators now get race alerts if they are spectating someone in a race
-	*		- r_inv now works with argument targeting - ex !r_inv talkingmelon works now
-	*		- restart no longer displays twice
-	*		- When a player loads into a map, their previous caps will no longer be remembered - should fix the notification issue
-	*		- Sounds should play properly
-	*		- r_info added
-	*		- r_spec added
-	*		- r_set added
-	*
-	* 0.7.7
-	*		- Can invite multiple people at once with the r_inv command
-	*		- Fixed server_race bug
-	*		- Tried to fix sounds (pls)
-	*		- r_list command added
-	*
-	* 0.7.8
-	*		- Ammo regen after plugin reload working
-	*		- skeys_loc now allows you to set the location of skeys on the screen
-	*		- Actually fixed no alert on cp problem
-	*		- r_list and r_info now work for spectators of a race
-	*
-	* 0.7.9
-	*		- Fixed undo bug that let you change classes and teams and still have your old teleport
-	*		- Timer sould work in all time zones properly now
-	*		- Fixed calling for medic giving regen during race
-	*
-	* 0.7.10
-	*		- Added !spec command
-	*		- Fixed potential for tele notification spam
-	*		- Improved the usability of the help menu
-	*
-	* 0.7.11
-	*		- Fixed timer team bug
-	*		- Fixed SQL ReloadPlayerData bug (maybe?)
-	*
-	* 0.8.0
-	*		- Moved upater to github repository
-	*		- imported jumptracer
-	*		- added cvar ja_update_branch for server operators to select updating from
-	*		- from dev or master.  Must be set in server.cfg.
-	*
-	* 0.8.0+ - See GitHub logs for future changes (Too many to list now)
-	* This plugin is now maintained by JoinedSenses, primarily on http://github.com/JoinedSenses
-	*
-	**********************************************************************************************************************************
-	* TODO: (Nolem's notes - Some may now be irrelevant)
-	*		- give race a better UI
-	*		- R_LIST TIMES AFTER PLAYER DC
-	*		- LOG TO SERVER WHEN THE MAPSET COMMAND IS USED
-	*		- STARTING A SECOND RACE WITH THE FIRST ONE STILL IN PROGRESS OFTEN GIVES - YOU ARE NOT THE RACE LOBBY LEADER if everyone types !r_leave it works
-	*		- maybe leave race when not leader of old race to start new one not work?
-	*		- Plugin cvar enabled for all functions
-	*		- ADD CVAR TO TOGGLE FINISH ALERT TO SERVER / FIX SPAM POSSIBLITY - SPEC POINTS REACHED BUG THING
-	*		- PLAYER GOT TO CP IN TIME NOT JUST PLAYER GOT TO CP - WOULD MAKE THE TIME PART GOODOODOOODOD
-	*		- TEST RACE SPEC AND ADD FUNCTIONALITY FOR ONLY SHOWING PEOPLE IN A RACE WHEN ATTACK1 AND 2 ARE USED
-	*		- rematch typa thing
-	*		- Polish for release.
-	*		- Support for jtele with one argument
-	*		- Support for sequence of cps
-	* TODO : (JoinedSenses' notes)
-	*		- Fix race menus, perhaps build on map start and set ITEMDRAW
-	*		- Continuously improve this plugin as my dev skills improve
-	**********************************************************************************************************************************
-	* BUGS: (Nolem's notes)
-	* I'm sure there are plenty
-	* Change to spec during race
-	* Race with 3 people - 2 finish - leader is one of them and starts new race inviting the other finisher and starts
-	* Race keeps other person in it - may not have transfered leadership/may not leave race on !race if you are in one    --- I think i fixed this bug but is is difficult to test
-	*
-	* TESTERS
-	* - Froyo
-	* - Zigzati
-	* - Elie
-	* - Fossiil
-	* - Melon
-	* - AI
-	* - Jondy
-	* - Fractal
-	* - Torch
-	* - Velks
-	* - Jondy
-	* - Pizza Butt 8)
-	* - 0beezy
-	* - JoinedSenses
-	* - Literally anyone who plays on a server using this plugin
 	**********************************************************************************************************************************
 	* NOTES:
 	*
@@ -403,9 +238,6 @@ void Hook_Func_regenerate() {
 }
 
 void HookFunc(int entity) {
-#if defined DEBUG
-	LogMessage("Hooked entity %d", entity);
-#endif
 	SDKUnhook(entity, SDKHook_StartTouch, OnPlayerStartTouchFuncRegenerate);
 	SDKUnhook(entity, SDKHook_Touch, OnPlayerStartTouchFuncRegenerate);
 	SDKUnhook(entity, SDKHook_EndTouch, OnPlayerStartTouchFuncRegenerate);
@@ -505,7 +337,6 @@ public void OnClientPostAdminCheck(int client) {
 /*****************************************************************************************************************
 												Functions
 *****************************************************************************************************************/
-//I SHOULD MAKE THIS DO A PAGED MENU IF IT DOESNT ALREADY IDK ANY MAPS WITH THAT MANY CPS ANYWAY
 Action cmdRaceInitialize(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client)) {
 		return Plugin_Handled;
@@ -670,7 +501,7 @@ int Menu_InvitePlayers(Menu menu, MenuAction action, int param1, int param2) {
 
 			if (g_bWaitingInvite[StringToInt(info)]) {
 				PrintColoredChat(param1, "[%sJA\x01]%s %N has already been invited", cTheme1, cTheme2, info);
-				menu.DisplayAt(param1, GetMenuSelectionPosition(), MENU_TIME_FOREVER);
+				menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
 				return 0;
 			}
 			PrintColoredChat(param1, "[%sJA\x01] You have invited%s %N \x01to race.", cTheme1, cTheme2, StringToInt(info));
@@ -685,7 +516,7 @@ int Menu_InvitePlayers(Menu menu, MenuAction action, int param1, int param2) {
 			g_iRaceInvitedTo[StringToInt(info)] = param1;
 			g_bWaitingInvite[StringToInt(info)] = true;
 
-			menu.DisplayAt(param1, GetMenuSelectionPosition(), MENU_TIME_FOREVER);		
+			menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);		
 		}
 		case MenuAction_Cancel: {
 			g_iRaceID[param1] = 0;
@@ -1221,12 +1052,20 @@ void LeaveRace(int client, bool raceFinished = false) {
 
 void ResetRace(int raceID) {
 	for (int i = 0; i <= MaxClients; i++) {
-		if (g_iRaceID[i] == raceID) {	
-			DataPack dp = new DataPack();
-			dp.WriteCell(i);
-			dp.WriteCell(raceID);
-			CreateTimer(3.0, timerPostRace1, dp);
-			PrintColoredChat(i, "[%sJA\x01] Race has%s ended\x01.", cTheme1, cTheme2);
+		if (g_iRaceID[i] == raceID) {
+			g_iRaceID[i] = 0;
+			g_iRaceStatus[i] = STATUS_NONE;
+			g_fRaceTime[i] = g_fRaceFirstTime[i] = g_fRaceStartTime[i] = 0.0;
+			g_bRaceLocked[i] = g_bRaceAmmoRegen[i] = false;
+			g_iRaceEndPoint[i] = -1;
+			g_bRaceClassForce[i] = true;
+			if (IsClientInGame(i)) {
+				DataPack dp = new DataPack();
+				dp.WriteCell(i);
+				dp.WriteCell(raceID);
+				CreateTimer(3.0, timerPostRace1, dp);
+				PrintColoredChat(i, "[%sJA\x01] Race has%s ended\x01.", cTheme1, cTheme2);				
+			}
 		}
 		g_fRaceTimes[raceID][i] = 0.0;
 		g_iRaceFinishedPlayers[raceID][i] = 0;
@@ -2057,7 +1896,7 @@ void LockCPs() {
 }
 
 Action cmdRestart(int client, int args) {
-	if (!IsValidClient(client) || IsClientObserver(client) || !g_cvarPluginEnabled.BoolValue) {
+	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client) || IsClientObserver(client)) {
 		return Plugin_Handled;
 	}
 	EraseLocs(client);
@@ -2073,7 +1912,7 @@ Action cmdRestart(int client, int args) {
 }
 
 void SendToStart(int client) {
-	if (!IsValidClient(client) || IsClientObserver(client) || !g_cvarPluginEnabled.BoolValue) {
+	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client) || IsClientObserver(client)) {
 		return;
 	}
 	g_bUsedReset[client] = true;
@@ -2122,7 +1961,7 @@ bool IsValidClient(int client) {
 }
 
 bool IsValidPosition(const float vect[3]) {
-	return vect[0] != 0.0 || vect[1] != 0.0 || vect[2] != 0.0;
+	return (vect[0] != 0.0 || vect[1] != 0.0 || vect[2] != 0.0);
 }
 
 int FindTarget2(int client, const char[] target, bool nobots = false, bool immunity = true) {
@@ -2170,14 +2009,8 @@ void SetCvarValues() {
 *****************************************************************************************************************/
 public Action OnPlayerStartTouchFuncRegenerate(int entity, int other) {
 	if (other <= MaxClients && g_AL_NoFuncRegen.Length > 0 && g_AL_NoFuncRegen.FindValue(other) != -1) {
-#if defined DEBUG_FUNC_REGEN
-		LogMessage("Entity %d touch %d Prevented", entity, other);
-#endif
 		return Plugin_Handled;
 	}
-#if defined DEBUG_FUNC_REGEN
-	LogMessage("Entity %d touch %d Allowed", entity, other);
-#endif
 	return Plugin_Continue;
 }
 
@@ -2205,7 +2038,6 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	int area = event.GetInt("area");
 	
 	char g_sClass[33];
-	char playerName[64];
 	char cpName[32];
 
 	if (g_bCPTouched[client][area] && g_iRaceID[client] == 0) {
@@ -2213,7 +2045,6 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	}
 	
 	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(view_as<int>(g_TFClientClass[client])));
-	GetClientName(client, playerName, 64);
 
 	int entity;
 	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1) {
@@ -2290,7 +2121,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 			GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 			for (int i = 1; i <= MaxClients; i++) {
 				if (IsClientInGame(i)) {
-					PrintColoredChat(i, "[%sJA\x01] %s%s%s\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", cTheme1, playerName, cTheme1, cpName, cTheme1, g_sClass);
+					PrintColoredChat(i, "[%sJA\x01] %s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", cTheme2, client, cTheme2, cpName, cTheme2, g_sClass);
 					EmitSoundToClient(i, "misc/freeze_cam.wav");
 				}
 			}
@@ -2422,7 +2253,7 @@ Action timerPostRace2(Handle timer, DataPack dp) {
 	dp.Reset();
 	int client = dp.ReadCell();
 	int raceID = dp.ReadCell();
-
+	delete dp;
 	if (g_iRaceID[client] == raceID) {	
 		g_iRaceID[client] = 0;
 		g_iRaceStatus[client] = STATUS_NONE;
