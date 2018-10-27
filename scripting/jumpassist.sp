@@ -96,7 +96,7 @@ RaceStatus
 	  g_iRaceStatus[MAXPLAYERS+1];
 
 
-#define PLUGIN_VERSION "1.2.1"
+#define PLUGIN_VERSION "1.2.2"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cDefault 0x01
@@ -296,6 +296,7 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 	g_bUnkillable[client] = false;
 	g_sClientSteamID[client] = "";
 	EraseLocs(client);
+	g_iRaceID[client] = 0;
 	
 	if (g_iRaceID[client] != 0) {
 		LeaveRace(client);
@@ -1001,6 +1002,7 @@ void LeaveRace(int client, bool raceFinished = false) {
 	}
 	if (GetPlayersStillRacing(raceID) < 2) {
 		ResetRace(raceID);
+		raceID = 0;
 	}
 	if (client == raceID) {
 		if (HasRaceStarted(raceID)) {
