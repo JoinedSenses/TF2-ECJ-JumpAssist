@@ -138,7 +138,7 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_regen", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_ammo", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_tele", cmdTele, "Teleports you to your current saved location.");
-	RegConsoleCmd("sm_g_bHideMessage", cmdg_bHideMessage, "Toggles display of JA messages, such as save and teleport");
+	RegConsoleCmd("sm_hidemessage", cmdHideMessage, "Toggles display of JA messages, such as save and teleport");
 
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a clients key's.");
 	RegConsoleCmd("sm_skeyscolor", cmdChangeSkeysColor, "Changes the color of the text for skeys.");
@@ -756,7 +756,7 @@ void PrintToRace(int raceID, char[] message, any ...) {
 	char output[1024];
 	VFormat(output, sizeof(output), message, 3);
 	for (int i = 1; i <= MaxClients; i++) {
-		if (IsClientInRace(i, raceID) || IsClientSpectatingRace(i, raceID)) {
+		if (IsClientInGame(i) && (IsClientInRace(i, raceID) || IsClientSpectatingRace(i, raceID))) {
 			PrintColoredChat(i, "%s", output);
 		}
 	}
@@ -1387,7 +1387,7 @@ Action cmdSendPlayer(int client,int args) {
 	return Plugin_Handled;
 }
 
-Action cmdg_bHideMessage(int client, int args) {
+Action cmdHideMessage(int client, int args) {
 	g_bHideMessage[client] = !g_bHideMessage[client];
 	PrintColoredChat(client, "[%sJA\x01] Messages will now be%s %s", cTheme1, cTheme2, g_bHideMessage[client] ? "hidden" : "displayed");
 	SetClientCookie(client, g_hJAMessageCookie, g_bHideMessage[client] ? "1" : "0");
@@ -1439,7 +1439,7 @@ void Teleport(int client) {
 	Format(sClass, sizeof(sClass), "%s", GetClassname(view_as<int>(g_TFClientClass[client])));
 	if (g_iClientTeam[client] == 2) {
 		Format(sTeam, sizeof(sTeam), "%T", "Red_Team", LANG_SERVER);
-		teamColor= "\x07ba5353";
+		teamColor = "\x07ba5353";
 	}
 	else if (g_iClientTeam[client] == 3) {
 		Format(sTeam, sizeof(sTeam), "%T", "Blu_Team", LANG_SERVER);
