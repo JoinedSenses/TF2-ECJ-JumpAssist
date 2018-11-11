@@ -11,4 +11,5 @@ Changed hardcore capture message and sound.
 Removed updater.  
 Removed goto, since that is now part of another plugin I use.  
 Commented out various unused commands and/or changed access to root admin.  
+Showkeys has been greatly changed. Now includes /skeyspos  
 Tons of other small misc changes.  
