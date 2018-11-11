@@ -6,7 +6,7 @@ I'll make documentation at some point, but for now, just dig through the source.
 Too many to really list at this point. This version is more efficient  
 Included regen for engineer metal.  
 Removed soundhook since it's now included within my hide plugin.  
-Updated database syntax.  
+Updated database syntax and structure.  
 Changed hardcore capture message and sound.  
 Removed updater.  
 Removed goto, since that is now part of another plugin I use.  
