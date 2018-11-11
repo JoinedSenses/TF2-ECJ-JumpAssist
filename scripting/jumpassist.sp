@@ -117,7 +117,7 @@ public Plugin myinfo = {
 }
 
 public void OnPluginStart() {
-	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	CreateConVar("jumpassist_version", PLUGIN_VERSION, "JumpAssist Version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	g_cvarHostname = FindConVar("hostname");
 	g_cvarWaitingForPlayers = FindConVar("mp_waitingforplayers_time");
 	g_cvarPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NOTIFY);
@@ -127,17 +127,22 @@ public void OnPluginStart() {
 	g_cvarSuperman = CreateConVar("ja_superman", "1", "Allows everyone to be invincible.", FCVAR_NOTIFY);
 
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
-	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Sends you back to the beginning without deleting your save..");
+	RegConsoleCmd("sm_jumptf", cmdJumpTF, "Shows the jump.tf website.");
+	RegConsoleCmd("sm_forums", cmdJumpForums, "Shows the jump.tf forums.");
+	RegConsoleCmd("sm_jumpassist", cmdJumpAssist, "Shows the forum page for JumpAssist.");
+
+	RegConsoleCmd("sm_s", cmdSave, "Saves your current position.");
+	RegConsoleCmd("sm_save", cmdSave, "Saves your current position.");
+	RegConsoleCmd("sm_t", cmdTele, "Teleports you to your current saved location.");
+	RegConsoleCmd("sm_tele", cmdTele, "Teleports you to your current saved location.");
 	RegConsoleCmd("sm_r", cmdReset, "Sends you back to the beginning without deleting your save.");
 	RegConsoleCmd("sm_reset", cmdReset, "Sends you back to the beginning without deleting your save.");
 	RegConsoleCmd("sm_restart", cmdRestart, "Deletes your save, and sends you back to the beginning.");
-	RegConsoleCmd("sm_s", cmdSave, "Saves your current position.");
-	RegConsoleCmd("sm_save", cmdSave, "Saves your current position.");
 	RegConsoleCmd("sm_undo", cmdUndo, "Restores your last saved position.");
-	RegConsoleCmd("sm_t", cmdTele, "Teleports you to your current saved location.");
+
 	RegConsoleCmd("sm_regen", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_ammo", cmdToggleAmmo, "Regenerates weapon ammunition");
-	RegConsoleCmd("sm_tele", cmdTele, "Teleports you to your current saved location.");
+	
 	RegConsoleCmd("sm_hidemessage", cmdHideMessage, "Toggles display of JA messages, such as save and teleport");
 
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a clients key's.");
@@ -147,9 +152,8 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_skeysloc", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
 
 	RegConsoleCmd("sm_superman", cmdUnkillable, "Makes you strong like superman.");
-	RegConsoleCmd("sm_jumptf", cmdJumpTF, "Shows the jump.tf website.");
-	RegConsoleCmd("sm_forums", cmdJumpForums, "Shows the jump.tf forums.");
-	RegConsoleCmd("sm_jumpassist", cmdJumpAssist, "Shows the forum page for JumpAssist.");
+	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Sends you back to the beginning without deleting your save..");
+
 	RegConsoleCmd("sm_race", cmdRaceInitialize, "Initializes a new race.");
 	RegConsoleCmd("sm_r_leave", cmdRaceLeave, "Leave the current race.");
 	RegConsoleCmd("sm_race_leave", cmdRaceLeave, "Leave the current race.");
