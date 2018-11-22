@@ -262,6 +262,7 @@ public void OnMapStart() {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
+	FindConVar("mp_respawnwavetime").SetFloat(0.0);
 	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 
 	for (int i = 1; i <= MaxClients ; i++) {
