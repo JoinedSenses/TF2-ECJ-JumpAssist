@@ -179,7 +179,6 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_mapset", cmdMapSet, ADMFLAG_GENERIC, "Change map settings");
 	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
 
-	HookEvent("player_changeclass", eventPlayerChangeClass);
 	HookEvent("player_spawn", eventPlayerSpawn, EventHookMode_Post);
 	HookEvent("player_death", eventPlayerDeath);
 	HookEvent("controlpoint_starttouch", eventTouchCP);
@@ -188,6 +187,8 @@ public void OnPluginStart() {
 	HookEvent("player_disconnect", eventPlayerDisconnect);
 
 	AddCommandListener(listenerJoinTeam, "jointeam");
+	AddCommandListener(listenerJoinClass, "joinclass");
+	AddCommandListener(listenerJoinClass, "join_class");
 	
 	g_cvarAmmoCheat.AddChangeHook(cvarAmmoCheatChanged);
 	g_cvarWelcomeMsg.AddChangeHook(cvarWelcomeMsgChanged);
@@ -2119,18 +2120,14 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	return Plugin_Continue;
 }
 
-public Action eventPlayerChangeClass(Event event, const char[] name, bool dontBroadcast) {
+public Action listenerJoinClass(int client, const char[] command, int args){
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Continue;
 	}
-	int client = GetClientOfUserId(event.GetInt("userid"));
-
 	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client) && g_bRaceClassForce[g_iRaceID[client]]) {
-		TF2_SetPlayerClass(client, g_TFClientClass[client]);
 		PrintColoredChat(client, "[%sJA\x01] Cannot change class while racing.", cTheme1);
-		return Plugin_Continue;
+		return Plugin_Handled;
 	}
-	
 	return Plugin_Continue;
 }
 
