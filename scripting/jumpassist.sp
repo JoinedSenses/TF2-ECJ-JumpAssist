@@ -32,7 +32,7 @@
 #define YPOSDEFAULT 0.4
 
 enum RaceStatus {
-	STATUS_NONE,
+	STATUS_NONE = 0,
 	STATUS_INVITING,
 	STATUS_COUNTDOWN,
 	STATUS_RACING,
@@ -40,8 +40,15 @@ enum RaceStatus {
 }
 
 enum {
-	DISPLAY,
+	DISPLAY = 0,
 	EDIT
+}
+
+enum {
+	TEAM_UNASSIGNED = 0,
+	TEAM_SPECTATOR,
+	TEAM_RED,
+	TEAM_BLUE
 }
 
 int
@@ -95,8 +102,7 @@ TFClassType
 RaceStatus
 	  g_iRaceStatus[MAXPLAYERS+1];
 
-
-#define PLUGIN_VERSION "1.2.2"
+#define PLUGIN_VERSION "1.2.3"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cDefault 0x01
@@ -122,9 +128,9 @@ public void OnPluginStart() {
 	g_cvarWaitingForPlayers = FindConVar("mp_waitingforplayers_time");
 	g_cvarPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NOTIFY);
 	g_cvarWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NOTIFY);
-	g_cvarAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_NOTIFY);
-	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
-	g_cvarSuperman = CreateConVar("ja_superman", "1", "Allows everyone to be invincible.", FCVAR_NOTIFY);
+	g_cvarAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo?", FCVAR_NOTIFY);
+	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits?", FCVAR_NOTIFY);
+	g_cvarSuperman = CreateConVar("ja_superman", "1", "Allows everyone to be invincible?", FCVAR_NOTIFY);
 
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
 	RegConsoleCmd("sm_jumptf", cmdJumpTF, "Shows the jump.tf website.");
@@ -145,14 +151,14 @@ public void OnPluginStart() {
 	
 	RegConsoleCmd("sm_hidemessage", cmdHideMessage, "Toggles display of JA messages, such as save and teleport");
 
-	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a clients key's.");
+	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a client's keys.");
 	RegConsoleCmd("sm_skeyscolor", cmdChangeSkeysColor, "Changes the color of the text for skeys.");
 	RegConsoleCmd("sm_skeyscolors", cmdChangeSkeysColor, "Changes the color of the text for skeys.");
 	RegConsoleCmd("sm_skeyspos", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
 	RegConsoleCmd("sm_skeysloc", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
 
 	RegConsoleCmd("sm_superman", cmdUnkillable, "Makes you strong like superman.");
-	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Sends you back to the beginning without deleting your save..");
+	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Enables hardcore mode (No regen, no saves)");
 
 	RegConsoleCmd("sm_race", cmdRaceInitialize, "Initializes a new race.");
 	RegConsoleCmd("sm_r_leave", cmdRaceLeave, "Leave the current race.");
@@ -173,14 +179,15 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_mapset", cmdMapSet, ADMFLAG_GENERIC, "Change map settings");
 	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
 
-	HookEvent("player_team", eventPlayerChangeTeam);
 	HookEvent("player_changeclass", eventPlayerChangeClass);
-	HookEvent("player_spawn", eventPlayerSpawn);
+	HookEvent("player_spawn", eventPlayerSpawn, EventHookMode_Post);
 	HookEvent("player_death", eventPlayerDeath);
 	HookEvent("controlpoint_starttouch", eventTouchCP);
 	HookEvent("teamplay_round_start", eventRoundStart);
 	HookEvent("post_inventory_application", eventInventoryUpdate);
 	HookEvent("player_disconnect", eventPlayerDisconnect);
+
+	AddCommandListener(listenerJoinTeam, "jointeam");
 	
 	g_cvarAmmoCheat.AddChangeHook(cvarAmmoCheatChanged);
 	g_cvarWelcomeMsg.AddChangeHook(cvarWelcomeMsgChanged);
@@ -236,9 +243,10 @@ void TF2_SetGameType() {
 // Support for beggers bazooka
 void Hook_Func_regenerate() {
 	int entity = -1;
-	while ((entity = FindEntityByClassname(entity, "func_regenerate")) != INVALID_ENT_REFERENCE)
+	while ((entity = FindEntityByClassname(entity, "func_regenerate")) != INVALID_ENT_REFERENCE) {
 		// Support for concmap*, and quad* maps that are imported from TFC.
 		HookFunc(entity);
+	}
 }
 
 void HookFunc(int entity) {
@@ -255,6 +263,7 @@ public void OnMapStart() {
 		return;
 	}
 	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
+
 	for (int i = 1; i <= MaxClients ; i++) {
 		ResetRace(i);
 		g_iLastTeleport[i] = 0;
@@ -268,8 +277,8 @@ public void OnMapStart() {
 
 	TF2_SetGameType();
 
-	int iCP = -1;
 	g_iCPs = 0;
+	int iCP = -1;
 	while ((iCP = FindEntityByClassname(iCP, "trigger_capture_area")) != -1) {
 		g_iCPs++;
 	}
@@ -1169,10 +1178,6 @@ Action cmdToggleHardcore(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
-	if (IsUsingJumper(client)) {
-		PrintColoredChat(client, "[%sJA\x01] %t", cTheme1, "Jumper_Command_Disabled");
-		return Plugin_Handled;
-	}
 	Hardcore(client);
 	return Plugin_Handled;
 }
@@ -1271,35 +1276,6 @@ int HelpMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 			delete menu;
 		}
 	}
-}
-
-bool IsUsingJumper(int client) {
-	if (!IsValidClient(client)) {
-		return false;
-	}
-	if (g_TFClientClass[client] == TFClass_Soldier) {
-		if (!IsValidWeapon(g_iClientWeapons[client][0])) {
-			return false;
-		}
-		int sol_weap = GetEntProp(g_iClientWeapons[client][0], Prop_Send, "m_iItemDefinitionIndex");
-		switch (sol_weap) {
-			case 237: {
-				return true;
-			}
-		}
-	}
-	else if (g_TFClientClass[client] == TFClass_DemoMan) {
-		if (!IsValidWeapon(g_iClientWeapons[client][1])) {
-			return false;
-		}
-		int dem_weap = GetEntProp(g_iClientWeapons[client][1], Prop_Send, "m_iItemDefinitionIndex");
-		switch (dem_weap) {
-			case 265: {
-				return true;
-			}
-		}
-	}
-	return false;
 }
 
 void CheckBeggers(int client) {
@@ -2154,33 +2130,78 @@ public Action eventPlayerChangeClass(Event event, const char[] name, bool dontBr
 		return Plugin_Continue;
 	}
 	
-	//TF2_RespawnPlayer(client);
 	return Plugin_Continue;
 }
 
-public Action eventPlayerChangeTeam(Event event, const char[] name, bool dontBroadcast) {
+public Action listenerJoinTeam(int client, const char[] command, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
+		return Plugin_Continue;
+	}
+
+	int raceID = g_iRaceID[client];
+	int oldTeam = GetClientTeam(client);
+	int newTeam;
+
+	char arg[16];
+	GetCmdArg(1, arg, sizeof(arg));
+
+	if (StrEqual(arg, "spectate", false)) {
+		newTeam = TEAM_SPECTATOR;
+	}
+	else if (StrEqual(arg, "red", false)) {
+		newTeam = TEAM_RED;
+	}
+	else if (StrEqual(arg, "blue", false)) {
+		newTeam = TEAM_BLUE;
+	}
+	else {
 		return Plugin_Handled;
 	}
-	int client = GetClientOfUserId(event.GetInt("userid"));
-	int raceID = g_iRaceID[client];
 
-	g_iClientTeam[client] = event.GetInt("team");
+	switch (oldTeam) {
+		case TEAM_UNASSIGNED: {
+			g_iClientTeam[client] = newTeam;
+			return Plugin_Continue;
+		}
+		case TEAM_SPECTATOR: {
+			TF2_RespawnPlayer(client);			
+		}
+	}
 
 	if (raceID && (g_iRaceStatus[raceID] == STATUS_COUNTDOWN || g_iRaceStatus[raceID] == STATUS_RACING)) {
 		PrintColoredChat(client, "[%sJA\x01] You may not change teams during the race.", cTheme1);
 		return Plugin_Handled;
 	}
-	g_bUnkillable[client] = false;
-	if (g_iClientTeam[client]  == 1 || g_iForceTeam == 1 || g_iClientTeam[client]  == g_iForceTeam) {
+	DataPack dp = new DataPack();
+	dp.WriteCell(client);
+
+	if (newTeam == 1 || g_iForceTeam == 1 || newTeam == g_iForceTeam) {
 		g_fOrigin[client] = NULL_VECTOR;
 		g_fAngles[client] = NULL_VECTOR;
+		g_iClientTeam[client] = newTeam;
+		dp.WriteCell(newTeam);
 	}
 	else {
-		RequestFrame(ForceTeam, client);
+		dp.WriteCell(g_iForceTeam);
 	}
 	g_fLastSavePos[client] = NULL_VECTOR;
+
+	RequestFrame(framerequestChangeTeam, dp);
+
 	return Plugin_Handled;
+}
+
+public void framerequestChangeTeam(any data) {
+	DataPack dp = view_as<DataPack>(data);
+	dp.Reset();
+	int client = dp.ReadCell();
+	int team = dp.ReadCell();
+	delete dp;
+
+	ChangeClientTeam(client, team);
+	if (!view_as<bool>(TF2_GetPlayerClass(client))) {
+		PrintColoredChat(client, "\x01[%sJA\x01] Please choose a %sclass\x01.", cTheme1, cTheme2);
+	}
 }
 
 public void eventInventoryUpdate(Event event, char[] strName, bool bDontBroadcast) {
@@ -2196,14 +2217,21 @@ public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcas
 		return Plugin_Continue;
 	}
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	RequestFrame(Respawn, client);
+	RequestFrame(framerequestRespawn, client);
 	return Plugin_Continue;
+}
+
+void framerequestRespawn(any data) {
+	if (GetClientTeam(data) > 1) {
+		TF2_RespawnPlayer(data);
+	}
 }
 
 public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Continue;
 	}
+
 	int client = GetClientOfUserId(event.GetInt("userid"));
 
 	g_bUnkillable[client] = false;
@@ -2211,10 +2239,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	for (int i = 0; i <= 2; i++) {
 		g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
 	}
-	// Check if they have the jumper equipped, and hardcore is on for some reason.
-	if (IsUsingJumper(client) && g_bHardcore[client]) {
-		g_bHardcore[client] = false;
-	}
+
 	// Disable func_regenerate if player is using beggers bazooka
 	g_TFClientClass[client] = TF2_GetPlayerClass(client);
 	CheckBeggers(client);
@@ -2235,18 +2260,6 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 /*****************************************************************************************************************
 												Timers
 *****************************************************************************************************************/
-void ForceTeam(int client) {
-	if (client == 0) {
-		return;
-	}
-	EraseLocs(client);
-	if (IsClientInGame(client)) {
-		ChangeClientTeam(client, g_iForceTeam);
-		g_iClientTeam[client] = g_iForceTeam;
-	}
-	return;
-}
-
 Action timerPostRace1(Handle timer, DataPack dp) {
 	dp.Reset();
 	int client = dp.ReadCell();
@@ -2271,12 +2284,6 @@ Action timerPostRace2(Handle timer, DataPack dp) {
 
 	PostRaceClientRestore(client);
 	return Plugin_Handled;
-}
-
-void Respawn(int client) {
-	if (IsValidClient(client) && !IsPlayerAlive(client) && GetClientTeam(client) > 1) {
-		TF2_RespawnPlayer(client);
-	}
 }
 
 Action WelcomePlayer(Handle timer, any client) {

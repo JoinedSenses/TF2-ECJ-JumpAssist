@@ -119,10 +119,10 @@ void RunDBCheck() {
 void SQL_OnMapSettingsUpdated(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null) {
 		LogError("Query failed! %s", error);
-		ReplyToCommand(data, "\x01[%sJA\x01] %t (%s)", cTheme1, "Mapset_Not_Saved", cTheme2, cDefault, error);
+		PrintColoredChat(data, "[%sJA\x01] %t (%s)", cTheme1, "Mapset_Not_Saved", cTheme2, cDefault, error);
 	}
 	else {
-		ReplyToCommand(data, "\x01[%sJA\x01] %t", cTheme1, "Mapset_Saved", cTheme2, cDefault);
+		PrintColoredChat(data, "[%sJA\x01] %t", cTheme1, "Mapset_Saved", cTheme2, cDefault);
 	}
 }
 
@@ -424,7 +424,7 @@ void CreatePlayerProfile(int client) {
 	g_Database.Query(SQL_OnCreatePlayerProfile, query, client);
 }
 
-Action cmdMapSet(int client, int args) {
+public Action cmdMapSet(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
