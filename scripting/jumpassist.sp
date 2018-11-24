@@ -262,7 +262,7 @@ public void OnClientPostAdminCheck(int client) {
 	// Load the player profile.
 	if (!GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]))) {
 		KickClient(client, "Auth Error: Unable to retrieve steam id. Try reconnecting");
-		LogError("[JumpAssast] Unable to retrieve steam id on %N", client);
+		LogError("[JumpAssist] Unable to retrieve steam id on %N", client);
 		return;
 	}
 	SetPlayerDefaults(client);
