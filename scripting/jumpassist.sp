@@ -208,11 +208,11 @@ public void OnPluginStart() {
 			if (IsValidClient(client)) {
 				g_iClientTeam[client] = GetClientTeam(client);
 				g_TFClientClass[client] = TF2_GetPlayerClass(client);
-				
+				GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]));
+				SDKHook(client, SDKHook_WeaponEquipPost, OnWeaponEquipPost);
 				for (int i = 0; i <= 2; i++) {
 					g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
 				}
-				SDKHook(client, SDKHook_WeaponEquipPost, OnWeaponEquipPost);
 			}
 		}
 	}
@@ -255,20 +255,18 @@ public void OnClientPostAdminCheck(int client) {
 	if (!g_cvarPluginEnabled.BoolValue || IsFakeClient(client)) {
 		return;
 	}
-
-	// Hook the client
-	SDKHook(client, SDKHook_WeaponEquipPost, OnWeaponEquipPost);
-
+	SetPlayerDefaults(client);
 	// Load the player profile.
 	if (!GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]))) {
 		KickClient(client, "Auth Error: Unable to retrieve steam id. Try reconnecting");
 		LogError("[JumpAssist] Unable to retrieve steam id on %N", client);
 		return;
 	}
-	SetPlayerDefaults(client);
+	// Hook and load info for client
+	SDKHook(client, SDKHook_WeaponEquipPost, OnWeaponEquipPost);
 	LoadPlayerProfile(client);
 	
-	// Welcome message. 15 seconds seems to be a good number.
+	// Welcome message.
 	if (g_cvarWelcomeMsg.BoolValue) {
 		CreateTimer(15.0, WelcomePlayer, client);
 	}
@@ -305,7 +303,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 
 	int observerMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
 	int clientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
-	if (g_bSKeysEnabled[client] && !(buttons & IN_SCORE) && observerMode != 7) {
+	if (IsValidClient(clientToShow) && g_bSKeysEnabled[client] && !(buttons & IN_SCORE) && observerMode != 7) {
 		int
 			  buttonsToShow = g_iButtons[clientToShow]
 			, R = g_iSkeysRed[client]
@@ -959,7 +957,7 @@ void SaveLoc(int client) {
 
 		GetClientAbsOrigin(client, g_fOrigin[client]);
 		GetClientAbsAngles(client, g_fAngles[client]);
-		if (g_Database != null) {
+		if (g_Database != null && IsClientInGame(client)) {
 			GetPlayerData(client);
 		}
 	}

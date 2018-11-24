@@ -20,7 +20,6 @@ void SQL_OnConnect(Database db, const char[] error, any data) {
 		if (g_bLateLoad) {
 			for (int client = 1; client <= MaxClients; client++) {
 				if (IsValidClient(client)) {
-					GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]));
 					ReloadPlayerData(client);
 					LoadPlayerProfile(client);
 					LoadMapCFG();
@@ -58,10 +57,12 @@ void RunDBCheck() {
 		... ")"
 		, increment
 	);
+	SQL_LockDatabase(g_Database);
 	if (!SQL_FastQuery(g_Database, query)) {
 		SQL_GetError(g_Database, error, sizeof(error));
 		LogError("Failed to query (player_saves) (error: %s)", error);
 	}
+	SQL_UnlockDatabase(g_Database);
 	g_Database.Format(
 		query
 		, sizeof(query)
@@ -77,10 +78,13 @@ void RunDBCheck() {
 		... ")"
 		, increment
 	);
+	
+	SQL_LockDatabase(g_Database);
 	if (!SQL_FastQuery(g_Database, query)) {
 		SQL_GetError(g_Database, error, sizeof(error));
 		LogError("Failed to query (player_profiles) (error: %s)", error);
 	}
+	SQL_UnlockDatabase(g_Database);
 	g_Database.Format(
 		query
 		, sizeof(query)
@@ -93,10 +97,12 @@ void RunDBCheck() {
 		... ")"
 		, increment
 	);
+	SQL_LockDatabase(g_Database);
 	if (!SQL_FastQuery(g_Database, query)) {
 		SQL_GetError(g_Database, error, sizeof(error));
 		LogError("Failed to query (map_settings) (error: %s)", error);
 	}
+	SQL_UnlockDatabase(g_Database);
 }
 
 void LoadMapCFG() {
@@ -123,7 +129,7 @@ void SQL_OnMapSettingsLoad(Database db, DBResultSet results, const char[] error,
 
 void CreateMapCFG() {
 	char query[1024];
-	Format(query, sizeof(query), "INSERT INTO map_settings values(null, '%s', '1', '1')", g_sCurrentMap);
+	Format(query, sizeof(query), "INSERT INTO map_settings VALUES(null, '%s', '1', '1')", g_sCurrentMap);
 	g_Database.Query(SQL_CreateMapCFGCallback, query);
 	g_iForceTeam = g_iLockCPs = 1;
 }
@@ -135,28 +141,27 @@ void SQL_CreateMapCFGCallback(Database db, DBResultSet results, const char[] err
 }
 
 void SaveMapSettings(int client, char[] arg1, char[] arg2) {
-	int team;
 	int lock;
 	char query[512];
 
 	if (StrEqual(arg1, "team", false)) {
 		// Wonder if there is a prettier way of doing this.
 		if (StrEqual(arg2, "none", false)) {
-			team = g_iForceTeam = 1;
+			g_iForceTeam = 1;
 		}
 		else if (StrEqual(arg2, "red", false)) {
-			team = g_iForceTeam = 2;
+			g_iForceTeam = 2;
 			CheckTeams();
 		}
 		else if (StrEqual(arg2, "blue", false)) {
-			team = g_iForceTeam = 3;
+			g_iForceTeam = 3;
 			CheckTeams();
 		}
 		else {
 			PrintColoredChat(client, "[%sJA\x01] %sUsage\x01: !mapset team <red|blue|none>", cTheme1, cTheme1);
 			return;	
 		}
-		g_Database.Format(query, sizeof(query), "UPDATE map_settings SET Team = '%i' WHERE Map = '%s'", team, g_sCurrentMap);
+		g_Database.Format(query, sizeof(query), "UPDATE map_settings SET Team = '%i' WHERE Map = '%s'", g_iForceTeam, g_sCurrentMap);
 		g_Database.Query(SQL_OnMapSettingsUpdated, query, client);
 	}
 	else if (StrEqual(arg1, "lockcps", false)) {
