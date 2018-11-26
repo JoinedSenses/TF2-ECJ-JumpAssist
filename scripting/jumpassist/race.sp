@@ -1,10 +1,20 @@
+enum RaceStatus {
+	STATUS_NONE = 0,
+	STATUS_INVITING,
+	STATUS_COUNTDOWN,
+	STATUS_RACING,
+	STATUS_WAITING
+}
+
 int
 	  g_iRaceID[MAXPLAYERS+1]
 	, g_iRaceFinishedPlayers[MAXPLAYERS+1][MAXPLAYERS]
 	, g_iRaceEndPoint[MAXPLAYERS+1] = {-1, ...}
 	, g_iRaceInvitedTo[MAXPLAYERS+1]
 	, g_iRaceSpec[MAXPLAYERS+1]
-	, g_iCountDown[MAXPLAYERS+1];
+	, g_iCountDown[MAXPLAYERS+1]
+	, g_iClientPreRaceTeam[MAXPLAYERS+1]
+	, g_iClientPreRaceCPsTouched[MAXPLAYERS+1];
 float
 	  g_fRaceStartTime[MAXPLAYERS+1]
 	, g_fRaceTime[MAXPLAYERS+1]

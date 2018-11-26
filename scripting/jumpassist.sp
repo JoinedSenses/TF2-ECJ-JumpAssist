@@ -29,14 +29,6 @@
 #define COLORREDTEAM "\x07ba5353"
 #define COLORBLUETEAM "\x0782b6ff"
 
-enum RaceStatus {
-	STATUS_NONE = 0,
-	STATUS_INVITING,
-	STATUS_COUNTDOWN,
-	STATUS_RACING,
-	STATUS_WAITING
-}
-
 enum {
 	TEAM_UNASSIGNED = 0,
 	TEAM_SPECTATOR,
@@ -64,9 +56,7 @@ char
 int
 	  g_iLastTeleport[MAXPLAYERS+1]
 	, g_iClientTeam[MAXPLAYERS+1]
-	, g_iClientWeapons[MAXPLAYERS+1][3]
-	, g_iClientPreRaceTeam[MAXPLAYERS+1]
-	, g_iClientPreRaceCPsTouched[MAXPLAYERS+1];
+	, g_iClientWeapons[MAXPLAYERS+1][3];
 float
 	  g_fOrigin[MAXPLAYERS+1][3]
 	, g_fAngles[MAXPLAYERS+1][3]
@@ -90,7 +80,7 @@ ArrayList
 Database
 	  g_Database;
 
-#define PLUGIN_VERSION "2.0.0"
+#define PLUGIN_VERSION "2.1.0"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cDefault 0x01
@@ -101,6 +91,7 @@ Database
 #include "jumpassist/skeys.sp"
 #include "jumpassist/database.sp"
 #include "jumpassist/race.sp"
+#include "jumpassist/spec.sp"
 
 public Plugin myinfo = {
 	name = PLUGIN_NAME,
@@ -120,6 +111,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 }
 
 public void OnPluginStart() {
+	// CONVAR
 	CreateConVar("jumpassist_version", PLUGIN_VERSION, "JumpAssist Version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	g_cvarHostname = FindConVar("hostname");
 	g_cvarWaitingForPlayers = FindConVar("mp_waitingforplayers_time");
@@ -129,11 +121,19 @@ public void OnPluginStart() {
 	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits?", FCVAR_NOTIFY);
 	g_cvarSuperman = CreateConVar("ja_superman", "1", "Allows everyone to be invincible?", FCVAR_NOTIFY);
 
+	FindConVar("mp_respawnwavetime").SetInt(0);
+
+	g_cvarAmmoCheat.AddChangeHook(cvarAmmoCheatChanged);
+	g_cvarWelcomeMsg.AddChangeHook(cvarWelcomeMsgChanged);
+	g_cvarSuperman.AddChangeHook(cvarSupermanChanged);
+
+	// HELP
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
 	RegConsoleCmd("sm_jumptf", cmdJumpTF, "Shows the jump.tf website.");
 	RegConsoleCmd("sm_forums", cmdJumpForums, "Shows the jump.tf forums.");
 	RegConsoleCmd("sm_jumpassist", cmdJumpAssist, "Shows the forum page for JumpAssist.");
 
+	// GENERAL
 	RegConsoleCmd("sm_s", cmdSave, "Saves your current position.");
 	RegConsoleCmd("sm_save", cmdSave, "Saves your current position.");
 	RegConsoleCmd("sm_t", cmdTele, "Teleports you to your current saved location.");
@@ -142,7 +142,6 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_reset", cmdReset, "Sends you back to the beginning without deleting your save.");
 	RegConsoleCmd("sm_restart", cmdRestart, "Deletes your save, and sends you back to the beginning.");
 	RegConsoleCmd("sm_undo", cmdUndo, "Restores your last saved position.");
-
 	RegConsoleCmd("sm_regen", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_ammo", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_superman", cmdUnkillable, "Makes you strong like superman.");
@@ -150,24 +149,33 @@ public void OnPluginStart() {
 	
 	RegConsoleCmd("sm_hidemessage", cmdHideMessage, "Toggles display of JA messages, such as save and teleport");
 
+	// SKEYS
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a client's keys.");
 	RegConsoleCmd("sm_skeyscolor", cmdChangeSkeysColor, "Changes the color of the text for skeys.");
 	RegConsoleCmd("sm_skeyscolors", cmdChangeSkeysColor, "Changes the color of the text for skeys.");
 	RegConsoleCmd("sm_skeyspos", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
 	RegConsoleCmd("sm_skeysloc", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
 
+	// SPEC
+	RegConsoleCmd("sm_spec", cmdSpec, "sm_spec <target> - Spectate a player.", COMMAND_FILTER_NO_IMMUNITY);
+	RegConsoleCmd("sm_spec_ex", cmdSpecLock, "sm_spec_ex <target> - Consistently spectate a player, even through their death");
+	RegConsoleCmd("sm_speclock", cmdSpecLock, "sm_speclock <target> - Consistently spectate a player, even through their death");
+	RegAdminCmd("sm_fspec", cmdForceSpec, ADMFLAG_GENERIC, "sm_fspec <target> <targetToSpec>.");
+
+	// RACE
 	RegConsoleCmd("sm_race", cmdRaceInitialize, "Initializes a new race.");
 	RegConsoleCmd("sm_leaverace", cmdRaceLeave, "Leave the current race.");
 	RegConsoleCmd("sm_r_leave", cmdRaceLeave, "Leave the current race.");
 	RegConsoleCmd("sm_specrace", cmdRaceSpec, "Spectate a race.");
 	RegConsoleCmd("sm_racelist", cmdRaceList, "Display race list");
 	RegConsoleCmd("sm_raceinfo", cmdRaceInfo, "Display information about the race you are in.");
-
 	RegAdminCmd("sm_serverrace", cmdRaceInitializeServer, ADMFLAG_GENERIC, "Invite everyone to a server wide race");
 
+	// ADMIN
 	RegAdminCmd("sm_mapset", cmdMapSet, ADMFLAG_GENERIC, "Change map settings");
 	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
 
+	// HOOKS
 	HookEvent("player_spawn", eventPlayerSpawn, EventHookMode_Pre);
 	HookEvent("player_death", eventPlayerDeath);
 	HookEvent("controlpoint_starttouch", eventTouchCP);
@@ -175,20 +183,13 @@ public void OnPluginStart() {
 	HookEvent("post_inventory_application", eventInventoryUpdate);
 	HookEvent("player_disconnect", eventPlayerDisconnect);
 
+	HookUserMessage(GetUserMessageId("VoiceSubtitle"), VoiceHook, true);
+
 	AddCommandListener(listenerJoinTeam, "jointeam");
 	AddCommandListener(listenerJoinClass, "joinclass");
 	AddCommandListener(listenerJoinClass, "join_class");
-	
-	g_cvarAmmoCheat.AddChangeHook(cvarAmmoCheatChanged);
-	g_cvarWelcomeMsg.AddChangeHook(cvarWelcomeMsgChanged);
-	g_cvarSuperman.AddChangeHook(cvarSupermanChanged);
-	
-	HookUserMessage(GetUserMessageId("VoiceSubtitle"), VoiceHook, true);
-	
-	g_hJAMessageCookie = RegClientCookie("JAMessage_cookie", "Jump Assist Message Cookie", CookieAccess_Protected);
 
-	LoadTranslations("common.phrases");
-
+	// SKEYS Objects
 	g_hHudDisplayForward = CreateHudSynchronizer();
 	g_hHudDisplayASD = CreateHudSynchronizer();
 	g_hHudDisplayDuck = CreateHudSynchronizer();
@@ -198,9 +199,14 @@ public void OnPluginStart() {
 
 	g_AL_NoFuncRegen = new ArrayList();
 
+	LoadTranslations("common.phrases");
+
+	g_hJAMessageCookie = RegClientCookie("JAMessage_cookie", "Jump Assist Message Cookie", CookieAccess_Protected);
+
 	SetAllSkeysDefaults();
 	ConnectToDatabase();
 	
+	// LATELOAD
 	if (g_bLateLoad) {
 		PrintColoredChatAll("[%sJA\x01]%s JumpAssist\x01 has been%s reloaded.", cTheme1, cTheme2, cTheme2);
 		GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
@@ -258,7 +264,7 @@ public void OnClientPostAdminCheck(int client) {
 	SetPlayerDefaults(client);
 	// Load the player profile.
 	if (!GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]))) {
-		KickClient(client, "Auth Error: Unable to retrieve steam id. Try reconnecting");
+		//KickClient(client, "Auth Error: Unable to retrieve steam id. Try reconnecting");
 		LogError("[JumpAssist] Unable to retrieve steam id on %N", client);
 		return;
 	}
@@ -495,6 +501,14 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 		return Plugin_Continue;
 	}
 
+	// spec lock
+	for (int i = 1; i <= GetMaxClients(); i++) {
+		if (g_iSpecTarget[i] == client) {
+			FakeClientCommand(i, "spec_player #%i", GetClientUserId(client));
+			FakeClientCommand(i, "spec_mode 1");
+		}
+	}
+	g_iSpecTarget[client] = 0;
 	g_bUnkillable[client] = false;
 	g_fLastSavePos[client] = nullVector;
 	for (int i = 0; i < 3; i++) {
@@ -537,6 +551,14 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 		return;
 	}
 	int client = GetClientOfUserId(event.GetInt("userid"));
+
+	// spec lock
+	g_iSpecTarget[client] = 0;
+	for (int i = 1; i <= MaxClients; i++) {
+		if (g_iSpecTarget[i] == client) {
+			g_iSpecTarget[i] = 0;
+		}
+	}
 	
 	SetPlayerDefaults(client);
 	
