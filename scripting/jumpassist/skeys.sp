@@ -77,7 +77,15 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 		case DISPLAY: {
 			g_iSkeysMode[client] = EDIT;
 			SetEntityFlags(client, GetEntityFlags(client)|FL_ATCONTROLS|FL_FROZEN);
-			PrintColoredChat(client, "[%sJA\x01] Update position using%s mouse movement\x01.\nSave with%s mouse1\x01.\nReset with%s jump\x01.");
+			PrintColoredChat(
+				  client,
+				"[%sSKEYS\x01] Update position using%s mouse movement\x01.\n"
+			... "[%sSKEYS\x01] Save with%s mouse1\x01.\n"
+			... "[%sSKEYS\x01] Reset with%s jump\x01."
+				, cTheme1, cTheme2
+				, cTheme1, cTheme2
+				, cTheme1, cTheme2
+			);
 		}
 	}
 	return Plugin_Handled;
