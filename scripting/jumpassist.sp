@@ -176,6 +176,8 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
 
 	// HOOKS
+	HookEvent("player_team", eventPlayerChangeTeam);
+	HookEvent("player_changeclass", eventPlayerChangeClass);
 	HookEvent("player_spawn", eventPlayerSpawn, EventHookMode_Pre);
 	HookEvent("player_death", eventPlayerDeath);
 	HookEvent("controlpoint_starttouch", eventTouchCP);
@@ -479,6 +481,18 @@ public Action listenerJoinTeam(int client, const char[] command, int args) {
 	return Plugin_Handled;
 }
 
+public void eventPlayerChangeTeam(Event event, const char[] name, bool dontBroadcast) {
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	int team = event.GetInt("team");
+	g_iClientTeam[client] = team;
+}
+
+public void eventPlayerChangeClass(Event event, const char[] name, bool dontBroadcast) {
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	int class = event.GetInt("class");
+	g_TFClientClass[client] = view_as<TFClassType>(class);
+}
+
 public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Continue;
@@ -516,7 +530,6 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	}
 
 	// Disable func_regenerate if player is using beggers bazooka
-	g_TFClientClass[client] = TF2_GetPlayerClass(client);
 	CheckBeggars(client);
 	if (g_Database != null) {
 		CreateTimer(0.3, timerSpawnedBool, client);
@@ -571,7 +584,7 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 	}
 }
 
-public Action eventRoundStart(Handle event, const char[] name, bool dontBroadcast) {
+public void eventRoundStart(Handle event, const char[] name, bool dontBroadcast) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
@@ -1419,8 +1432,7 @@ int FindTarget2(int client, const char[] target, bool nobots = false, bool immun
    ------------------------------- Timers
 */
 
-void framerequestChangeTeam(any data) {
-	DataPack dp = view_as<DataPack>(data);
+void framerequestChangeTeam(DataPack dp) {
 	dp.Reset();
 	int client = dp.ReadCell();
 	int team = dp.ReadCell();
