@@ -36,6 +36,14 @@ enum {
 	TEAM_BLUE
 }
 
+enum {
+	INTEL_PICKEDUP = 1,
+	INTEL_CAPTURED,
+	INTEL_DEFENDED,
+	INTEL_DROPPED,
+	INTEL_RETURNED
+}
+
 bool
 	  g_bLateLoad
 	, g_bIsPreviewing[MAXPLAYERS+1]
@@ -58,7 +66,8 @@ char
 int
 	  g_iLastTeleport[MAXPLAYERS+1]
 	, g_iClientTeam[MAXPLAYERS+1]
-	, g_iClientWeapons[MAXPLAYERS+1][3];
+	, g_iClientWeapons[MAXPLAYERS+1][3]
+	, g_iIntelCarrier;
 float
 	  g_fOrigin[MAXPLAYERS+1][3]
 	, g_fAngles[MAXPLAYERS+1][3]
@@ -131,8 +140,6 @@ public void OnPluginStart() {
 	g_cvarPreviewTime = CreateConVar("ja_previewtime", "15.0", "Time allowed for preview mode.", FCVAR_NONE, true, 0.0);
 	g_cvarPreviewCooldownTime = CreateConVar("ja_previewcooldowntime", "180.0", "Cooldown timer for preview mode", FCVAR_NONE, true, 0.0);
 
-	FindConVar("mp_respawnwavetime").SetInt(0);
-	FindConVar("sv_noclipspeed").SetFloat(2.5);
 	version.SetString(PLUGIN_VERSION);
 	delete version;
 
@@ -202,6 +209,7 @@ public void OnPluginStart() {
 	HookEvent("teamplay_round_start", eventRoundStart);
 	HookEvent("post_inventory_application", eventInventoryUpdate);
 	HookEvent("player_disconnect", eventPlayerDisconnect);
+	HookEvent("teamplay_flag_event", eventIntelPickedUp, EventHookMode_Pre);
 
 	HookUserMessage(GetUserMessageId("VoiceSubtitle"), VoiceHook, true);
 
@@ -258,6 +266,9 @@ public void OnMapStart() {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
+	FindConVar("mp_respawnwavetime").SetInt(0);
+	FindConVar("sv_noclipspeed").SetFloat(2.5);
+
 	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 
 	for (int i = 1; i <= MaxClients ; i++) {
@@ -525,6 +536,15 @@ public void eventPlayerChangeTeam(Event event, const char[] name, bool dontBroad
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	int team = event.GetInt("team");
 	g_iClientTeam[client] = team;
+	if (g_iIntelCarrier == client) {
+		int ent = -1;
+		while((ent = FindEntityByClassname(ent, "item_teamflag")) != INVALID_ENT_REFERENCE) {
+			AcceptEntityInput(ent, "ForceDrop");
+			AcceptEntityInput(ent, "Disable");
+			CreateTimer(15.0, timerIntel, ent);
+			g_iIntelCarrier = 0;
+		}	
+	}
 }
 
 public void eventPlayerChangeClass(Event event, const char[] name, bool dontBroadcast) {
@@ -644,6 +664,31 @@ public void eventRoundStart(Handle event, const char[] name, bool dontBroadcast)
 	if (g_cvarAmmoCheat.BoolValue) {
 		FindConVar("tf_sentrygun_ammocheat").SetInt(1);
 	}
+}
+
+public Action eventIntelPickedUp(Event event, const char[] name, bool dontBroadcast) {
+	int client = event.GetInt("player");
+	int eventType = event.GetInt("eventtype");
+
+	switch (eventType) {
+		case INTEL_PICKEDUP: {
+			if (IsClientPreviewing(client)) {
+				int ent = -1;
+				while((ent = FindEntityByClassname(ent, "item_teamflag")) != INVALID_ENT_REFERENCE) {
+					AcceptEntityInput(ent, "ForceDrop");
+					AcceptEntityInput(ent, "Disable");
+					CreateTimer(15.0, timerIntel, ent);
+				}
+				return Plugin_Handled;
+			}
+			g_iIntelCarrier = client;
+		}
+		case INTEL_DROPPED: {
+			g_iIntelCarrier = 0;
+		}
+	}
+
+	return Plugin_Continue;
 }
 
 public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
@@ -767,7 +812,7 @@ public void hookOnWeaponEquipPost(int client, int weapon) {
 }
 
 public Action hookSetTransmitClient(int entity, int client) {
-	if (entity != client && GetEntityMoveType(entity) == MOVETYPE_NOCLIP && IsClientPreviewing(entity)) {
+	if (entity != client && GetEntityMoveType(entity) == MOVETYPE_NOCLIP && IsClientPreviewing(entity) && !IsClientObserver(client)) {
 		return Plugin_Handled;
 	}
 	return Plugin_Continue;
@@ -1620,4 +1665,9 @@ Action timerPreviewEnd(Handle timer, int client) {
 
 Action timerPreviewCooldown(Handle timer, int client) {
 	g_bOnPreviewCooldown[client] = false;
+}
+
+Action timerIntel(Handle timer, int entity) {
+	AcceptEntityInput(entity, "Enable");
+	AcceptEntityInput(entity, "ForceReset");
 }
