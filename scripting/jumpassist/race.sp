@@ -51,6 +51,10 @@ public Action cmdRaceInitialize(int client, int args) {
 		PrintColoredChat(client, "[%sJA\x01] You may only race on maps with control points.", cTheme1);
 		return Plugin_Handled;
 	}
+	if (IsClientPreviewing(client)) {
+		PrintColoredChat(client, "[%sJA\x01] Unable to bein race while previewing.");
+		return Plugin_Handled;
+	}
 	if (IsClientRacing(client) || g_iRaceID[client] != 0) {
 		PrintColoredChat(client, "[%sJA\x01] You are already in a race. Wait for it to finish or type %s/r_leave\x01 to leave.", cTheme1, cTheme2);
 		return Plugin_Handled;
@@ -530,6 +534,7 @@ void SendRaceToStart(int raceid, TFClassType class, int team) {
 			}
 			ChangeClientTeam(i, team);
 			SendToStart(i);
+			g_bIsPreviewing[i] = false;
 		}
 	}
 }
