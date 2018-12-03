@@ -541,8 +541,7 @@ public void eventPlayerChangeTeam(Event event, const char[] name, bool dontBroad
 		int ent = -1;
 		while((ent = FindEntityByClassname(ent, "item_teamflag")) != INVALID_ENT_REFERENCE) {
 			AcceptEntityInput(ent, "ForceDrop");
-			AcceptEntityInput(ent, "Disable");
-			CreateTimer(15.0, timerIntel, ent);
+			AcceptEntityInput(ent, "ForceReset");
 			g_iIntelCarrier = 0;
 		}	
 	}
@@ -682,15 +681,6 @@ public Action eventIntelPickedUp(Event event, const char[] name, bool dontBroadc
 
 	switch (eventType) {
 		case INTEL_PICKEDUP: {
-			if (IsClientPreviewing(client)) {
-				int ent = -1;
-				while((ent = FindEntityByClassname(ent, "item_teamflag")) != INVALID_ENT_REFERENCE) {
-					AcceptEntityInput(ent, "ForceDrop");
-					AcceptEntityInput(ent, "Disable");
-					CreateTimer(15.0, timerIntel, ent);
-				}
-				return Plugin_Handled;
-			}
 			g_iIntelCarrier = client;
 		}
 		case INTEL_DROPPED: {
@@ -1606,9 +1596,4 @@ Action timerMapSetUsed(Handle timer) {
 
 Action timerUnfreeze(Handle timer, int client) {
 	SetEntityFlags(client, GetEntityFlags(client) & ~(FL_ATCONTROLS|FL_FROZEN));
-}
-
-Action timerIntel(Handle timer, int entity) {
-	AcceptEntityInput(entity, "Enable");
-	AcceptEntityInput(entity, "ForceReset");
 }
