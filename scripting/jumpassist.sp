@@ -73,8 +73,6 @@ float
 	, g_fAngles[MAXPLAYERS+1][3]
 	, g_fLastSavePos[MAXPLAYERS+1][3]
 	, g_fLastSaveAngles[MAXPLAYERS+1][3]
-	, g_fPreviewOrigin[MAXPLAYERS+1][3]
-	, g_fPreviewAngles[MAXPLAYERS+1][3]
 	, nullVector[3];
 TFClassType
 	  g_TFClientClass[MAXPLAYERS+1];
@@ -107,6 +105,7 @@ Database
 #include "jumpassist/database.sp"
 #include "jumpassist/race.sp"
 #include "jumpassist/spec.sp"
+#include "jumpassist/preview.sp"
 #include "jumpassist/teleporting.sp"
 
 public Plugin myinfo = {
@@ -166,13 +165,16 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_ammo", cmdToggleAmmo, "Regenerates weapon ammunition");
 	RegConsoleCmd("sm_superman", cmdUnkillable, "Makes you strong like superman.");
 	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Enables hardcore mode (No regen, no saves)");
-	RegConsoleCmd("sm_preview", cmdPreview, "Enables noclip, allowing preview of a map");
 	
 	RegConsoleCmd("sm_hidemessage", cmdHideMessage, "Toggles display of JA messages, such as save and teleport");
+
+	// PREVIEW
+	RegConsoleCmd("sm_preview", cmdPreview, "Enables noclip, allowing preview of a map");
 
 	// TELEPORT
 	RegAdminCmd("sm_bring", OnBringAction, ADMFLAG_ROOT, "Bring a client or group to your position.");
 	RegAdminCmd("sm_goto", OnGoToAction, ADMFLAG_RESERVATION, "Go to a client's position.");
+	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
 
 	// SKEYS
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a client's keys.");
@@ -198,7 +200,6 @@ public void OnPluginStart() {
 
 	// ADMIN
 	RegAdminCmd("sm_mapset", cmdMapSet, ADMFLAG_GENERIC, "Change map settings");
-	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
 
 	// HOOKS
 	HookEvent("player_team", eventPlayerChangeTeam);
@@ -255,9 +256,9 @@ public void OnPluginStart() {
 
 public void OnPluginEnd() {
 	for (int i = 1; i <= MaxClients; i++) {
-		if (IsValidClient(i) && IsClientPreviewing(i)) {
-		   RestorePreviewLocation(i);
-		   PrintColoredChat(i, "[%sJA\x01] Plugin ending: Restoring location", cTheme1);
+		if (IsClientPreviewing(i)) {
+		   DisablePreview(i, IsClientInGame(i));
+		   PrintColoredChat(i, "Plugin reloading: Restoring location");
 		}
 	}
 }
@@ -559,11 +560,14 @@ public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcas
 	}
 	
 	int client = GetClientOfUserId(event.GetInt("userid"));
+
 	if (GetClientTeam(client) == g_iClientTeam[client] || g_bMapSetUsed) {
 		RequestFrame(framerequestRespawn, client);
 	}
 
-	g_bIsPreviewing[client] = false;
+	if (IsClientPreviewing(client)) {
+		DisablePreview(client, IsClientInGame(client));
+	}
 	return Plugin_Handled;
 }
 
@@ -586,8 +590,11 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	}
 	g_iSpecTarget[client] = 0;
 	g_bUnkillable[client] = false;
-	g_bIsPreviewing[client] = false;
 	g_fLastSavePos[client] = nullVector;
+
+	if (IsClientPreviewing(client)) {
+		DisablePreview(client);
+	}
 
 	for (int i = 0; i < 3; i++) {
 		g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
@@ -638,7 +645,10 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 		}
 	}
 	
-	g_bIsPreviewing[client] = false;
+	if (IsClientPreviewing(client)) {
+		DisablePreview(client);
+	}
+
 	SetPlayerDefaults(client);
 	
 	if (g_iRaceID[client] != 0) {
@@ -696,16 +706,18 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 		return Plugin_Continue;
 	}
 	int client = event.GetInt("player");
+
+	if (IsClientPreviewing(client)) {
+		return Plugin_Continue;
+	}
+
 	int area = event.GetInt("area");
-	
-	char g_sClass[33];
-	char cpName[32];
 
 	if (g_bCPTouched[client][area] && g_iRaceID[client] == 0) {
 		return Plugin_Continue;
 	}
 	
-	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(g_TFClientClass[client]));
+	char cpName[32];
 
 	int entity;
 	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1) {
@@ -782,7 +794,9 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 			GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 			for (int i = 1; i <= MaxClients; i++) {
 				if (IsClientInGame(i)) {
-					PrintColoredChat(i, "[%sJA\x01] %s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", cTheme2, client, cTheme2, cpName, cTheme2, g_sClass);
+					char className[33];
+					Format(className, sizeof(className), "%s", GetClassname(g_TFClientClass[client]));
+					PrintColoredChat(i, "[%sJA\x01] %s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", cTheme2, client, cTheme2, cpName, cTheme2, className);
 					EmitSoundToClient(i, "misc/freeze_cam.wav");
 				}
 			}
@@ -809,13 +823,6 @@ public void hookOnWeaponEquipPost(int client, int weapon) {
 			g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
 		}
 	}
-}
-
-public Action hookSetTransmitClient(int entity, int client) {
-	if (entity != client && GetEntityMoveType(entity) == MOVETYPE_NOCLIP && IsClientPreviewing(entity) && !IsClientObserver(client)) {
-		return Plugin_Handled;
-	}
-	return Plugin_Continue;
 }
 
 public Action VoiceHook(UserMsg msg_id, BfRead bf, const int[] players, int playersNum, bool reliable, bool init) {
@@ -864,7 +871,11 @@ public Action cmdReset(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue || IsClientObserver(client)) {
 		return Plugin_Handled;
 	}
-	g_bIsPreviewing[client] = false;
+
+	if (IsClientPreviewing(client)) {
+		DisablePreview(client);
+	}
+
 	g_iLastTeleport[client] = 0;
 	SendToStart(client);
 	g_bUsedReset[client] = true;
@@ -885,7 +896,11 @@ public Action cmdRestart(int client, int args) {
 	if (!g_bHideMessage[client]) {
 		PrintColoredChat(client, "[%sJA\x01] You have been%s restarted\x01.", cTheme1, cTheme2);
 	}
-	g_bIsPreviewing[client] = false;
+
+	if (IsClientPreviewing(client)) {
+		DisablePreview(client);
+	}
+
 	g_iLastTeleport[client] = 0;
 	return Plugin_Handled;
 }
@@ -949,50 +964,6 @@ public Action cmdHideMessage(int client, int args) {
 	g_bHideMessage[client] = !g_bHideMessage[client];
 	PrintColoredChat(client, "[%sJA\x01] Messages will now be%s %s", cTheme1, cTheme2, g_bHideMessage[client]?"hidden":"displayed");
 	SetClientCookie(client, g_hJAMessageCookie, g_bHideMessage[client]?"1":"0");
-	return Plugin_Handled;
-}
-
-public Action cmdPreview(int client, int args) {
-	if (!IsValidClient(client) || !IsPlayerAlive(client)) {
-		return Plugin_Handled;
-	}
-	if (IsClientRacing(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Can't use this feature while racing.", cTheme1);
-		return Plugin_Handled;
-	}
-
-	bool timer;
-	if (IsClientPreviewing(client)) {
-		RestorePreviewLocation(client);
-		g_bIsPreviewing[client] = false;
-	}
-	else {
-		if (IsClientOnPreviewCooldown(client)) {
-			PrintColoredChat(client, "[%sJA\x01] Must wait for cooldown period of%s %0.1f seconds\x01 to end.", cTheme1, cTheme2, g_cvarPreviewCooldownTime.FloatValue);
-			return Plugin_Handled;
-		}
-		int flags = GetEntityFlags(client);
-		if (!(flags & FL_ONGROUND)) {
-			PrintColoredChat(client, "[%sJA\x01] Can't begin preview mode while%s in the air\x01.", cTheme1, cTheme2);
-			return Plugin_Handled;
-		}
-		if ((flags & FL_DUCKING)) {
-			PrintColoredChat(client, "[%sJA\x01] Can't begin preview mode while%s ducking\x01.", cTheme1, cTheme2);
-			return Plugin_Handled;
-		}
-		SavePreviewLocation(client);
-		g_bIsPreviewing[client] = true;
-		if (!CheckCommandAccess(client, "sm_preview_extended", ADMFLAG_RESERVATION)) {
-			timer = true;
-			g_bOnPreviewCooldown[client] = true;
-			CreateTimer(g_cvarPreviewTime.FloatValue, timerPreviewEnd, client);
-			CreateTimer(g_cvarPreviewCooldownTime.FloatValue+g_cvarPreviewTime.FloatValue, timerPreviewCooldown, client);
-		}
-	}
-	PrintColoredChat(client, "[%sJA\x01] Preview mode%s %s", cTheme1, cTheme2, g_bIsPreviewing[client] ? "enabled" : "disabled");
-	if (timer) {
-		PrintColoredChat(client, "[%sJA\x01] Preview will end in%s %0.1f seconds\x01.", cTheme1, cTheme2, g_cvarPreviewTime.FloatValue);
-	}
 	return Plugin_Handled;
 }
 
@@ -1113,7 +1084,7 @@ void SetPlayerDefaults(int client) {
 	g_bBeatTheMap[client] = false;
 	g_bSKeysEnabled[client] = false;
 	g_bUnkillable[client] = false;
-	g_sClientSteamID[client] = "";
+	g_sClientSteamID[client][0] = '\0';
 	EraseLocs(client);
 	g_iRaceID[client] = 0;
 	SetSkeysDefaults(client);
@@ -1188,25 +1159,6 @@ void Teleport(int client) {
 	if (!g_bHideMessage[client]) {
 		PrintColoredChat(client, "[%sJA\x01] You have been%s teleported\x01.", cTheme1, cTheme2);
 	}
-}
-
-bool IsClientPreviewing(int client) {
-	return g_bIsPreviewing[client];
-}
-
-bool IsClientOnPreviewCooldown(int client) {
-	return g_bOnPreviewCooldown[client];
-}
-
-bool SavePreviewLocation(int client) {
-	GetClientAbsOrigin(client, g_fPreviewOrigin[client]);
-	GetClientAbsAngles(client, g_fPreviewAngles[client]);
-	SetEntityMoveType(client, MOVETYPE_NOCLIP);
-}
-
-void RestorePreviewLocation(int client) {
-	TeleportEntity(client, g_fPreviewOrigin[client], g_fPreviewAngles[client], nullVector);
-	SetEntityMoveType(client, MOVETYPE_WALK);
 }
 
 void ResetPlayerPos(int client) {
@@ -1654,17 +1606,6 @@ Action timerMapSetUsed(Handle timer) {
 
 Action timerUnfreeze(Handle timer, int client) {
 	SetEntityFlags(client, GetEntityFlags(client) & ~(FL_ATCONTROLS|FL_FROZEN));
-}
-
-Action timerPreviewEnd(Handle timer, int client) {
-	if (IsClientPreviewing(client)) {
-		g_bIsPreviewing[client] = false;
-		RestorePreviewLocation(client);
-	}
-}
-
-Action timerPreviewCooldown(Handle timer, int client) {
-	g_bOnPreviewCooldown[client] = false;
 }
 
 Action timerIntel(Handle timer, int entity) {
