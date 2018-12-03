@@ -697,6 +697,10 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	}
 	int client = event.GetInt("player");
 
+	if (IsFakeClient(client)) {
+		return Plugin_Continue;
+	}
+
 	if (IsClientPreviewing(client)) {
 		return Plugin_Continue;
 	}
