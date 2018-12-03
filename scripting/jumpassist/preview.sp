@@ -49,7 +49,7 @@ void EnablePreview(int client) {
 
 	g_bIsPreviewing[client] = true;
 
-	PrintColoredChat(client, "\x01Preview mode\x03 enabled\x01.");
+	PrintColoredChat(client, "[%sJA\x01] Preview mode%s enabled\x01.", cTheme1, cTheme2);
 
 	if (!CheckCommandAccess(client, "sm_preview_extended", ADMFLAG_RESERVATION)) {
 		g_bOnPreviewCooldown[client] = true;
@@ -66,7 +66,7 @@ void DisablePreview(int client, bool restore = false) {
 
 	if (restore) {
 		int flags = GetEntityFlags(client);
-		TeleportEntity(client, g_fOrigin[client], g_fAngles[client], nullVector);
+		TeleportEntity(client, g_fPreviewOrigin[client], g_fPreviewAngles[client], nullVector);
 
 		SetEntityMoveType(client, MOVETYPE_WALK);
 		SetEntityFlags(client, flags & ~(FL_DONTTOUCH|FL_NOTARGET|FL_FLY));

@@ -172,8 +172,8 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_preview", cmdPreview, "Enables noclip, allowing preview of a map");
 
 	// TELEPORT
-	RegAdminCmd("sm_bring", OnBringAction, ADMFLAG_ROOT, "Bring a client or group to your position.");
-	RegAdminCmd("sm_goto", OnGoToAction, ADMFLAG_RESERVATION, "Go to a client's position.");
+	RegAdminCmd("sm_bring", cmdBring, ADMFLAG_ROOT, "Bring a client or group to your position.");
+	RegAdminCmd("sm_goto", cmdGoTo, ADMFLAG_RESERVATION, "Go to a client's position.");
 	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
 
 	// SKEYS

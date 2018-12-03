@@ -2,7 +2,7 @@
    ------------------------------- Commands
 */
 
-public Action OnBringAction(int client, int argc) {
+public Action cmdBring(int client, int argc) {
 	if (!client || !IsClientInGame(client)) {
 		return Plugin_Handled;
 	}
@@ -54,7 +54,7 @@ public Action OnBringAction(int client, int argc) {
 	return Plugin_Handled;
 }
 
-public Action OnGoToAction(int client, int args) {
+public Action cmdGoTo(int client, int args) {
 	if (!client || !IsClientInGame(client)) {
 		return Plugin_Handled;
 	}
@@ -70,7 +70,7 @@ public Action OnGoToAction(int client, int args) {
 		return Plugin_Handled;
 	}
 	
-	int target = FindTarget(client, sCommand, !(GetUserFlagBits(client) & ADMFLAG_ROOT));
+	int target = FindTarget(client, sCommand, !(GetUserFlagBits(client) & ADMFLAG_ROOT), false);
 	
 	if (target == -1 || client == target) {
 		return Plugin_Handled;
@@ -83,7 +83,7 @@ public Action OnGoToAction(int client, int args) {
 
 	float fPosition[3];
 	if (clientTeam != GetClientTeam(target) && !(GetUserFlagBits(client) & (ADMFLAG_GENERIC|ADMFLAG_ROOT))) {
-		PrintColoredChat(client, "[%sJA\x01] Can't go to players on the opposite team");
+		PrintColoredChat(client, "[%sJA\x01] Can't go to players on the%s opposite team", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
 	GetClientAbsOrigin(target, fPosition);
