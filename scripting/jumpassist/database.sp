@@ -143,7 +143,7 @@ void SQL_CreateMapCFGCallback(Database db, DBResultSet results, const char[] err
 void SaveMapSettings(int client, char[] arg1, char[] arg2) {
 	int lock;
 	char query[512];
-
+	
 	if (StrEqual(arg1, "team", false)) {
 		// Wonder if there is a prettier way of doing this.
 		if (StrEqual(arg2, "none", false)) {
@@ -162,7 +162,7 @@ void SaveMapSettings(int client, char[] arg1, char[] arg2) {
 			return;	
 		}
 		g_Database.Format(query, sizeof(query), "UPDATE map_settings SET Team = '%i' WHERE Map = '%s'", g_iForceTeam, g_sCurrentMap);
-		g_Database.Query(SQL_OnMapSettingsUpdated, query, client);
+		g_Database.Query(SQL_OnMapSettingsUpdated, query, GetClientUserId(client));
 	}
 	else if (StrEqual(arg1, "lockcps", false)) {
 		if (StrEqual(arg2, "on", false)) {
@@ -176,7 +176,7 @@ void SaveMapSettings(int client, char[] arg1, char[] arg2) {
 			return;
 		}
 		g_Database.Format(query, sizeof(query), "UPDATE map_settings SET LockCPs = '%i' WHERE Map = '%s'", lock, g_sCurrentMap);
-		g_Database.Query(SQL_OnMapSettingsUpdated, query, client);
+		g_Database.Query(SQL_OnMapSettingsUpdated, query, GetClientUserId(client));
 	}
 }
 
@@ -184,7 +184,10 @@ void SQL_OnMapSettingsUpdated(Database db, DBResultSet results, const char[] err
 	if (db == null) {
 		LogError("Query failed! %s", error);
 	}
-	PrintColoredChat(data, "[%sJA\x01] Map settings were %s%ssaved\x01.", cTheme1, cTheme2, (db == null)?"NOT ":"");
+	int client;
+	if ((client = GetClientOfUserId(data)) > 0) {
+		PrintColoredChat(client, "[%sJA\x01] Map settings were%s %ssaved\x01.", cTheme1, cTheme2, (db == null)?"NOT ":"");
+	}
 }
 
 void LoadPlayerProfile(int client) {
@@ -194,7 +197,7 @@ void LoadPlayerProfile(int client) {
 	char query[1024];
 	if (g_Database != null) {
 		Format(query, sizeof(query), "SELECT * FROM player_profiles WHERE SteamID = '%s'", g_sClientSteamID[client]);
-		g_Database.Query(SQL_OnLoadPlayerProfile, query, client);
+		g_Database.Query(SQL_OnLoadPlayerProfile, query, GetClientUserId(client));
 	}
 	else {
 		g_bLoadedPlayerSettings[client] = true;
@@ -206,19 +209,23 @@ void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] erro
 		LogError("OnLoadPlayerProfile() - Query failed!");
 		return;
 	}
-	if (results.FetchRow()) {
-		g_iSkeysRed[data] = results.FetchInt(2);
-		g_iSkeysGreen[data] = results.FetchInt(3);
-		g_iSkeysBlue[data] = results.FetchInt(4);
-
-		g_fSkeysXLoc[data] = results.FetchFloat(5);
-		g_fSkeysYLoc[data] = results.FetchFloat(6);
-
-		g_bLoadedPlayerSettings[data] = true;
+	int client;
+	if ((client = GetClientOfUserId(data) < 1)) {
+		return;
 	}
-	else if (IsValidClient(data)) {
+	if (results.FetchRow()) {
+		g_iSkeysRed[client] = results.FetchInt(2);
+		g_iSkeysGreen[client] = results.FetchInt(3);
+		g_iSkeysBlue[client] = results.FetchInt(4);
+
+		g_fSkeysXLoc[client] = results.FetchFloat(5);
+		g_fSkeysYLoc[client] = results.FetchFloat(6);
+
+		g_bLoadedPlayerSettings[client] = true;
+	}
+	else if (IsValidClient(client)) {
 		// No profile
-		CreatePlayerProfile(data);
+		CreatePlayerProfile(client);
 	}
 }
 
@@ -234,7 +241,7 @@ void CreatePlayerProfile(int client) {
 		... ")"
 		, g_sClientSteamID[client]
 	);
-	g_Database.Query(SQL_OnCreatePlayerProfile, query, client);
+	g_Database.Query(SQL_OnCreatePlayerProfile, query, GetClientUserId(client));
 }
 
 void SQL_OnCreatePlayerProfile(Database db, DBResultSet results, const char[] error, any data) {
@@ -242,10 +249,18 @@ void SQL_OnCreatePlayerProfile(Database db, DBResultSet results, const char[] er
 		LogError("OnCreatePlayerProfile() - Query failed! %s", error);
 		return;
 	}
-	g_bHardcore[data] = g_bLoadedPlayerSettings[data] = false;
+	int client;
+	if ((client = GetClientOfUserId(data)) > 0) {
+		g_bHardcore[client] = g_bLoadedPlayerSettings[client] = false;
+	}
+	
 }
 
 void GetPlayerData(int client) {
+	if (IsFakeClient(client)) {
+		return;
+	}
+
 	char sQuery[256];
 
 	g_Database.Format(
@@ -262,7 +277,7 @@ void GetPlayerData(int client) {
 		, view_as<int>(g_TFClientClass[client])
 		, g_sCurrentMap
 	);
-	g_Database.Query(SQL_OnGetPlayerData, sQuery, client);
+	g_Database.Query(SQL_OnGetPlayerData, sQuery, GetClientUserId(client));
 }
 
 void SQL_OnGetPlayerData(Database db, DBResultSet results, const char[] error, any data) {
@@ -270,11 +285,15 @@ void SQL_OnGetPlayerData(Database db, DBResultSet results, const char[] error, a
 		LogError("OnGetPlayerData() - Query failed! %s", error);
 		return;
 	}
+	int client;
+	if ((client = GetClientOfUserId(data)) < 1) {
+		return;
+	}
 	if (results.FetchRow()) {
-		UpdatePlayerData(data);
+		UpdatePlayerData(client);
 	}
 	else {
-		SavePlayerData(data);
+		SavePlayerData(client);
 	}
 }
 
@@ -282,6 +301,7 @@ void SavePlayerData(int client) {
 	if (IsFakeClient(client)) {
 		return;
 	}
+
 	char sQuery[1024];
 	float SavePos1[MAXPLAYERS+1][3];
 	float SavePos2[MAXPLAYERS+1][3];
@@ -313,7 +333,7 @@ void SavePlayerData(int client) {
 		, SavePos1[client][2]
 		, SavePos2[client][1]
 	);
-	g_Database.Query(SQL_SaveLocCallback, sQuery, client);
+	g_Database.Query(SQL_SaveLocCallback, sQuery, GetClientUserId(client));
 }
 
 void UpdatePlayerData(int client) {
@@ -346,17 +366,17 @@ void UpdatePlayerData(int client) {
 		, view_as<int>(g_TFClientClass[client])
 		, g_sCurrentMap
 	);
-	g_Database.Query(SQL_SaveLocCallback, sQuery, client);
+	g_Database.Query(SQL_SaveLocCallback, sQuery, GetClientUserId(client));
 }
 
 void SQL_SaveLocCallback(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null) {
 		LogError("SaveLocCallback() - %N, Query failed! %s", data, error);
-		PrintColoredChat(data, "[%sJA\x01] Database not connected, save not stored.");
 		return;
 	}
-	if (!g_bHideMessage[data]) {
-		PrintColoredChat(data, "[%sJA\x01] Location has been%s saved\x01.", cTheme1, cTheme2);
+	int client;
+	if ((client = GetClientOfUserId(data)) > 0 && !g_bHideMessage[client]) {
+		PrintColoredChat(client, "[%sJA\x01] Location has been%s saved\x01.", cTheme1, cTheme2);
 	}
 }
 
@@ -380,21 +400,26 @@ void ReloadPlayerData(int client) {
 		, view_as<int>(g_TFClientClass[client])
 		, g_sCurrentMap
 	);
-	g_Database.Query(SQL_OnReloadPlayerData, sQuery, client, DBPrio_High);
+	g_Database.Query(SQL_OnReloadPlayerData, sQuery, GetClientUserId(client), DBPrio_High);
 }
 
 void SQL_OnReloadPlayerData(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null) {
 		LogError("OnreloadPlayerData() - Query failed! %s", error);
+		return;
 	}
-	else if (results.FetchRow()) {
-		g_fOrigin[data][0] = results.FetchFloat(0);
-		g_fOrigin[data][1] = results.FetchFloat(1);
-		g_fOrigin[data][2] = results.FetchFloat(2);
+	int client;
+	if ((client = GetClientOfUserId(data)) < 1) {
+		return;
+	}
+	if (results.FetchRow()) {
+		g_fOrigin[client][0] = results.FetchFloat(0);
+		g_fOrigin[client][1] = results.FetchFloat(1);
+		g_fOrigin[client][2] = results.FetchFloat(2);
 
-		g_fAngles[data][1] = results.FetchFloat(3);
+		g_fAngles[client][1] = results.FetchFloat(3);
 
-		g_bUsedReset[data] = false;
+		g_bUsedReset[client] = false;
 	}
 }
 
@@ -418,34 +443,30 @@ void LoadPlayerData(int client) {
 		, view_as<int>(g_TFClientClass[client])
 		, g_sCurrentMap
 	);
-	g_Database.Query(SQL_OnLoadPlayerData, sQuery, client, DBPrio_High);
+	g_Database.Query(SQL_OnLoadPlayerData, sQuery, GetClientUserId(client), DBPrio_High);
 }
 
 void SQL_OnLoadPlayerData(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null) {
 		LogError("OnLoadPlayerData() - Query failed! %s", error);
-	}
-	else if (results.FetchRow()) {
-		g_fOrigin[data][0] = results.FetchFloat(0);
-		g_fOrigin[data][1] = results.FetchFloat(1);
-		g_fOrigin[data][2] = results.FetchFloat(2);
-
-		g_fAngles[data][1] = results.FetchFloat(3);
-
-		if (!g_bHardcore[data] && !IsClientRacing(data)) {
-			Teleport(data);
-			g_iLastTeleport[data] = RoundFloat(GetEngineTime());
-		}
-	}
-}
-
-void SQL_OnDeletePlayerData(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
-		LogError("OnDeletePlayerData() - Query failed! %s", error);
 		return;
 	}
-	EraseLocs(data);
-	g_bBeatTheMap[data] = false;
+	int client;
+	if ((client = GetClientOfUserId(data)) < 1) {
+		return;
+	}
+	if (results.FetchRow()) {
+		g_fOrigin[client][0] = results.FetchFloat(0);
+		g_fOrigin[client][1] = results.FetchFloat(1);
+		g_fOrigin[client][2] = results.FetchFloat(2);
+
+		g_fAngles[client][1] = results.FetchFloat(3);
+
+		if (!g_bHardcore[client] && !IsClientRacing(client)) {
+			Teleport(client);
+			g_iLastTeleport[client] = RoundFloat(GetEngineTime());
+		}
+	}
 }
 
 void DeletePlayerData(int client) {
@@ -456,15 +477,27 @@ void DeletePlayerData(int client) {
 		, sizeof(sQuery)
 		, "DELETE FROM player_saves "
 		... "WHERE steamID = '%s' "		// g_sClientSteamID[client]
+		... "AND playerMap = '%s'"		// g_sCurrentMap
 		... "AND playerTeam = '%i' "	// g_iClientTeam[client]
 		... "AND playerClass = '%i' "	// view_as<int>(g_TFClientClass[client])
-		... "AND playerMap = '%s'"		// g_sCurrentMap
 		, g_sClientSteamID[client]
+		, g_sCurrentMap
 		, g_iClientTeam[client]
 		, view_as<int>(g_TFClientClass[client])
-		, g_sCurrentMap
 	);
-	g_Database.Query(SQL_OnDeletePlayerData, sQuery, client);
+	g_Database.Query(SQL_OnDeletePlayerData, sQuery, GetClientUserId(client));
+}
+
+void SQL_OnDeletePlayerData(Database db, DBResultSet results, const char[] error, any data) {
+	if (db == null) {
+		LogError("OnDeletePlayerData() - Query failed! %s", error);
+		return;
+	}
+	int client;
+	if ((client = GetClientOfUserId(data)) > 0) {
+		EraseLocs(client);
+		g_bBeatTheMap[client] = false;	
+	}
 }
 
 void SaveKeyColor(int client, char[] red, char[] green, char[] blue) {
@@ -487,14 +520,17 @@ void SaveKeyColor(int client, char[] red, char[] green, char[] blue) {
 		, g_iSkeysBlue[client]
 		, g_sClientSteamID[client]
 	);
-	g_Database.Query(SQL_OnSetKeys, query, client);
+	g_Database.Query(SQL_OnSetKeys, query, GetClientUserId(client));
 }
 
 void SQL_OnSetKeys(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null) {
 		LogError("Query failed! %s", error);
 	}
-	PrintColoredChat(data, "\x01[%sJA\x01] Your settings were %s%ssaved\x01.", cTheme1, cTheme2, (db == null)?"NOT ":"");
+	int client;
+	if ((client = GetClientOfUserId(data)) > 0) {
+		PrintColoredChat(client, "\x01[%sJA\x01] Your settings were %s%ssaved\x01.", cTheme1, cTheme2, (db == null)?"NOT ":"");
+	}
 }
 
 void SaveKeyPos(int client, float x, float y) {
@@ -511,14 +547,16 @@ void SaveKeyPos(int client, float x, float y) {
 		, y
 		, g_sClientSteamID[client]
 	);
-	g_Database.Query(SQL_UpdateSkeys, query, client);
+	g_Database.Query(SQL_UpdateSkeys, query, GetClientUserId(client));
 }
 
 void SQL_UpdateSkeys(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null) {
 		LogError("Query failed! %s", error);
-		PrintColoredChat(data, "[%sJA\x01] Key position not saved (%s)", cTheme1, error);
 		return;
 	}
-	PrintColoredChat(data, "[%sJA\x01] Key position updated", cTheme1);
+	int client;
+	if ((client = GetClientOfUserId(data)) > 0) {
+		PrintColoredChat(client, "[%sJA\x01] Key position updated", cTheme1);
+	}
 }

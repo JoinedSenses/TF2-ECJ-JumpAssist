@@ -19,15 +19,21 @@
 #pragma newdecls required
 #pragma semicolon 1
 
+#define PLUGIN_VERSION "2.2.1"
+#define PLUGIN_NAME "[TF2] Jump Assist"
+#define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
+#define cTheme1 "\x0769cfbc"
+#define cTheme2 "\x07a4e8dc"
+#define cHardcore "\x07FF4500"
+#define cRedTeam "\x07ba5353"
+#define cBlueTeam "\x0782b6ff"
+
 #include <sourcemod>
 #include <tf2_stocks>
 #include <sdkhooks>
 #include <color_literals>
 #include <clientprefs>
 #include "smlib/math.inc"
-
-#define COLORREDTEAM "\x07ba5353"
-#define COLORBLUETEAM "\x0782b6ff"
 
 enum {
 	TEAM_UNASSIGNED = 0,
@@ -93,14 +99,6 @@ ArrayList
 Database
 	  g_Database;
 
-#define PLUGIN_VERSION "2.2.0"
-#define PLUGIN_NAME "[TF2] Jump Assist"
-#define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
-#define cDefault 0x01
-#define cLightGreen 0x03
-#define cTheme1 "\x0769cfbc"
-#define cTheme2 "\x07a4e8dc"
-#define cHardcore "\x07FF4500"
 #include "jumpassist/skeys.sp"
 #include "jumpassist/database.sp"
 #include "jumpassist/race.sp"
@@ -1142,7 +1140,7 @@ void Teleport(int client) {
 	char teamColor[16];
 
 	Format(teamName, sizeof(teamName), (g_iClientTeam[client] == TEAM_RED) ? "Red Team" : "Blue Team");
-	teamColor = (g_iClientTeam[client] == TEAM_RED) ? COLORREDTEAM : COLORBLUETEAM;
+	teamColor = (g_iClientTeam[client] == TEAM_RED) ? cRedTeam : cBlueTeam;
 
 	if (g_fOrigin[client][0] == 0.0) {
 		PrintColoredChat(client, "[%sJA\x01] You don't have a save for%s %s\x01 on the%s %s\x01.", cTheme1, teamColor, GetClassname(g_TFClientClass[client]), teamColor, teamName);
