@@ -17,9 +17,9 @@ bool
 	  g_bSKeysEnabled[MAXPLAYERS+1];
 int
 	  g_iButtons[MAXPLAYERS+1]
-	, g_iSkeysRed[MAXPLAYERS+1]
-	, g_iSkeysGreen[MAXPLAYERS+1]
-	, g_iSkeysBlue[MAXPLAYERS+1]
+	, g_iSkeysRed[MAXPLAYERS+1] = {255, ...}
+	, g_iSkeysGreen[MAXPLAYERS+1] = {255, ...}
+	, g_iSkeysBlue[MAXPLAYERS+1] = {255, ...}
 	, g_iSkeysMode[MAXPLAYERS+1];
 float
 	  g_fSkeysXLoc[MAXPLAYERS+1]
@@ -47,7 +47,7 @@ public Action cmdChangeSkeysColor(int client, int args) {
 		PrintColoredChat(client, "[%sJA\x01]%s Usage\x01: sm_skeys_color <R> <G> <B>", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
-	
+
 	GetCmdArg(1, red, sizeof(red));
 	GetCmdArg(2, green, sizeof(green));
 	GetCmdArg(3, blue, sizeof(blue));
