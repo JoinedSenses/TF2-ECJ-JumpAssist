@@ -39,11 +39,10 @@ Command | Description
 **sm_skeyspos, sm_skeysloc** | Changes the location of the text for skeys.  
 ======== Race ======== |  
 **sm_race** | Initializes a new race.  
-**sm_r_leave, sm_race_leave** | Leave the current race.  
-**sm_r_spec, sm_race_spec** | Spectate a race.  
-**sm_r_list, sm_race_list, sm_racelist, sm_rlist** | Display race list  
-**sm_race_set** | Change a race's settings.  
-**sm_r_info, sm_race_info** | Display information about the race you are in.  
+**sm_leaverace** | Leave the current race.  
+**sm_specrace** | Spectate a race.  
+**sm_racelist** | Display race list   
+**sm_raceinfo** | Display information about the race you are in.  
   
 ## Admin Commands  
 Command | Description
