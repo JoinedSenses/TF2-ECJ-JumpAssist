@@ -32,17 +32,17 @@ Command | Description
 **sm_superman** | Makes you strong like superman. (Reduces damage taken)  
 **sm_hardcore** | Enables hardcore mode (No regen, no saves)  
 **sm_hidemessage** | Toggles display of JA messages, such as save and teleport
+**sm_preview** | Toggle noclip to preview map/stage. Location is restored after use.
 ======== ShowKeys ======== |  
 **sm_skeys** | Toggle showing a client's keys  
 **sm_skeyscolor, sm_skeyscolors** | Changes the color of the text for skeys.  
 **sm_skeyspos, sm_skeysloc** | Changes the location of the text for skeys.  
 ======== Race ======== |  
 **sm_race** | Initializes a new race.  
-**sm_r_leave, sm_race_leave** | Leave the current race.  
-**sm_r_spec, sm_race_spec** | Spectate a race.  
-**sm_r_list, sm_race_list, sm_racelist, sm_rlist** | Display race list  
-**sm_race_set** | Change a race's settings.  
-**sm_r_info, sm_race_info** | Display information about the race you are in.  
+**sm_leaverace** | Leave the current race.  
+**sm_specrace** | Spectate a race.  
+**sm_racelist** | Display race list   
+**sm_raceinfo** | Display information about the race you are in.  
   
 ## Admin Commands  
 Command | Description
