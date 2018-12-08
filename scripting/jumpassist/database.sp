@@ -210,7 +210,7 @@ void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] erro
 		return;
 	}
 	int client;
-	if ((client = GetClientOfUserId(data) < 1)) {
+	if ((client = GetClientOfUserId(data)) < 1) {
 		return;
 	}
 	if (results.FetchRow()) {

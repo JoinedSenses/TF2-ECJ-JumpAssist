@@ -47,6 +47,7 @@ public Action cmdChangeSkeysColor(int client, int args) {
 		PrintColoredChat(client, "[%sJA\x01]%s Usage\x01: sm_skeys_color <R> <G> <B>", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
+	
 	GetCmdArg(1, red, sizeof(red));
 	GetCmdArg(2, green, sizeof(green));
 	GetCmdArg(3, blue, sizeof(blue));

@@ -19,7 +19,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.2.1"
+#define PLUGIN_VERSION "2.2.2"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cTheme1 "\x0769cfbc"
@@ -52,9 +52,8 @@ enum {
 
 bool
 	  g_bLateLoad
-	, g_bIsPreviewing[MAXPLAYERS+1]
-	, g_bOnPreviewCooldown[MAXPLAYERS+1]
 	, g_bHideMessage[MAXPLAYERS+1]
+	, g_bIsPreviewing[MAXPLAYERS+1]
 	, g_bAmmoRegen[MAXPLAYERS+1]
 	, g_bHardcore[MAXPLAYERS+1]
 	, g_bCPTouched[MAXPLAYERS+1][32]
@@ -65,7 +64,7 @@ bool
 	, g_bMapSetUsed;
 char
 	  g_sWebsite[128] = "http:// www.jump.tf/"
-	, g_sForum[128] = "http:// tf2rj.com/forum/"
+	, g_sForum[128] = "http://tf2rj.com/forum/"
 	, g_sJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0"
 	, g_sCurrentMap[64]
 	, g_sClientSteamID[MAXPLAYERS+1][32];
@@ -86,8 +85,6 @@ ConVar
 	  g_cvarHostname
 	, g_cvarPluginEnabled
 	, g_cvarWelcomeMsg
-	, g_cvarPreviewTime
-	, g_cvarPreviewCooldownTime
 	, g_cvarCriticals
 	, g_cvarSuperman
 	, g_cvarAmmoCheat
@@ -111,7 +108,7 @@ public Plugin myinfo = {
 	author = PLUGIN_AUTHOR,
 	description = "Tools to run a jump server with ease.",
 	version = PLUGIN_VERSION,
-	url = "https:// github.com/JoinedSenses/TF2-ECJ-JumpAssist"
+	url = "https://github.com/JoinedSenses/TF2-ECJ-JumpAssist"
 }
 
 /* ======================================================================
@@ -134,8 +131,6 @@ public void OnPluginStart() {
 	g_cvarAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo?", FCVAR_NONE);
 	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits?", FCVAR_NONE);
 	g_cvarSuperman = CreateConVar("ja_superman", "1", "Allows everyone to be invincible?", FCVAR_NONE);
-	g_cvarPreviewTime = CreateConVar("ja_previewtime", "15.0", "Time allowed for preview mode.", FCVAR_NONE, true, 0.0);
-	g_cvarPreviewCooldownTime = CreateConVar("ja_previewcooldowntime", "180.0", "Cooldown timer for preview mode", FCVAR_NONE, true, 0.0);
 
 	version.SetString(PLUGIN_VERSION);
 	delete version;
@@ -182,7 +177,7 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_skeysloc", cmdChangeSkeysLoc, "Changes the location of the text for skeys.");
 
 	// SPEC
-	RegConsoleCmd("sm_spec", cmdSpec, "sm_spec <target> - Spectate a player.", COMMAND_FILTER_NO_IMMUNITY);
+	RegConsoleCmd("sm_spec", cmdSpec, "sm_spec <target> - Spectate a player.");
 	RegConsoleCmd("sm_spec_ex", cmdSpecLock, "sm_spec_ex <target> - Consistently spectate a player, even through their death");
 	RegConsoleCmd("sm_speclock", cmdSpecLock, "sm_speclock <target> - Consistently spectate a player, even through their death");
 	RegAdminCmd("sm_fspec", cmdForceSpec, ADMFLAG_GENERIC, "sm_fspec <target> <targetToSpec>.");
@@ -309,6 +304,7 @@ public void OnClientPostAdminCheck(int client) {
 	// Hook and load info for client
 	SDKHook(client, SDKHook_WeaponEquipPost, hookOnWeaponEquipPost);
 	SDKHook(client, SDKHook_SetTransmit, hookSetTransmitClient);
+	
 	LoadPlayerProfile(client);
 	
 	// Welcome message.
