@@ -26,6 +26,12 @@ public Action cmdSpec(int client, int args) {
 	if ((target = FindTarget(client, targetName, false, false)) < 1) {
 		return Plugin_Handled;
 	}
+
+	if (target == client) {
+		PrintToChat(client, "\x01[\x03Spec\x01] Unable to spectate yourself. That would be pretty weird.");
+		return Plugin_Handled;
+	}
+	
 	bool isTargetInSpec;
 	if (IsClientObserver(target)) {
 		target = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
@@ -145,8 +151,10 @@ public Action cmdForceSpec(int client, int args) {
 		ChangeClientTeam(target, 1);
 		g_iClientTeam[client] = TEAM_SPECTATOR;
 	}
+
 	FakeClientCommand(target, "spec_player #%i", GetClientUserId(targetToSpec));
 	FakeClientCommand(target, "spec_mode 1");
+
 	PrintColoredChat(client, "[%sJA\x01] Forced%s %N\x01 to spectate%s %s", cTheme1, cTheme2, target, cTheme2, targetToSpecName);
 	return Plugin_Handled;
 }

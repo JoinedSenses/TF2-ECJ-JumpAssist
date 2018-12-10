@@ -396,11 +396,6 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		vel = nullVector;
 	}
 
-	if (IsClientPreviewing(client) && buttons & IN_ATTACK && GetEntityMoveType(client) == MOVETYPE_NOCLIP) {
-		buttons &= ~IN_ATTACK;
-		return Plugin_Changed;
-	}
-
 	int iMaxHealth = GetEntProp(client, Prop_Data, "m_iMaxHealth");
 	if (!IsClientObserver(client) && GetClientHealth(client) < iMaxHealth) {
 		SetEntityHealth(client, iMaxHealth);

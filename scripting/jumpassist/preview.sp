@@ -51,6 +51,11 @@ void EnablePreview(int client) {
 	SetEntityMoveType(client, MOVETYPE_NOCLIP);
 	SetEntityFlags(client, flags|FL_DONTTOUCH|FL_NOTARGET|FL_FLY);
 
+	SetEntPropFloat(client, Prop_Send, "m_flNextAttack", GetGameTime()+9999999.0);
+	SetEntProp(client, Prop_Send, "m_bDrawViewmodel", 0);
+
+	SDKHook(client, SDKHook_WeaponSwitch, hookWeaponSwitch);
+
 	g_bIsPreviewing[client] = true;
 
 	PrintColoredChat(client, "[%sJA\x01] Preview mode%s enabled\x01.", cTheme1, cTheme2);
@@ -65,6 +70,11 @@ void DisablePreview(int client, bool restore = false) {
 
 		SetEntityMoveType(client, MOVETYPE_WALK);
 		SetEntityFlags(client, flags & ~(FL_DONTTOUCH|FL_NOTARGET|FL_FLY));
+
+		SetEntPropFloat(client, Prop_Send, "m_flNextAttack", GetGameTime());
+		SetEntProp(client, Prop_Send, "m_bDrawViewmodel", 1);
+
+		SDKUnhook(client, SDKHook_WeaponSwitch, hookWeaponSwitch);
 	}
 	if (IsClientInGame(client)) {
 		PrintColoredChat(client, "[%sJA\x01] Preview mode%s disabled\x01.", cTheme1, cTheme2);
@@ -84,4 +94,8 @@ public Action hookSetTransmitClient(int entity, int client) {
 		return Plugin_Handled;
 	}
 	return Plugin_Continue;
+}
+
+public Action hookWeaponSwitch(int client, int weapon) {
+	return Plugin_Handled;
 }
