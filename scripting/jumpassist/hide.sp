@@ -128,16 +128,20 @@ public Action hookSound(int clients[64], int& numClients, char sample[PLATFORM_M
 		return Plugin_Continue;
 	}
 
-	int builder;
 	char className[32];
-	
+	GetEntityClassname(entity, className, sizeof(className));
+
+	int owner;
 	if (StrContains(className, "obj_") != -1) {
-		builder = GetEntPropEnt(entity, Prop_Send, "m_hBuilder");
+		owner = GetEntPropEnt(entity, Prop_Send, "m_hBuilder");
+	}
+	else if (StrEqual(className, "prop_physics")) {
+		owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 	}
 
 	for (int i = 0; i < numClients; i++) {
 		int client = clients[i];
-		if (IsValidClient(client) && g_bHide[client] && client != entity && client != builder && g_iClientTeam[client] != 1) {
+		if (IsValidClient(client) && g_bHide[client] && client != entity && client != owner && g_iClientTeam[client] != 1) {
 			//Remove the client from the array if they have hide toggled, if they are not the creator of the sound, and if they are not in spectate.
 			for (int j = i; j < numClients-1; j++) {
 				clients[j] = clients[j+1];
