@@ -245,7 +245,7 @@ public void OnPluginStart() {
 		PrintColoredChatAll("[%sJA\x01]%s JumpAssist\x01 has been%s reloaded.", cTheme1, cTheme2, cTheme2);
 		GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 		for (int i = 1; i <= MaxClients; i++) {
-			if (IsValidClient(i)) {
+			if (IsValidClient(i, true)) {
 				g_iClientTeam[i] = GetClientTeam(i);
 				g_TFClientClass[i] = TF2_GetPlayerClass(i);
 				GetClientAuthId(i, AuthId_Steam2, g_sClientSteamID[i], sizeof(g_sClientSteamID[]));
@@ -313,9 +313,16 @@ public void OnClientCookiesCached(int client) {
 }
 
 public void OnClientPostAdminCheck(int client) {
-	if (!g_cvarPluginEnabled.BoolValue || IsFakeClient(client)) {
+	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
+
+	SDKHook(client, SDKHook_SetTransmit, hookSetTransmitClient);
+
+	if (IsFakeClient(client)) {
+		return;
+	}
+	
 	SetPlayerDefaults(client);
 	if (!GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]))) {
 		LogError("[JumpAssist] Unable to retrieve steam id on %N", client);
@@ -323,7 +330,6 @@ public void OnClientPostAdminCheck(int client) {
 	}
 	// Hook and load info for client
 	SDKHook(client, SDKHook_WeaponEquipPost, hookOnWeaponEquipPost);
-	SDKHook(client, SDKHook_SetTransmit, hookSetTransmitClient);
 	
 	LoadPlayerProfile(client);
 	
