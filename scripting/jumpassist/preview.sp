@@ -1,6 +1,17 @@
-/* ======================================================================
-   ------------------------------- Global Vars
-*/
+enum (<<=1) {
+	HIDEHUD_WEAPONSELECTION = 1,
+	HIDEHUD_FLASHLIGHT,
+	HIDEHUD_ALL,
+	HIDEHUD_HEALTH,
+	HIDEHUD_PLAYERDEAD,
+	HIDEHUD_NEEDSUIT,
+	HIDEHUD_MISCSTATUS,
+	HIDEHUD_CHAT,
+	HIDEHUD_CROSSHAIR,
+	HIDEHUD_VEHICLE_CROSSHAIR,
+	HIDEHUD_INVEHICLE,
+	HIDEHUD_BONUS_PROGRESS
+}
 
 float
 	  g_fPreviewOrigin[MAXPLAYERS+1][3]
@@ -54,6 +65,8 @@ void EnablePreview(int client) {
 	SetEntPropFloat(client, Prop_Send, "m_flNextAttack", GetGameTime()+9999999.0);
 	SetEntProp(client, Prop_Send, "m_bDrawViewmodel", 0);
 
+	SetEntProp(client, Prop_Send, "m_iHideHUD", HIDEHUD_HEALTH|HIDEHUD_MISCSTATUS); 
+
 	SDKHook(client, SDKHook_WeaponSwitch, hookWeaponSwitch);
 
 	g_bIsPreviewing[client] = true;
@@ -61,7 +74,7 @@ void EnablePreview(int client) {
 	PrintColoredChat(client, "[%sJA\x01] Preview mode%s enabled\x01.", cTheme1, cTheme2);
 }
 
-void DisablePreview(int client, bool restore = false) {
+void DisablePreview(int client, bool restore = false, bool click = false) {
 	g_bIsPreviewing[client] = false;
 
 	if (restore) {
@@ -71,8 +84,9 @@ void DisablePreview(int client, bool restore = false) {
 		SetEntityMoveType(client, MOVETYPE_WALK);
 		SetEntityFlags(client, flags & ~(FL_DONTTOUCH|FL_NOTARGET|FL_FLY));
 
-		SetEntPropFloat(client, Prop_Send, "m_flNextAttack", GetGameTime());
 		SetEntProp(client, Prop_Send, "m_bDrawViewmodel", 1);
+		SetEntProp(client, Prop_Send, "m_iHideHUD", 0);
+		SetEntPropFloat(client, Prop_Send, "m_flNextAttack", GetGameTime()+(click?1.0:0.0)); 
 
 		SDKUnhook(client, SDKHook_WeaponSwitch, hookWeaponSwitch);
 	}
@@ -88,13 +102,6 @@ bool IsClientPreviewing(int client) {
 /* ======================================================================
    ------------------------------- Hooks
 */
-
-public Action hookSetTransmitClient(int entity, int client) {
-	if (IsValidClient(entity) && entity != client && IsClientPreviewing(entity) && !IsClientObserver(client)) {
-		return Plugin_Handled;
-	}
-	return Plugin_Continue;
-}
 
 public Action hookWeaponSwitch(int client, int weapon) {
 	return Plugin_Handled;

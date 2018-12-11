@@ -19,7 +19,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.2.2"
+#define PLUGIN_VERSION "2.3.0"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cTheme1 "\x0769cfbc"
@@ -102,6 +102,7 @@ Database
 #include "jumpassist/spec.sp"
 #include "jumpassist/preview.sp"
 #include "jumpassist/teleporting.sp"
+#include "jumpassist/hide.sp"
 
 public Plugin myinfo = {
 	name = PLUGIN_NAME,
@@ -131,6 +132,7 @@ public void OnPluginStart() {
 	g_cvarAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo?", FCVAR_NONE);
 	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits?", FCVAR_NONE);
 	g_cvarSuperman = CreateConVar("ja_superman", "1", "Allows everyone to be invincible?", FCVAR_NONE);
+	g_cvarExplosions = CreateConVar("sm_hide_explosions", "1", "Enable/Disable hiding explosions.", 0);
 
 	version.SetString(PLUGIN_VERSION);
 	delete version;
@@ -160,6 +162,9 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Enables hardcore mode (No regen, no saves)");
 	
 	RegConsoleCmd("sm_hidemessage", cmdHideMessage, "Toggles display of JA messages, such as save and teleport");
+
+	// HIDE
+	RegConsoleCmd("sm_hide", cmdHide, "Show/Hide Other Players");
 
 	// PREVIEW
 	RegConsoleCmd("sm_preview", cmdPreview, "Enables noclip, allowing preview of a map");
@@ -205,11 +210,18 @@ public void OnPluginStart() {
 	HookEvent("player_disconnect", eventPlayerDisconnect);
 	HookEvent("teamplay_flag_event", eventIntelPickedUp, EventHookMode_Pre);
 
-	HookUserMessage(GetUserMessageId("VoiceSubtitle"), VoiceHook, true);
+	HookUserMessage(GetUserMessageId("VoiceSubtitle"), hookVoice, true);
 
 	AddCommandListener(listenerJoinTeam, "jointeam");
 	AddCommandListener(listenerJoinClass, "joinclass");
 	AddCommandListener(listenerJoinClass, "join_class");
+
+	// HIDE
+	AddNormalSoundHook(hookSound);
+
+	AddTempEntHook("TFExplosion", hookTempEnt);
+	AddTempEntHook("TFBlood", hookTempEnt);
+	AddTempEntHook("TFParticleEffect", hookTempEnt);
 
 	// SKEYS Objects
 	g_hHudDisplayForward = CreateHudSynchronizer();
@@ -244,6 +256,11 @@ public void OnPluginStart() {
 				}
 			}
 		}
+		// HIDE
+		int ent = -1;
+		while((ent = FindEntityByClassname(ent, "item_teamflag")) != INVALID_ENT_REFERENCE) {
+			SDKHook(ent, SDKHook_SetTransmit, hookSetTransmitIntel);
+		}
 	}
 }
 
@@ -260,8 +277,6 @@ public void OnMapStart() {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
-	FindConVar("mp_respawnwavetime").SetInt(0);
-	FindConVar("sv_noclipspeed").SetFloat(2.5);
 
 	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 
@@ -284,6 +299,11 @@ public void OnMapStart() {
 		g_iCPs++;
 	}
 	HookFuncRegenerate();
+}
+
+public void OnConfigsExecuted() {
+	FindConVar("mp_respawnwavetime").SetInt(0);
+	FindConVar("sv_noclipspeed").SetFloat(2.5);
 }
 
 public void OnClientCookiesCached(int client) {
@@ -386,6 +406,10 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		//.54 x def and .4 y def
 	}
 
+	if (IsClientPreviewing(client) && (buttons & IN_ATTACK)) {
+		DisablePreview(client, true, true);
+	}
+
 	if (g_bAmmoRegen[client] && buttons & (IN_ATTACK|IN_ATTACK2) && !IsClientObserver(client)) {
 		for (int i = 0; i <= 2; i++) {
 			ReSupply(client, g_iClientWeapons[client][i]);
@@ -394,6 +418,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 
 	if (g_bRaceLocked[client]) {
 		vel = nullVector;
+		buttons = 0;
 	}
 
 	int iMaxHealth = GetEntProp(client, Prop_Data, "m_iMaxHealth");
@@ -665,15 +690,18 @@ public void eventRoundStart(Handle event, const char[] name, bool dontBroadcast)
 }
 
 public Action eventIntelPickedUp(Event event, const char[] name, bool dontBroadcast) {
+	event.BroadcastDisabled = true;
 	int client = event.GetInt("player");
 	int eventType = event.GetInt("eventtype");
 
 	switch (eventType) {
 		case INTEL_PICKEDUP: {
 			g_iIntelCarrier = client;
+			g_bIntelPickedUp = true;
 		}
 		case INTEL_DROPPED: {
 			g_iIntelCarrier = 0;
+			g_bIntelPickedUp = false;
 		}
 	}
 
@@ -808,15 +836,20 @@ public void hookOnWeaponEquipPost(int client, int weapon) {
 	}
 }
 
-public Action VoiceHook(UserMsg msg_id, BfRead bf, const int[] players, int playersNum, bool reliable, bool init) {
+public Action hookVoice(UserMsg msg_id, BfRead bf, const int[] players, int playersNum, bool reliable, bool init) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Continue;
 	}
 	int client = bf.ReadByte();
+
+	if (IsClientPreviewing(client)) {
+		return Plugin_Handled;
+	}
+
 	int vMenu1 = bf.ReadByte();
 	int vMenu2 = bf.ReadByte();
 
-	if (g_cvarPluginEnabled.BoolValue && IsValidClient(client) && IsPlayerAlive(client)) {
+	if (IsValidClient(client) && IsPlayerAlive(client)) {
 		if ((vMenu1 == 0) && (vMenu2 == 0) && !g_bHardcore[client] && (!g_iRaceID[client] || g_fRaceTime[client] != 0.0)) {
 			for (int i = 0; i <= 2; i++) {
 				ReSupply(client, g_iClientWeapons[client][i]);
@@ -1505,8 +1538,8 @@ char[] GetClassname(TFClassType class) {
 	return buffer;
 }
 
-bool IsValidClient(int client) {
-	return (0 < client <= MaxClients && IsClientInGame(client) && !IsFakeClient(client));
+bool IsValidClient(int client, int bot = false) {
+	return (0 < client <= MaxClients && IsClientInGame(client) && (bot || !IsFakeClient(client)));
 }
 
 bool IsUserAdmin(int client) {
