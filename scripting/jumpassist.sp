@@ -19,7 +19,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.0"
+#define PLUGIN_VERSION "2.3.1"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 #define cTheme1 "\x0769cfbc"
@@ -52,6 +52,7 @@ enum {
 
 bool
 	  g_bLateLoad
+	, g_bFeaturesEnabled[MAXPLAYERS+1]
 	, g_bHideMessage[MAXPLAYERS+1]
 	, g_bIsPreviewing[MAXPLAYERS+1]
 	, g_bAmmoRegen[MAXPLAYERS+1]
@@ -123,8 +124,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart() {
 	// CONVAR
-	ConVar version;
-	version = CreateConVar("jumpassist_version", PLUGIN_VERSION, "JumpAssist Version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	CreateConVar("jumpassist_version", PLUGIN_VERSION, "JumpAssist Version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
 	g_cvarHostname = FindConVar("hostname");
 	g_cvarWaitingForPlayers = FindConVar("mp_waitingforplayers_time");
 	g_cvarPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NONE);
@@ -133,9 +133,6 @@ public void OnPluginStart() {
 	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits?", FCVAR_NONE);
 	g_cvarSuperman = CreateConVar("ja_superman", "1", "Allows everyone to be invincible?", FCVAR_NONE);
 	g_cvarExplosions = CreateConVar("sm_hide_explosions", "1", "Enable/Disable hiding explosions.", 0);
-
-	version.SetString(PLUGIN_VERSION);
-	delete version;
 
 	g_cvarAmmoCheat.AddChangeHook(cvarAmmoCheatChanged);
 	g_cvarWelcomeMsg.AddChangeHook(cvarWelcomeMsgChanged);
@@ -239,6 +236,9 @@ public void OnPluginStart() {
 
 	SetAllSkeysDefaults();
 	ConnectToDatabase();
+
+	// GOTO
+	CreateGoToArrays();
 	
 	// LATELOAD
 	if (g_bLateLoad) {
@@ -324,22 +324,23 @@ public void OnClientPostAdminCheck(int client) {
 	}
 	
 	SetPlayerDefaults(client);
-	if (!GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]))) {
-		LogError("[JumpAssist] Unable to retrieve steam id on %N", client);
-		return;
-	}
-	// Hook and load info for client
+
 	SDKHook(client, SDKHook_WeaponEquipPost, hookOnWeaponEquipPost);
-	
-	LoadPlayerProfile(client);
-	
+
 	// Welcome message.
 	if (g_cvarWelcomeMsg.BoolValue) {
 		CreateTimer(15.0, WelcomePlayer, client);
 	}
+
+	if (!GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]))) {
+		LogError("[JumpAssist] Unable to retrieve steam id on %N", client);
+		return;
+	}
+	g_bFeaturesEnabled[client] = true;
+	LoadPlayerProfile(client);
 }
 
-public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2]) {
+public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2]) {
 	if (!IsValidClient(client)) {
 		return Plugin_Continue;
 	}
@@ -571,6 +572,7 @@ public void eventPlayerChangeClass(Event event, const char[] name, bool dontBroa
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	int class = event.GetInt("class");
 	g_TFClientClass[client] = view_as<TFClassType>(class);
+	TF2_RespawnPlayer(client);
 }
 
 public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
@@ -622,7 +624,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	// Disable func_regenerate if player is using beggers bazooka
 	CheckBeggars(client);
 
-	if (g_Database != null) {
+	if (g_Database != null && g_bFeaturesEnabled[client]) {
 		CreateTimer(0.3, timerSpawnedBool, client);
 		g_bJustSpawned[client] = true;
 		if (g_bUsedReset[client]) {
@@ -1099,6 +1101,7 @@ public Action cmdJumpAssist(int client, int args) {
 */
 
 void SetPlayerDefaults(int client) {
+	g_bFeaturesEnabled[client] = false;
 	g_bIsPreviewing[client] = false;
 	g_bAmmoRegen[client] = false;
 	g_bHardcore[client] = false;
@@ -1110,47 +1113,55 @@ void SetPlayerDefaults(int client) {
 	EraseLocs(client);
 	g_iRaceID[client] = 0;
 	SetSkeysDefaults(client);
+	ClearGoToArray(client);
 }
 
 void SaveLoc(int client) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
-	int flags = GetEntityFlags(client);
+	if (!g_bFeaturesEnabled[client]) {
+		PrintColoredChat(client, "[%sJA\x01] Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.", cTheme1);
+		return;
+	}
 	if (g_bHardcore[client]) {
 		PrintColoredChat(client, "[%sJA\x01]%s Hardcore:\x01 Saves are%s disabled\x01.", cTheme1, cHardcore, cTheme2);
 		return;
 	}
-	else if (!IsPlayerAlive(client) || IsClientObserver(client)) {
+	if (!IsPlayerAlive(client) || IsClientObserver(client)) {
 		PrintColoredChat(client, "[%sJA\x01] Must be%s alive\x01 to save.", cTheme1, cTheme2);
 		return;
 	}
-	else if (!(flags & FL_ONGROUND)) {
+	int flags = GetEntityFlags(client);
+	if (!(flags & FL_ONGROUND)) {
 		PrintColoredChat(client, "[%sJA\x01] Unable to save while%s in the air\x01.", cTheme1, cTheme2);
 		return;
 	}
-	else if ((flags & FL_DUCKING)) {
+	if ((flags & FL_DUCKING)) {
 		PrintColoredChat(client, "[%sJA\x01] Unable to save while%s ducked\x01.", cTheme1, cTheme2);
 		return;
 	}
-	else if ((GetEntityMoveType(client) == MOVETYPE_NOCLIP)) {
+	if ((GetEntityMoveType(client) == MOVETYPE_NOCLIP)) {
 		PrintColoredChat(client, "[%sJA\x01] Unable to save while%s noclipped\x01.", cTheme1, cTheme2);
 		return;
 	}
-	else {
-		g_fLastSavePos[client] = g_fOrigin[client];
-		g_fLastSaveAngles[client] = g_fAngles[client];
 
-		GetClientAbsOrigin(client, g_fOrigin[client]);
-		GetClientAbsAngles(client, g_fAngles[client]);
-		if (g_Database != null && IsClientInGame(client)) {
-			GetPlayerData(client);
-		}
+	g_fLastSavePos[client] = g_fOrigin[client];
+	g_fLastSaveAngles[client] = g_fAngles[client];
+
+	GetClientAbsOrigin(client, g_fOrigin[client]);
+	GetClientAbsAngles(client, g_fAngles[client]);
+	if (g_Database != null && IsClientInGame(client)) {
+		GetPlayerData(client);
 	}
 }
 
 void Teleport(int client) {
 	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client)) {
+		return;
+	}
+	if (!g_bFeaturesEnabled[client]) {
+		PrintColoredChat(client, "[%sJA\x01] Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.", cTheme1);
 		return;
 	}
 	if (g_iRaceID[client] && (g_iRaceStatus[g_iRaceID[client]] == STATUS_COUNTDOWN || g_iRaceStatus[g_iRaceID[client]] == STATUS_RACING)) {
@@ -1161,7 +1172,7 @@ void Teleport(int client) {
 		PrintColoredChat(client, "[%sJA\x01]%s Hardcore:\x01 Teleports are%s disabled\x01.", cTheme1, cHardcore, cTheme2);
 		return;
 	}
-	else if (!IsPlayerAlive(client)) {
+	if (!IsPlayerAlive(client)) {
 		PrintColoredChat(client, "[%sJA\x01] Unable to teleport while%s dead\x01.", cTheme1, cTheme2);
 		return;
 	}
@@ -1184,7 +1195,7 @@ void Teleport(int client) {
 }
 
 void ResetPlayerPos(int client) {
-	if (!g_cvarPluginEnabled.BoolValue || !IsClientInGame(client) || IsClientObserver(client)) {
+	if (!g_cvarPluginEnabled.BoolValue || !IsClientInGame(client) || IsClientObserver(client) || !g_bFeaturesEnabled[client]) {
 		return;
 	}
 	DeletePlayerData(client);
@@ -1201,12 +1212,13 @@ void Hardcore(int client) {
 		EraseLocs(client);
 		TF2_RespawnPlayer(client);
 		PrintColoredChat(client, "[%sJA\x01]%s Hardcore%s enabled\x01.", cTheme1, cHardcore, cTheme2);
+		return;
 	}
-	else {
-		g_bHardcore[client] = false;
-		LoadPlayerData(client);
-		PrintColoredChat(client, "[%sJA\x01]%s Hardcore%s disabled\x01.", cTheme1, cHardcore, cTheme2);
-	}
+
+	g_bHardcore[client] = false;
+	LoadPlayerData(client);
+	PrintColoredChat(client, "[%sJA\x01]%s Hardcore%s disabled\x01.", cTheme1, cHardcore, cTheme2);
+
 }
 
 // Support for beggar's bazooka
@@ -1596,7 +1608,7 @@ void framerequestChangeTeam(DataPack dp) {
 }
 
 void framerequestRespawn(any data) {
-	if (GetClientTeam(data) > 1) {
+	if (IsClientConnected(data) && GetClientTeam(data) > 1) {
 		TF2_RespawnPlayer(data);
 	}
 }

@@ -109,7 +109,7 @@ public Action cmdHide(int client, int args) {
    ------------------------------- Hooks
 */
 
-public Action hookSound(int clients[64], int& numClients, char sample[PLATFORM_MAX_PATH], int& entity, int& channel, float& volume, int& level, int& pitch, int& flags) {
+public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags, char soundEntry[PLATFORM_MAX_PATH], int &seed) {
 	//Block sounds within g_sSoundHook list.
 	for (int i = 0; i <= sizeof(g_sSoundHook)-1; i++) {
 		if (StrContains(sample, g_sSoundHook[i], false) != -1) {

@@ -1,6 +1,19 @@
+bool g_bGoToCooldown[MAXPLAYERS+1];
+ArrayList g_aGoToRecent[MAXPLAYERS+1];
+
 /* ======================================================================
    ------------------------------- Commands
 */
+
+void CreateGoToArrays() {
+	for (int i = 0; i <= MaxClients; i++) {
+		g_aGoToRecent[i] = new ArrayList();
+	}
+}
+
+void ClearGoToArray(int client) {
+	g_aGoToRecent[client].Clear();
+}
 
 public Action cmdBring(int client, int argc) {
 	if (!client || !IsClientInGame(client)) {
@@ -55,17 +68,16 @@ public Action cmdBring(int client, int argc) {
 }
 
 public Action cmdGoTo(int client, int args) {
-	if (!client || !IsClientInGame(client)) {
+	if (!client || !IsClientInGame(client) || g_bGoToCooldown[client]) {
 		return Plugin_Handled;
 	}
-	
-	char sCommand[256];
-	int clientTeam = GetClientTeam(client);
+
 	if (!args) {
 		MainMenu(client);
 		return Plugin_Handled;
 	}
-	
+
+	char sCommand[256];
 	if (!GetCmdArg(1, sCommand, sizeof(sCommand))) {
 		return Plugin_Handled;
 	}
@@ -76,21 +88,39 @@ public Action cmdGoTo(int client, int args) {
 		return Plugin_Handled;
 	}
 
+	if (!IsPlayerAlive(target)) {
+		PrintColoredChat(client, "[%sJA\x01] Target must be alive.", cTheme1);
+		return Plugin_Handled;
+	}
+
+	if (g_aGoToRecent[client].FindValue(target) != -1) {
+		PrintColoredChat(client, "[%sJA\x01] Unable to teleport to recently targetted players.", cTheme1);
+		return Plugin_Handled;
+	}
+
 	if (IsClientPreviewing(target)) {
-		PrintColoredChat(client, "[%sJA\x01] Can't go to players while they're in%s preview mode\x01.", cTheme1, cTheme2);
+		PrintColoredChat(client, "[%sJA\x01] Unable to teleport to players while they're in%s preview mode\x01.", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
 
 	float fPosition[3];
-	if (clientTeam != GetClientTeam(target) && !(GetUserFlagBits(client) & (ADMFLAG_GENERIC|ADMFLAG_ROOT))) {
+	if (GetClientTeam(client) != GetClientTeam(target) && !(GetUserFlagBits(client) & (ADMFLAG_GENERIC|ADMFLAG_ROOT))) {
 		PrintColoredChat(client, "[%sJA\x01] Can't go to players on the%s opposite team", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
+
 	GetClientAbsOrigin(target, fPosition);
 	TeleportEntity(client, fPosition, NULL_VECTOR, NULL_VECTOR);
 	
 	PrintColoredChat(client, "[%sJA\x01] You have teleported to%s %N\x01's position", cTheme1, cTheme2, target);
 	PrintColoredChat(target, "[%sJA\x01]%s %N\x01 has teleported to your position.", cTheme1, cTheme2, client);
+
+	g_aGoToRecent[client].Push(target);
+	CreateTimer(20.0, timerRecentTargetCooldown, client);
+
+	g_bGoToCooldown[client] = true;
+	CreateTimer(3.0, timerGoToCooldown, client);
+
 	return Plugin_Handled;
 }
 
@@ -105,8 +135,10 @@ void MainMenu(int client) {
 		if (IsValidClient(i) && IsPlayerAlive(i) && !IsClientPreviewing(i)) {
 			char name[MAX_NAME_LENGTH];
 			Format(name, sizeof(name), "%N", i);
+
 			char userid[16];
 			Format(userid, sizeof(userid), "%i", GetClientUserId(i));
+
 			menu.AddItem(userid, name);
 		}
 	}
@@ -115,17 +147,29 @@ void MainMenu(int client) {
 int MenuHandler_Main(Menu menu, MenuAction action, int param1, int param2) {
 	switch(action) {
 		case MenuAction_Select: {
-			char UserId[64];
-			menu.GetItem(param2, UserId, sizeof(UserId));
-			FakeClientCommand(param1, "sm_goto #%s", UserId);
+			char userid[64];
+			menu.GetItem(param2, userid, sizeof(userid));
+
+			if (IsValidClient(GetClientOfUserId(StringToInt(userid)))) {
+				FakeClientCommand(param1, "sm_goto #%s", userid);
+			}
+			else {
+				menu.RemoveItem(param2);
+			}
+
 			menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
 		}
 		case MenuAction_DrawItem: {
-			char UserId[64];
-			menu.GetItem(param2, UserId, sizeof(UserId));
-			int id = StringToInt(UserId);
+			char userid[64];
+			menu.GetItem(param2, userid, sizeof(userid));
+			int id = StringToInt(userid);
+
 			if (GetClientUserId(param1) == id) {
 				return ITEMDRAW_IGNORE;
+			}
+
+			if (g_aGoToRecent[param1].FindValue(GetClientOfUserId(id)) != -1) {
+				return ITEMDRAW_DISABLED;
 			}
 		}
 		case MenuAction_End: {
@@ -135,4 +179,12 @@ int MenuHandler_Main(Menu menu, MenuAction action, int param1, int param2) {
 		}
 	}
 	return 0;
+}
+
+Action timerRecentTargetCooldown(Handle timer, int client) {
+	g_aGoToRecent[client].Erase(0);
+}
+
+Action timerGoToCooldown(Handle timer, int client) {
+	g_bGoToCooldown[client] = false;
 }
