@@ -103,17 +103,21 @@ public Action cmdGoTo(int client, int args) {
 		return Plugin_Handled;
 	}
 
-	float fPosition[3];
 	if (GetClientTeam(client) != GetClientTeam(target) && !(GetUserFlagBits(client) & (ADMFLAG_GENERIC|ADMFLAG_ROOT))) {
 		PrintColoredChat(client, "[%sJA\x01] Can't go to players on the%s opposite team", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
 
+	float fPosition[3];
 	GetClientAbsOrigin(target, fPosition);
 	TeleportEntity(client, fPosition, NULL_VECTOR, NULL_VECTOR);
 	
 	PrintColoredChat(client, "[%sJA\x01] You have teleported to%s %N\x01's position", cTheme1, cTheme2, target);
 	PrintColoredChat(target, "[%sJA\x01]%s %N\x01 has teleported to your position.", cTheme1, cTheme2, client);
+
+	if (CheckCommandAccess(client, "sm_bring", ADMFLAG_GENERIC)) {
+		return Plugin_Handled;
+	}
 
 	g_aGoToRecent[client].Push(target);
 	CreateTimer(20.0, timerRecentTargetCooldown, client);
@@ -144,6 +148,7 @@ void MainMenu(int client) {
 	}
 	menu.Display(client, MENU_TIME_FOREVER);
 }
+
 int MenuHandler_Main(Menu menu, MenuAction action, int param1, int param2) {
 	switch(action) {
 		case MenuAction_Select: {

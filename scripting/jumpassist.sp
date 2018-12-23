@@ -248,12 +248,12 @@ public void OnPluginStart() {
 			if (IsValidClient(i, true)) {
 				g_iClientTeam[i] = GetClientTeam(i);
 				g_TFClientClass[i] = TF2_GetPlayerClass(i);
-				GetClientAuthId(i, AuthId_Steam2, g_sClientSteamID[i], sizeof(g_sClientSteamID[]));
+				if (GetClientAuthId(i, AuthId_Steam2, g_sClientSteamID[i], sizeof(g_sClientSteamID[]))) {
+					g_bFeaturesEnabled[i] = true;
+				}
 				SDKHook(i, SDKHook_WeaponEquipPost, hookOnWeaponEquipPost);
 				SDKHook(i, SDKHook_SetTransmit, hookSetTransmitClient);
-				for (int j = 0; j <= 2; j++) {
-					g_iClientWeapons[i][j] = GetPlayerWeaponSlot(i, j);
-				}
+				GetClientWeapons(i);
 			}
 		}
 		// HIDE
@@ -336,6 +336,7 @@ public void OnClientPostAdminCheck(int client) {
 		LogError("[JumpAssist] Unable to retrieve steam id on %N", client);
 		return;
 	}
+	
 	g_bFeaturesEnabled[client] = true;
 	LoadPlayerProfile(client);
 }
@@ -572,7 +573,9 @@ public void eventPlayerChangeClass(Event event, const char[] name, bool dontBroa
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	int class = event.GetInt("class");
 	g_TFClientClass[client] = view_as<TFClassType>(class);
-	TF2_RespawnPlayer(client);
+	if (IsPlayerAlive(client)) {
+		TF2_RespawnPlayer(client);
+	}
 }
 
 public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
@@ -617,9 +620,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 		DisablePreview(client);
 	}
 
-	for (int i = 0; i < 3; i++) {
-		g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
-	}
+	GetClientWeapons(client);
 
 	// Disable func_regenerate if player is using beggers bazooka
 	CheckBeggars(client);
@@ -838,9 +839,7 @@ public Action OnPlayerStartTouchFuncRegenerate(int entity, int other) {
 
 public void hookOnWeaponEquipPost(int client, int weapon) {
 	if (IsValidClient(client)) {
-		for (int i = 0; i <= 2; i++) {
-			g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
-		}
+		GetClientWeapons(client);
 	}
 }
 
@@ -1247,6 +1246,12 @@ void HookFuncRegenerate() {
 		SDKHook(entity, SDKHook_StartTouch, OnPlayerStartTouchFuncRegenerate);
 		SDKHook(entity, SDKHook_Touch, OnPlayerStartTouchFuncRegenerate);
 		SDKHook(entity, SDKHook_EndTouch, OnPlayerStartTouchFuncRegenerate);
+	}
+}
+
+void GetClientWeapons(int client) {
+	for (int i = 0; i <= 2; i++) {
+		g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
 	}
 }
 
