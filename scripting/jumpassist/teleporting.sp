@@ -187,7 +187,10 @@ int MenuHandler_Main(Menu menu, MenuAction action, int param1, int param2) {
 }
 
 Action timerRecentTargetCooldown(Handle timer, int client) {
-	g_aGoToRecent[client].Erase(0);
+	if (g_aGoToRecent[client].Length) {
+		g_aGoToRecent[client].Erase(0);
+	}
+	
 }
 
 Action timerGoToCooldown(Handle timer, int client) {
