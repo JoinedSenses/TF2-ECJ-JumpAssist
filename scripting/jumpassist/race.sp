@@ -39,7 +39,7 @@ RaceStatus
    ------------------------------- Commands
 */
 
-public Action cmdRaceInitialize(int client, int args) {
+public Action cmdRace(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client)) {
 		return Plugin_Handled;
 	}
@@ -178,7 +178,7 @@ public Action cmdRaceInfo(int client, int args) {
 	return Plugin_Handled;
 }
 
-public Action cmdRaceInitializeServer(int client, int args) {
+public Action cmdRaceServer(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
@@ -217,13 +217,21 @@ void displayServerRaceCPMenu(int client) {
 
 	char cpName[32];
 	char buffer[32];
+	int count;
 	int entity;
 	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1) {
 		int pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
 		GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 		IntToString(pIndex, buffer, sizeof(buffer));
 		menu.AddItem(buffer, cpName);
+		count++;
 	}
+
+	if (!count) {
+		PrintColoredChat(client, "No team control points to add to race menu at this time");
+		return;
+	}
+
 	menu.Display(client, 300);
 }
 
@@ -274,11 +282,18 @@ void displayRaceCPMenu(int client) {
 	Menu menu = new Menu(menuHandlerRaceCP, MENU_ACTIONS_DEFAULT);
 	menu.SetTitle("Select End Control Point");
 
+	int count;
 	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1) {
 		int pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
 		GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 		IntToString(pIndex, buffer, sizeof(buffer));
 		menu.AddItem(buffer, cpName);
+		count++;
+	}
+
+	if (!count) {
+		PrintColoredChat(client, "No team control points to add to race menu at this time");
+		return;
 	}
 
 	menu.Display(client, MENU_TIME_FOREVER);

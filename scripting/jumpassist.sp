@@ -19,16 +19,15 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.1"
+#define PLUGIN_VERSION "2.3.2"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
-#define cTheme1 "\x0769cfbc"
-#define cTheme2 "\x07a4e8dc"
 #define cHardcore "\x07FF4500"
 #define cRedTeam "\x07ba5353"
 #define cBlueTeam "\x0782b6ff"
 
 #include <sourcemod>
+#include <jumpassist>
 #include <tf2_stocks>
 #include <sdkhooks>
 #include <color_literals>
@@ -119,6 +118,11 @@ public Plugin myinfo = {
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	g_bLateLoad = late;
+	RegPluginLibrary("jumpassist");
+	CreateNative("JA_IsClientHiding", Native_IsClientHiding);
+	CreateNative("JA_IsClientHardcore", Native_IsClientHardcore);
+	CreateNative("JA_IsClientRacing", Native_IsClientRacing);
+	CreateNative("JA_GetClassName", Native_GetClassName);
 	return APLRes_Success;
 }
 
@@ -185,13 +189,13 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_fspec", cmdForceSpec, ADMFLAG_GENERIC, "sm_fspec <target> <targetToSpec>.");
 
 	// RACE
-	RegConsoleCmd("sm_race", cmdRaceInitialize, "Initializes a new race.");
+	RegConsoleCmd("sm_race", cmdRace, "Initializes a new race.");
 	RegConsoleCmd("sm_leaverace", cmdRaceLeave, "Leave the current race.");
 	RegConsoleCmd("sm_r_leave", cmdRaceLeave, "Leave the current race.");
 	RegConsoleCmd("sm_specrace", cmdRaceSpec, "Spectate a race.");
 	RegConsoleCmd("sm_racelist", cmdRaceList, "Display race list");
 	RegConsoleCmd("sm_raceinfo", cmdRaceInfo, "Display information about the race you are in.");
-	RegAdminCmd("sm_serverrace", cmdRaceInitializeServer, ADMFLAG_GENERIC, "Invite everyone to a server wide race");
+	RegAdminCmd("sm_serverrace", cmdRaceServer, ADMFLAG_GENERIC, "Invite everyone to a server wide race");
 
 	// ADMIN
 	RegAdminCmd("sm_mapset", cmdMapSet, ADMFLAG_GENERIC, "Change map settings");
@@ -436,6 +440,53 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	}
 
 	return Plugin_Continue;
+}
+
+/* ======================================================================
+   ------------------------------- Natives
+*/
+
+public int Native_IsClientHiding(Handle plugin, int numParams) {
+	int client = GetNativeCell(1);
+	if (client < 1 || client > MaxClients) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
+	}
+	if (!IsClientConnected(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
+	}
+	return g_bHide[client];
+}
+
+public int Native_IsClientHardcore(Handle plugin, int numParams) {
+	int client = GetNativeCell(1);
+	if (client < 1 || client > MaxClients) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
+	}
+	if (!IsClientConnected(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
+	}
+	return g_bHardcore[client];
+}
+
+public int Native_IsClientRacing(Handle plugin, int numParams) {
+	int client = GetNativeCell(1);
+	if (client < 1 || client > MaxClients) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
+	}
+	if (!IsClientConnected(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
+	}
+	return IsClientRacing(client);
+}
+
+public int Native_GetClassName(Handle plugin, int numParams) {
+	int size = GetNativeCell(2);
+	TFClassType class = GetNativeCell(3);
+
+	char[] className = new char[size];
+	GetClassname(class, className, size);
+
+	SetNativeString(1, className, size);
 }
 
 /* ======================================================================
@@ -812,14 +863,12 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 		// If client has not yet touched the cap and also if they haven't used the teleport command within 10 seconds.
 		else if (!g_bCPTouched[client][area] && ((RoundFloat(GetEngineTime()) - g_iLastTeleport[client]) > 10)) {
 			GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
-			for (int i = 1; i <= MaxClients; i++) {
-				if (IsClientInGame(i)) {
-					char className[33];
-					Format(className, sizeof(className), "%s", GetClassname(g_TFClientClass[client]));
-					PrintColoredChat(i, "[%sJA\x01] %s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", cTheme2, client, cTheme2, cpName, cTheme2, className);
-					EmitSoundToClient(i, "misc/freeze_cam.wav");
-				}
-			}
+			char className[33];
+			GetClassname(g_TFClientClass[client], className, sizeof(className));
+			Format(className, sizeof(className), "%s", className);
+			PrintColoredChatAll("[%sJA\x01] %s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", cTheme2, client, cTheme2, cpName, cTheme2, className);
+			EmitSoundToAll("misc/freeze_cam.wav");
+		
 			if (g_iCPsTouched[client] == g_iCPs) {
 				g_bBeatTheMap[client] = true;
 			}
@@ -1183,7 +1232,9 @@ void Teleport(int client) {
 	teamColor = (g_iClientTeam[client] == TEAM_RED) ? cRedTeam : cBlueTeam;
 
 	if (g_fOrigin[client][0] == 0.0) {
-		PrintColoredChat(client, "[%sJA\x01] You don't have a save for%s %s\x01 on the%s %s\x01.", cTheme1, teamColor, GetClassname(g_TFClientClass[client]), teamColor, teamName);
+		char className[33];
+		GetClassname(g_TFClientClass[client], className, sizeof(className));
+		PrintColoredChat(client, "[%sJA\x01] You don't have a save for%s %s\x01 on the%s %s\x01.", cTheme1, teamColor, className, teamColor, teamName);
 		return;
 	}
 
@@ -1545,20 +1596,18 @@ int menuHandlerJAHelpSubMenu(Menu menu, MenuAction action, int param1, int param
 	}
 }
 
-char[] GetClassname(TFClassType class) {
-	char buffer[128];
+void GetClassname(TFClassType class, char[] buffer, int size) {
 	switch(class) {
-		case TFClass_Scout: Format(buffer, sizeof(buffer), "Scout");
-		case TFClass_Sniper: Format(buffer, sizeof(buffer), "Sniper");
-		case TFClass_Soldier: Format(buffer, sizeof(buffer), "Soldier");
-		case TFClass_DemoMan: Format(buffer, sizeof(buffer), "Demoman");
-		case TFClass_Medic: Format(buffer, sizeof(buffer), "Medic");
-		case TFClass_Heavy: Format(buffer, sizeof(buffer), "Heavy");
-		case TFClass_Pyro: Format(buffer, sizeof(buffer), "Pyro");
-		case TFClass_Spy: Format(buffer, sizeof(buffer), "Spy");
-		case TFClass_Engineer: Format(buffer, sizeof(buffer), "Engineer");
+		case TFClass_Scout: Format(buffer, size, "Scout");
+		case TFClass_Sniper: Format(buffer, size, "Sniper");
+		case TFClass_Soldier: Format(buffer, size, "Soldier");
+		case TFClass_DemoMan: Format(buffer, size, "Demoman");
+		case TFClass_Medic: Format(buffer, size, "Medic");
+		case TFClass_Heavy: Format(buffer, size, "Heavy");
+		case TFClass_Pyro: Format(buffer, size, "Pyro");
+		case TFClass_Spy: Format(buffer, size, "Spy");
+		case TFClass_Engineer: Format(buffer, size, "Engineer");
 	}
-	return buffer;
 }
 
 bool IsValidClient(int client, int bot = false) {
