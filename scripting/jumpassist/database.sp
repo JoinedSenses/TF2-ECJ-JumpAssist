@@ -1,10 +1,4 @@
-bool
-	  g_bLoadedPlayerSettings[MAXPLAYERS+1];
-int
-	  g_iCPs
-	, g_iForceTeam = 1
-	, g_iCPsTouched[MAXPLAYERS+1]
-	, g_iLockCPs = 1;
+bool g_bLoadedPlayerSettings[MAXPLAYERS+1];
 
 void ConnectToDatabase() {
 	Database.Connect(SQL_OnConnect, "jumpassist");
@@ -92,8 +86,7 @@ void RunDBCheck() {
 		... "("
 			... "ID INT PRIMARY KEY %s NOT NULL, "
 			... "Map TEXT NOT NULL, "
-			... "Team TINYINT UNSIGNED NOT NULL, "
-			... "LockCPs TINYINT UNSIGNED NOT NULL"
+			... "Team TINYINT UNSIGNED NOT NULL"
 		... ")"
 		, increment
 	);
@@ -107,7 +100,7 @@ void RunDBCheck() {
 
 void LoadMapCFG() {
 	char query[1024];
-	Format(query, sizeof(query), "SELECT Team, LockCPs FROM map_settings WHERE Map = '%s'", g_sCurrentMap);
+	Format(query, sizeof(query), "SELECT Team FROM map_settings WHERE Map = '%s'", g_sCurrentMap);
 	g_Database.Query(SQL_OnMapSettingsLoad, query);
 }
 
@@ -117,7 +110,6 @@ void SQL_OnMapSettingsLoad(Database db, DBResultSet results, const char[] error,
 	}
 	else if (results.FetchRow()) {
 		g_iForceTeam = results.FetchInt(0);
-		g_iLockCPs = results.FetchInt(1);
 		if (g_bLateLoad && g_iForceTeam > 1) {
 			CheckTeams();
 		}
@@ -129,9 +121,9 @@ void SQL_OnMapSettingsLoad(Database db, DBResultSet results, const char[] error,
 
 void CreateMapCFG() {
 	char query[1024];
-	Format(query, sizeof(query), "INSERT INTO map_settings VALUES(null, '%s', '1', '1')", g_sCurrentMap);
+	Format(query, sizeof(query), "INSERT INTO map_settings VALUES(null, '%s', '1')", g_sCurrentMap);
 	g_Database.Query(SQL_CreateMapCFGCallback, query);
-	g_iForceTeam = g_iLockCPs = 1;
+	g_iForceTeam = 1;
 }
 
 void SQL_CreateMapCFGCallback(Database db, DBResultSet results, const char[] error, any data) {
@@ -141,7 +133,6 @@ void SQL_CreateMapCFGCallback(Database db, DBResultSet results, const char[] err
 }
 
 void SaveMapSettings(int client, char[] arg1, char[] arg2) {
-	int lock;
 	char query[512];
 	
 	if (StrEqual(arg1, "team", false)) {
@@ -162,20 +153,6 @@ void SaveMapSettings(int client, char[] arg1, char[] arg2) {
 			return;	
 		}
 		g_Database.Format(query, sizeof(query), "UPDATE map_settings SET Team = '%i' WHERE Map = '%s'", g_iForceTeam, g_sCurrentMap);
-		g_Database.Query(SQL_OnMapSettingsUpdated, query, GetClientUserId(client));
-	}
-	else if (StrEqual(arg1, "lockcps", false)) {
-		if (StrEqual(arg2, "on", false)) {
-			lock = 1;
-		}
-		else if (StrEqual(arg2, "off", false)) {
-			lock = 0;
-		}
-		else {
-			PrintColoredChat(client, "[%sJA\x01] %sUsage\x01: !mapset <lockcps> <on|off>", cTheme1, cTheme2);
-			return;
-		}
-		g_Database.Format(query, sizeof(query), "UPDATE map_settings SET LockCPs = '%i' WHERE Map = '%s'", lock, g_sCurrentMap);
 		g_Database.Query(SQL_OnMapSettingsUpdated, query, GetClientUserId(client));
 	}
 }

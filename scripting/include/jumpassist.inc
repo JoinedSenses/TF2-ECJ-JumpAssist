@@ -16,6 +16,9 @@ public SharedPlugin __pl_jumpassist =
 
 #define cTheme1 "\x0769cfbc"
 #define cTheme2 "\x07a4e8dc"
+#define cHardcore "\x07FF4500"
+#define cRedTeam "\x07ff5b5b"
+#define cBlueTeam "\x079bc4e8"
 
 /**
  * Checks if client has hidden other players
@@ -42,13 +45,13 @@ native bool JA_IsClientHardcore(int client);
 native bool JA_IsClientRacing(int client);
 
 /**
- * Formats client's class as a string
+ * Formats class as a string
  *
  * @param class			Class index
  * @param className		Char array to format
  * @noreturn
  */
-native void JA_GetClassName(TFClassType class, char[] className, int size);
+native void JA_GetClassName(char[] className, int size, TFClassType class);
 
 //public __pl_jumpassist_SetNTVOptional() {
 //}

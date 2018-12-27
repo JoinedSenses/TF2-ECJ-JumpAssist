@@ -47,7 +47,7 @@ public Action cmdRace(int client, int args) {
 		PrintColoredChat(client, "[%sJA\x01] Must be alive and on a team to use this command.", cTheme1);
 		return Plugin_Handled;
 	}
-	if (g_iCPs == 0) {
+	if (g_iCPCount == 0) {
 		PrintColoredChat(client, "[%sJA\x01] You may only race on maps with control points.", cTheme1);
 		return Plugin_Handled;
 	}
@@ -186,7 +186,7 @@ public Action cmdRaceServer(int client, int args) {
 		PrintColoredChat(client, "[%sJA\x01] Must be%s alive\x01 and on a%s team\x01 to use this command.", cTheme1, cTheme2, cTheme2);
 		return Plugin_Handled;
 	}
-	if (g_iCPs == 0) {
+	if (g_iCPCount == 0) {
 		PrintColoredChat(client, "[%sJA\x01] You may only race on maps with control points.", cTheme1);
 		return Plugin_Handled;
 	}
@@ -198,7 +198,7 @@ public Action cmdRaceServer(int client, int args) {
 		return Plugin_Handled;
 	}
 
-	displayServerRaceCPMenu(client);
+	displayRaceCPMenu(client, true);
 	return Plugin_Handled;
 }
 
@@ -206,33 +206,65 @@ public Action cmdRaceServer(int client, int args) {
    ------------------------------- Menus
 */
 
-void displayServerRaceCPMenu(int client) {
-	g_iRaceID[client] = client;
-	g_iRaceStatus[client] = STATUS_INVITING;
-	g_bRaceClassForce[client] = true;
-
-	Menu menu = new Menu(menuHandlerServerRaceCP, MENU_ACTIONS_DEFAULT);
-	menu.SetTitle("Select End Control Point");
-	menu.AddItem("*[Begin Race]*","*[Begin Race]*");
-
+void displayRaceCPMenu(int client, bool serverRace = false) {
 	char cpName[32];
 	char buffer[32];
-	int count;
 	int entity;
-	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1) {
-		int pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
-		GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
-		IntToString(pIndex, buffer, sizeof(buffer));
-		menu.AddItem(buffer, cpName);
-		count++;
+
+	Menu menu = new Menu(serverRace ? menuHandlerServerRaceCP : menuHandlerRaceCP, MENU_ACTIONS_DEFAULT);
+	menu.SetTitle("Select End Control Point");
+
+	int count;
+	if (g_bCPFallback) {
+		while ((entity = FindEntityByClassname(entity, "trigger_capture_area")) != INVALID_ENT_REFERENCE) {
+			GetEntPropString(entity, Prop_Data, "m_iszCapPointName", cpName, sizeof(cpName));
+			IntToString(count++, buffer, sizeof(buffer));
+			menu.AddItem(buffer, cpName);
+		}		
+	}
+	else {
+		while ((entity = FindEntityByClassname(entity, "team_control_point")) != INVALID_ENT_REFERENCE) {
+			int pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
+			GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
+			IntToString(pIndex, buffer, sizeof(buffer));
+			menu.AddItem(buffer, cpName);
+			count++;
+		}		
 	}
 
-	if (!count) {
-		PrintColoredChat(client, "No team control points to add to race menu at this time");
-		return;
+	if (count) {
+		menu.Display(client, MENU_TIME_FOREVER);
 	}
+	else {
+		PrintColoredChat(client, "[%sJA\x01] Unable to add control points to the menu at this time.");
+		delete menu;
+	}
+	
+	return;
+}
 
-	menu.Display(client, 300);
+int menuHandlerRaceCP(Menu menu, MenuAction action, int param1, int param2) {
+	switch (action) {
+		case MenuAction_Select: {
+			char info[32];
+			menu.GetItem(param2, info, sizeof(info));
+
+			g_iRaceEndPoint[param1] = StringToInt(info);
+			g_iRaceID[param1] = param1;
+			g_iRaceStatus[param1] = STATUS_INVITING;
+			g_bRaceClassForce[param1] = true;
+			
+			displayRaceInviteMenu(param1);
+		}
+		case MenuAction_Cancel: {
+			g_iRaceID[param1] = 0;
+			g_iRaceStatus[param1] = STATUS_NONE;
+			PrintColoredChat(param1, "[%sJA\x01] The race has been cancelled.", cTheme1);	
+		}
+		case MenuAction_End: {
+			delete menu;
+		}
+	}
 }
 
 int menuHandlerServerRaceCP(Menu menu, MenuAction action, int param1, int param2) {
@@ -272,56 +304,6 @@ int menuHandlerServerRaceCP(Menu menu, MenuAction action, int param1, int param2
 		}
 	}
 	return 0;
-}
-
-void displayRaceCPMenu(int client) {
-	char cpName[32];
-	char buffer[32];
-	int entity;
-
-	Menu menu = new Menu(menuHandlerRaceCP, MENU_ACTIONS_DEFAULT);
-	menu.SetTitle("Select End Control Point");
-
-	int count;
-	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1) {
-		int pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
-		GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
-		IntToString(pIndex, buffer, sizeof(buffer));
-		menu.AddItem(buffer, cpName);
-		count++;
-	}
-
-	if (!count) {
-		PrintColoredChat(client, "No team control points to add to race menu at this time");
-		return;
-	}
-
-	menu.Display(client, MENU_TIME_FOREVER);
-	return;
-}
-
-int menuHandlerRaceCP(Menu menu, MenuAction action, int param1, int param2) {
-	switch (action) {
-		case MenuAction_Select: {
-			char info[32];
-			menu.GetItem(param2, info, sizeof(info));
-
-			g_iRaceEndPoint[param1] = StringToInt(info);
-			g_iRaceID[param1] = param1;
-			g_iRaceStatus[param1] = STATUS_INVITING;
-			g_bRaceClassForce[param1] = true;
-
-			displayRaceInviteMenu(param1);
-		}
-		case MenuAction_Cancel: {
-			g_iRaceID[param1] = 0;
-			g_iRaceStatus[param1] = STATUS_NONE;
-			PrintColoredChat(param1, "[%sJA\x01] The race has been cancelled.", cTheme1);	
-		}
-		case MenuAction_End: {
-			delete menu;
-		}
-	}
 }
 
 void displayRaceInviteMenu(int client) {

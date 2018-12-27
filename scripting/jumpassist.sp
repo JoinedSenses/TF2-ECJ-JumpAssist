@@ -19,12 +19,10 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.2"
+#define PLUGIN_VERSION "2.3.3"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
-#define cHardcore "\x07FF4500"
-#define cRedTeam "\x07ba5353"
-#define cBlueTeam "\x0782b6ff"
+
 
 #include <sourcemod>
 #include <jumpassist>
@@ -52,6 +50,7 @@ enum {
 bool
 	  g_bLateLoad
 	, g_bFeaturesEnabled[MAXPLAYERS+1]
+	, g_bCPFallback
 	, g_bHideMessage[MAXPLAYERS+1]
 	, g_bIsPreviewing[MAXPLAYERS+1]
 	, g_bAmmoRegen[MAXPLAYERS+1]
@@ -72,7 +71,10 @@ int
 	  g_iLastTeleport[MAXPLAYERS+1]
 	, g_iClientTeam[MAXPLAYERS+1]
 	, g_iClientWeapons[MAXPLAYERS+1][3]
-	, g_iIntelCarrier;
+	, g_iIntelCarrier
+	, g_iCPCount
+	, g_iForceTeam = 1
+	, g_iCPsTouched[MAXPLAYERS+1];
 float
 	  g_fOrigin[MAXPLAYERS+1][3]
 	, g_fAngles[MAXPLAYERS+1][3]
@@ -92,9 +94,14 @@ ConVar
 Handle
 	  g_hJAMessageCookie;
 ArrayList
-	  g_AL_NoFuncRegen;
+	  g_aNoFuncRegen;
 Database
 	  g_Database;
+StringMap
+	  g_smCapturePoint
+	, g_smCapturePointName
+	, g_smCaptureArea
+	, g_smCaptureAreaName;
 
 #include "jumpassist/skeys.sp"
 #include "jumpassist/database.sp"
@@ -232,7 +239,12 @@ public void OnPluginStart() {
 	g_hHudDisplayM1 = CreateHudSynchronizer();
 	g_hHudDisplayM2 = CreateHudSynchronizer();
 
-	g_AL_NoFuncRegen = new ArrayList();
+	g_aNoFuncRegen = new ArrayList();
+
+	g_smCapturePoint = new StringMap();
+	g_smCapturePointName = new StringMap();
+	g_smCaptureArea = new StringMap();
+	g_smCaptureAreaName = new StringMap();
 
 	LoadTranslations("common.phrases");
 
@@ -281,33 +293,77 @@ public void OnMapStart() {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
-
+	g_bCPFallback = false;
 	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 
-	for (int i = 1; i <= MaxClients ; i++) {
+	for (int i = 1; i <= MaxClients; i++) {
 		ResetRace(i);
 		g_iLastTeleport[i] = 0;
 	}
 	if (g_Database != null) {
 		LoadMapCFG();
 	}
+
 	g_cvarWaitingForPlayers.SetInt(0);
 	PrecacheSound("misc/freeze_cam.wav");
 	PrecacheSound("misc/killstreak.wav");
 
 	GameRules_SetProp("m_nGameType", 2);
 
-	g_iCPs = 0;
-	int iCP = -1;
-	while ((iCP = FindEntityByClassname(iCP, "trigger_capture_area")) != -1) {
-		g_iCPs++;
-	}
 	HookFuncRegenerate();
+	SetUpCapturePoints();
+}
+
+void SetUpCapturePoints() {
+	g_iCPCount = 0;
+
+	g_smCapturePoint.Clear();
+	g_smCapturePointName.Clear();
+	g_smCaptureArea.Clear();
+	g_smCaptureAreaName.Clear();
+
+	int entity;
+	int cpCount;
+	int idx;
+	char name[64];
+	char areaidx[3];
+	while ((entity = FindEntityByClassname(entity, "team_control_point")) != INVALID_ENT_REFERENCE) {
+		GetEntPropString(entity, Prop_Data, "m_iszPrintName", name, sizeof(name));
+		idx = GetEntProp(entity, Prop_Data, "m_iPointIndex");
+		Format(areaidx, sizeof(areaidx), "%i", idx);
+
+		g_smCapturePoint.SetValue(name, idx);
+		g_smCapturePointName.SetString(areaidx, name);
+
+		cpCount++;
+	}
+
+	while ((entity = FindEntityByClassname(entity, "trigger_capture_area")) != INVALID_ENT_REFERENCE) {
+		SDKHook(entity, SDKHook_StartTouchPost, hookCPStartTouchPost);
+
+		GetEntPropString(entity, Prop_Data, "m_iszCapPointName", name, sizeof(name));
+		g_smCaptureArea.SetValue(name, g_iCPCount);
+
+		Format(areaidx, sizeof(areaidx), "%i", g_iCPCount);
+		g_smCaptureAreaName.SetString(areaidx, name);
+
+		SetVariantString("2 0");
+		AcceptEntityInput(entity, "SetTeamCanCap");
+		SetVariantString("3 0");
+		AcceptEntityInput(entity, "SetTeamCanCap");
+		g_iCPCount++;
+	}
+	//PrintToChatAll("CPCount = %i trigger count = %i", cpCount, g_iCPCount);
+	if (cpCount < g_iCPCount) {
+		g_bCPFallback = true;
+	}
 }
 
 public void OnConfigsExecuted() {
 	FindConVar("mp_respawnwavetime").SetInt(0);
 	FindConVar("sv_noclipspeed").SetFloat(2.5);
+	FindConVar("tf_weapon_criticals").SetInt(g_cvarCriticals.BoolValue, true, false);
+	FindConVar("tf_sentrygun_ammocheat").SetInt(g_cvarAmmoCheat.BoolValue);
 }
 
 public void OnClientCookiesCached(int client) {
@@ -484,7 +540,7 @@ public int Native_GetClassName(Handle plugin, int numParams) {
 	TFClassType class = GetNativeCell(3);
 
 	char[] className = new char[size];
-	GetClassname(class, className, size);
+	GetClassName(class, className, size);
 
 	SetNativeString(1, className, size);
 }
@@ -728,8 +784,8 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 		LeaveRace(client);
 	}
 	int idx;
-	if ((idx = g_AL_NoFuncRegen.FindValue(client)) != -1) {
-		g_AL_NoFuncRegen.Erase(idx);
+	if ((idx = g_aNoFuncRegen.FindValue(client)) != -1) {
+		g_aNoFuncRegen.Erase(idx);
 	}
 }
 
@@ -737,16 +793,9 @@ public void eventRoundStart(Handle event, const char[] name, bool dontBroadcast)
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
-	if (g_iLockCPs == 1) {
-		LockCPs();
-	}
+
 	HookFuncRegenerate();
-	if (!g_cvarCriticals.BoolValue) {
-		FindConVar("tf_weapon_criticals").SetInt(0, true, false);
-	}
-	if (g_cvarAmmoCheat.BoolValue) {
-		FindConVar("tf_sentrygun_ammocheat").SetInt(1);
-	}
+	SetUpCapturePoints();
 }
 
 public Action eventIntelPickedUp(Event event, const char[] name, bool dontBroadcast) {
@@ -774,11 +823,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	}
 	int client = event.GetInt("player");
 
-	if (IsFakeClient(client)) {
-		return Plugin_Continue;
-	}
-
-	if (IsClientPreviewing(client)) {
+	if (IsFakeClient(client) || IsClientPreviewing(client)) {
 		return Plugin_Continue;
 	}
 
@@ -787,91 +832,91 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	if (g_bCPTouched[client][area] && g_iRaceID[client] == 0) {
 		return Plugin_Continue;
 	}
+
+	int raceID = g_iRaceID[client];
+
+	if (g_iRaceEndPoint[raceID] == area && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)) {
+		char timeString[255];
+		char buffer[128];
+			
+		float time = GetEngineTime();
+		g_fRaceTime[client] = time;
+		float timeTaken = time - g_fRaceStartTime[raceID];
+		timeString = TimeFormat(timeTaken);
+
+		if (RoundToNearest(g_fRaceFirstTime[raceID]) == 0) {
+			Format(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 won the race in%s %s\x01!", cTheme1, cTheme2, client, cTheme2, timeString);
+			g_fRaceFirstTime[raceID] = time;
+			g_iRaceStatus[raceID] = STATUS_WAITING;
+			for (int i = 0; i < MaxClients; i++) {
+				if (g_iRaceFinishedPlayers[raceID][i] == 0) {
+					g_iRaceFinishedPlayers[raceID][i] = client;
+					g_fRaceTimes[raceID][i] = time;
+					break;
+				}
+			}
+			for (int j = 1; j <= MaxClients; j++) {
+				if (g_iRaceID[j] == raceID) {
+					EmitSoundToClient(j, "misc/killstreak.wav");
+				}
+			}
+		}
+		else {
+			char diffFormatted[255];
+
+			float firstTime = g_fRaceFirstTime[raceID];
+			float diff = time - firstTime;
+			diffFormatted = TimeFormat(diff);
+			
+			for (int i = 0; i < MaxClients; i++) {
+				if (g_iRaceFinishedPlayers[raceID][i] == 0) {
+					g_iRaceFinishedPlayers[raceID][i] = client;
+					g_fRaceTimes[raceID][i] = time;
+					break;
+				}
+			}
+			Format(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 finished the race in%s %s \x01(%s+%s\x01)!", cTheme1, cTheme2, client, cTheme2, timeString, cTheme2, diffFormatted);
+			for (int j = 1; j <= MaxClients; j++) {
+				if (g_iRaceID[j] == raceID) {
+					EmitSoundToClient(j, "misc/freeze_cam.wav");
+				}
+			}
+		}
+		if (RoundToZero(g_fRaceFirstTime[raceID]) == 0) {
+			g_fRaceFirstTime[raceID] = time;
+		}
+
+		PrintToRace(raceID, buffer);
+
+		if (GetPlayersStillRacing(raceID) == 0) {
+			PrintToRace(raceID, "[%sJA\x01] Everyone has finished the race.", cTheme1);
+			for (int player = 1; player <= MaxClients; player++) {
+				if (g_iRaceID[player] == raceID || IsClientSpectatingRace(player, raceID)) {
+					displayRaceTimesMenu(player, player);
+				}
+			}
+			ResetRace(raceID);
+			g_iRaceStatus[raceID] = STATUS_NONE;
+		}
+	}
+	// If client has not yet touched the cap and also if they haven't used the teleport command within 10 seconds.
+	else if (!g_bCPTouched[client][area] && ((RoundFloat(GetEngineTime()) - g_iLastTeleport[client]) > 10)) {
+		char cpName[32];
+		char areaidx[3];
+		Format(areaidx, sizeof(areaidx), "%i", area);
+		(g_bCPFallback ? g_smCaptureAreaName : g_smCapturePointName).GetString(areaidx, cpName, sizeof(cpName));
+
+		char className[33];
+		GetClassName(g_TFClientClass[client], className, sizeof(className));
+
+		char color[8];
+		Format(color, sizeof(color), (g_iClientTeam[client] == 2) ? cRedTeam : cBlueTeam);
+
+		PrintColoredChatAll("[%sJA\x01] %s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", color, client, cTheme2, cpName, color, className);
+		EmitSoundToAll("misc/freeze_cam.wav");
 	
-	char cpName[32];
-
-	int entity;
-	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1) {
-		int pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
-		int raceID = g_iRaceID[client];
-		if (pIndex != area) {
-			continue;
-		}
-		if (g_iRaceEndPoint[raceID] == pIndex && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)) {
-			char timeString[255];
-			char buffer[128];
-				
-			float time = GetEngineTime();
-			g_fRaceTime[client] = time;
-			float timeTaken = time - g_fRaceStartTime[raceID];
-			timeString = TimeFormat(timeTaken);
-
-			if (RoundToNearest(g_fRaceFirstTime[raceID]) == 0) {
-				Format(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 won the race in%s %s\x01!", cTheme1, cTheme2, client, cTheme2, timeString);
-				g_fRaceFirstTime[raceID] = time;
-				g_iRaceStatus[raceID] = STATUS_WAITING;
-				for (int i = 0; i < MaxClients; i++) {
-					if (g_iRaceFinishedPlayers[raceID][i] == 0) {
-						g_iRaceFinishedPlayers[raceID][i] = client;
-						g_fRaceTimes[raceID][i] = time;
-						break;
-					}
-				}
-				for (int j = 1; j <= MaxClients; j++) {
-					if (g_iRaceID[j] == raceID) {
-						EmitSoundToClient(j, "misc/killstreak.wav");
-					}
-				}
-			}
-			else {
-				char diffFormatted[255];
-
-				float firstTime = g_fRaceFirstTime[raceID];
-				float diff = time - firstTime;
-				diffFormatted = TimeFormat(diff);
-				
-				for (int i = 0; i < MaxClients; i++) {
-					if (g_iRaceFinishedPlayers[raceID][i] == 0) {
-						g_iRaceFinishedPlayers[raceID][i] = client;
-						g_fRaceTimes[raceID][i] = time;
-						break;
-					}
-				}
-				Format(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 finished the race in%s %s \x01(%s+%s\x01)!", cTheme1, cTheme2, client, cTheme2, timeString, cTheme2, diffFormatted);
-				for (int j = 1; j <= MaxClients; j++) {
-					if (g_iRaceID[j] == raceID) {
-						EmitSoundToClient(j, "misc/freeze_cam.wav");
-					}
-				}				
-
-			}
-			if (RoundToZero(g_fRaceFirstTime[raceID]) == 0) {
-				g_fRaceFirstTime[raceID] = time;
-			}
-			PrintToRace(raceID, buffer);
-			if (GetPlayersStillRacing(raceID) == 0) {
-				PrintToRace(raceID, "[%sJA\x01] Everyone has finished the race.", cTheme1);
-				for (int player = 1; player <= MaxClients; player++) {
-					if (g_iRaceID[player] == raceID || IsClientSpectatingRace(player, raceID)) {
-						displayRaceTimesMenu(player, player);
-					}
-				}
-				ResetRace(raceID);
-				g_iRaceStatus[raceID] = STATUS_NONE;
-			}
-		}
-		// If client has not yet touched the cap and also if they haven't used the teleport command within 10 seconds.
-		else if (!g_bCPTouched[client][area] && ((RoundFloat(GetEngineTime()) - g_iLastTeleport[client]) > 10)) {
-			GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
-			char className[33];
-			GetClassname(g_TFClientClass[client], className, sizeof(className));
-			Format(className, sizeof(className), "%s", className);
-			PrintColoredChatAll("[%sJA\x01] %s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", cTheme2, client, cTheme2, cpName, cTheme2, className);
-			EmitSoundToAll("misc/freeze_cam.wav");
-		
-			if (g_iCPsTouched[client] == g_iCPs) {
-				g_bBeatTheMap[client] = true;
-			}
+		if (g_iCPsTouched[client] == g_iCPCount) {
+			g_bBeatTheMap[client] = true;
 		}
 	}
 	g_bCPTouched[client][area] = true;
@@ -879,8 +924,27 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	return Plugin_Continue;
 }
 
-public Action OnPlayerStartTouchFuncRegenerate(int entity, int other) {
-	if (other <= MaxClients && g_AL_NoFuncRegen.Length > 0 && g_AL_NoFuncRegen.FindValue(other) != -1) {
+public void hookCPStartTouchPost(int entity, int other) {
+	if (!g_bCPFallback || !IsValidClient(other)) {
+		return;
+	}
+
+	char name[64];
+	GetEntPropString(entity, Prop_Data, "m_iszCapPointName", name, sizeof(name));
+
+	int area;
+	if (!g_smCaptureArea.GetValue(name, area)) {
+		return;
+	}
+
+	Event event = CreateEvent("controlpoint_starttouch");
+	event.SetInt("player", other);
+	event.SetInt("area", area);
+	event.Fire();
+}
+
+public Action hookStartTouchFuncRegenerate(int entity, int other) {
+	if (other <= MaxClients && g_aNoFuncRegen.Length && g_aNoFuncRegen.FindValue(other) != -1) {
 		return Plugin_Handled;
 	}
 	return Plugin_Continue;
@@ -1233,7 +1297,7 @@ void Teleport(int client) {
 
 	if (g_fOrigin[client][0] == 0.0) {
 		char className[33];
-		GetClassname(g_TFClientClass[client], className, sizeof(className));
+		GetClassName(g_TFClientClass[client], className, sizeof(className));
 		PrintColoredChat(client, "[%sJA\x01] You don't have a save for%s %s\x01 on the%s %s\x01.", cTheme1, teamColor, className, teamColor, teamName);
 		return;
 	}
@@ -1268,22 +1332,19 @@ void Hardcore(int client) {
 	g_bHardcore[client] = false;
 	LoadPlayerData(client);
 	PrintColoredChat(client, "[%sJA\x01]%s Hardcore%s disabled\x01.", cTheme1, cHardcore, cTheme2);
-
 }
 
 // Support for beggar's bazooka
 void CheckBeggars(int client) {
 	int weapon = GetPlayerWeaponSlot(client, 0);
-	int index = g_AL_NoFuncRegen.FindValue(client);
+	int index = g_aNoFuncRegen.FindValue(client);
 	if (IsValidEntity(weapon) && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == 730) {
 		if (index == -1) {
-			g_AL_NoFuncRegen.Push(client);
-			// LogMessage("Preventing player %d from touching func_regenerate");
+			g_aNoFuncRegen.Push(client);
 		}
 	}
 	else if (index != -1){
-		g_AL_NoFuncRegen.Erase(index);
-		// LogMessage("Allowing player %d to touch func_regenerate");
+		g_aNoFuncRegen.Erase(index);
 	}
 }
 
@@ -1291,12 +1352,12 @@ void HookFuncRegenerate() {
 	int entity = -1;
 	while ((entity = FindEntityByClassname(entity, "func_regenerate")) != INVALID_ENT_REFERENCE) {
 		// Support for concmap*, and quad* maps that are imported from TFC.
-		SDKUnhook(entity, SDKHook_StartTouch, OnPlayerStartTouchFuncRegenerate);
-		SDKUnhook(entity, SDKHook_Touch, OnPlayerStartTouchFuncRegenerate);
-		SDKUnhook(entity, SDKHook_EndTouch, OnPlayerStartTouchFuncRegenerate);
-		SDKHook(entity, SDKHook_StartTouch, OnPlayerStartTouchFuncRegenerate);
-		SDKHook(entity, SDKHook_Touch, OnPlayerStartTouchFuncRegenerate);
-		SDKHook(entity, SDKHook_EndTouch, OnPlayerStartTouchFuncRegenerate);
+		SDKUnhook(entity, SDKHook_StartTouch, hookStartTouchFuncRegenerate);
+		SDKUnhook(entity, SDKHook_Touch, hookStartTouchFuncRegenerate);
+		SDKUnhook(entity, SDKHook_EndTouch, hookStartTouchFuncRegenerate);
+		SDKHook(entity, SDKHook_StartTouch, hookStartTouchFuncRegenerate);
+		SDKHook(entity, SDKHook_Touch, hookStartTouchFuncRegenerate);
+		SDKHook(entity, SDKHook_EndTouch, hookStartTouchFuncRegenerate);
 	}
 }
 
@@ -1493,21 +1554,6 @@ void CheckTeams() {
 	}
 }
 
-void LockCPs() {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
-	}
-	int iCP = -1;
-	g_iCPs = 0;
-	while ((iCP = FindEntityByClassname(iCP, "trigger_capture_area")) != -1) {
-		SetVariantString("2 0");
-		AcceptEntityInput(iCP, "SetTeamCanCap");
-		SetVariantString("3 0");
-		AcceptEntityInput(iCP, "SetTeamCanCap");
-		g_iCPs++;
-	}
-}
-
 void SendToStart(int client) {
 	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client) || IsClientObserver(client)) {
 		return;
@@ -1596,7 +1642,7 @@ int menuHandlerJAHelpSubMenu(Menu menu, MenuAction action, int param1, int param
 	}
 }
 
-void GetClassname(TFClassType class, char[] buffer, int size) {
+void GetClassName(TFClassType class, char[] buffer, int size) {
 	switch(class) {
 		case TFClass_Scout: Format(buffer, size, "Scout");
 		case TFClass_Sniper: Format(buffer, size, "Sniper");
