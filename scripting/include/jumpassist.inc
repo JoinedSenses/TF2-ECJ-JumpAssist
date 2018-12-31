@@ -43,7 +43,8 @@ native bool JA_IsClientRacing(int client);
 native void JA_ToggleKeys(int client, bool enable);
 
 /**
- * Pauses teleporting caused by respawn for 5 seconds.
+ * Interupts teleporting caused by respawn for 5 seconds.
+ * Best results if paired with TF2_RespawnPlayer()
  *
  * @param client		client index
  * @noreturn
