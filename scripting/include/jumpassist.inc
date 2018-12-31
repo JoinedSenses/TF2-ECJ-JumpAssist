@@ -43,7 +43,7 @@ native bool JA_IsClientRacing(int client);
 native void JA_ToggleKeys(int client, bool enable);
 
 /**
- * Prevents the client from teleporting for 5 seconds
+ * Pauses teleporting caused by respawn for 5 seconds.
  *
  * @param client		client index
  * @noreturn
