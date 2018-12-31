@@ -56,6 +56,7 @@ bool
 	, g_bHardcore[MAXPLAYERS+1]
 	, g_bCPTouched[MAXPLAYERS+1][32]
 	, g_bJustSpawned[MAXPLAYERS+1]
+	, g_bTelePaused[MAXPLAYERS+1]
 	, g_bUsedReset[MAXPLAYERS+1]
 	, g_bBeatTheMap[MAXPLAYERS+1]
 	, g_bUnkillable[MAXPLAYERS+1]
@@ -129,8 +130,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("JA_IsClientHiding", Native_IsClientHiding);
 	CreateNative("JA_IsClientHardcore", Native_IsClientHardcore);
 	CreateNative("JA_IsClientRacing", Native_IsClientRacing);
-	CreateNative("JA_GetClassName", Native_GetClassName);
 	CreateNative("JA_ToggleKeys", Native_ToggleKeys);
+	CreateNative("JA_PauseTeleport", Native_PauseTeleport);
 	return APLRes_Success;
 }
 
@@ -411,7 +412,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 	int observerMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
 	int clientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
-	if ((g_bSKeysEnabled[client] || IsFakeClient(clientToShow)) && IsValidClient(clientToShow, true) && !(buttons & IN_SCORE) && observerMode != 7) {
+	if (IsValidClient(clientToShow, true) && (g_bSKeysEnabled[client] || IsFakeClient(clientToShow)) && !(buttons & IN_SCORE) && observerMode != 7) {
 		bool isEditing;
 		if (g_iSkeysMode[client] == EDIT) {
 			isEditing = true;
@@ -471,7 +472,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			, M1 = !!(buttonsToShow & IN_ATTACK)
 			, M2 = !!(buttonsToShow & IN_ATTACK2);
 		float
-			  hold = 0.1
+			  hold = 0.3
 			, X = g_fSkeysPos[client][XPOS]
 			, Y = g_fSkeysPos[client][YPOS];
 
@@ -551,16 +552,6 @@ public int Native_IsClientRacing(Handle plugin, int numParams) {
 	return IsClientRacing(client);
 }
 
-public int Native_GetClassName(Handle plugin, int numParams) {
-	int size = GetNativeCell(2);
-	TFClassType class = GetNativeCell(3);
-
-	char[] className = new char[size];
-	GetClassName(class, className, size);
-
-	SetNativeString(1, className, size);
-}
-
 public int Native_ToggleKeys(Handle plugin, int numParams) {
 	int client = GetNativeCell(1);
 	if (client < 1 || client > MaxClients) {
@@ -570,6 +561,19 @@ public int Native_ToggleKeys(Handle plugin, int numParams) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
 	g_bSKeysEnabled[client] = GetNativeCell(2);
+	return 0;
+}
+
+public int Native_PauseTeleport(Handle plugin, int numParams) {
+	int client = GetNativeCell(1);
+	if (client < 1 || client > MaxClients) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
+	}
+	if (!IsClientConnected(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
+	}
+	g_bTelePaused[client] = true;
+	CreateTimer(5.0, timerUnpauseTeleport, client);
 	return 0;
 }
 
@@ -767,7 +771,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 			ReloadPlayerData(client);
 			g_bUsedReset[client] = false;
 		}
-		else {
+		else if (!g_bTelePaused[client]) {
 			EraseLocs(client);
 			LoadPlayerData(client);
 		}
@@ -1768,4 +1772,8 @@ Action timerMapSetUsed(Handle timer) {
 
 Action timerUnfreeze(Handle timer, int client) {
 	SetEntityFlags(client, GetEntityFlags(client) & ~(FL_ATCONTROLS|FL_FROZEN));
+}
+
+Action timerUnpauseTeleport(Handle timer, int client) {
+	g_bTelePaused[client] = true;
 }
