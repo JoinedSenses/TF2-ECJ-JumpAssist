@@ -19,7 +19,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.3"
+#define PLUGIN_VERSION "2.3.4"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 
@@ -91,7 +91,8 @@ ConVar
 	, g_cvarAmmoCheat
 	, g_cvarWaitingForPlayers;
 Handle
-	  g_hJAMessageCookie;
+	  g_hJAMessageCookie
+	, g_hForwardSKeys;
 ArrayList
 	  g_aNoFuncRegen;
 Database
@@ -129,6 +130,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("JA_IsClientHardcore", Native_IsClientHardcore);
 	CreateNative("JA_IsClientRacing", Native_IsClientRacing);
 	CreateNative("JA_GetClassName", Native_GetClassName);
+	CreateNative("JA_ToggleKeys", Native_ToggleKeys);
 	return APLRes_Success;
 }
 
@@ -229,6 +231,8 @@ public void OnPluginStart() {
 	AddTempEntHook("TFExplosion", hookTempEnt);
 	AddTempEntHook("TFBlood", hookTempEnt);
 	AddTempEntHook("TFParticleEffect", hookTempEnt);
+
+	g_hForwardSKeys = CreateGlobalForward("OnClientKeys", ET_Event, Param_Cell, Param_CellByRef);
 
 	// SKEYS Objects
 	g_hHudDisplayForward = CreateHudSynchronizer();
@@ -407,7 +411,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 	int observerMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
 	int clientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
-	if (g_bSKeysEnabled[client] && IsValidClient(clientToShow) && !(buttons & IN_SCORE) && observerMode != 7) {
+	if ((g_bSKeysEnabled[client] || IsFakeClient(clientToShow)) && IsValidClient(clientToShow, true) && !(buttons & IN_SCORE) && observerMode != 7) {
 		bool isEditing;
 		if (g_iSkeysMode[client] == EDIT) {
 			isEditing = true;
@@ -431,9 +435,29 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			}
 		}
 
+		int btns = g_iButtons[clientToShow];
+
+		Action result = Plugin_Continue;
+		Call_StartForward(g_hForwardSKeys);
+		Call_PushCell(client);
+		Call_PushCellRef(btns);
+		Call_Finish(result);
+
+		int buttonsToShow;
+		switch (result) {
+			case Plugin_Changed: {
+				buttonsToShow = btns;
+			}
+			case Plugin_Handled, Plugin_Stop: {
+				buttonsToShow = 0;
+			}
+			case Plugin_Continue: {
+				buttonsToShow = isEditing ? ALLKEYS : g_iButtons[clientToShow];
+			}
+		}
+
 		int
-			  buttonsToShow = isEditing ? ALLKEYS : g_iButtons[clientToShow]
-			, R = g_iSkeysColor[client][RED]
+			  R = g_iSkeysColor[client][RED]
 			, G = g_iSkeysColor[client][GREEN]
 			, B = g_iSkeysColor[client][BLUE]
 			, alpha = 255;
@@ -535,6 +559,18 @@ public int Native_GetClassName(Handle plugin, int numParams) {
 	GetClassName(class, className, size);
 
 	SetNativeString(1, className, size);
+}
+
+public int Native_ToggleKeys(Handle plugin, int numParams) {
+	int client = GetNativeCell(1);
+	if (client < 1 || client > MaxClients) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
+	}
+	if (!IsClientConnected(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
+	}
+	g_bSKeysEnabled[client] = GetNativeCell(2);
+	return 0;
 }
 
 /* ======================================================================

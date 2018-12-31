@@ -53,5 +53,25 @@ native bool JA_IsClientRacing(int client);
  */
 native void JA_GetClassName(char[] className, int size, TFClassType class);
 
+/**
+ * Toggles use of skeys
+ *
+ * @param client		client index
+ * @param enable		True to enable, false to disable;
+ * @noreturn
+ */
+native void JA_ToggleKeys(int client, bool enable);
+
+/**
+ * Called when a client's show keys are about to be set
+ *
+ * @param client		Client index
+ * @param buttons		Client button flags
+ * @return				Plugin_Changed to change display
+ * 						Plugin_Handled to prevent display
+ * 						Plugin_Continue to resume
+ */
+forward Action OnClientKeys(int client, int &buttons);
+
 //public __pl_jumpassist_SetNTVOptional() {
 //}
