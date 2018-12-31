@@ -23,7 +23,6 @@
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
 
-
 #include <sourcemod>
 #include <jumpassist>
 #include <tf2_stocks>
@@ -234,10 +233,8 @@ public void OnPluginStart() {
 	// SKEYS Objects
 	g_hHudDisplayForward = CreateHudSynchronizer();
 	g_hHudDisplayASD = CreateHudSynchronizer();
-	g_hHudDisplayDuck = CreateHudSynchronizer();
 	g_hHudDisplayJump = CreateHudSynchronizer();
-	g_hHudDisplayM1 = CreateHudSynchronizer();
-	g_hHudDisplayM2 = CreateHudSynchronizer();
+	g_hHudDisplayAttack = CreateHudSynchronizer();
 
 	g_aNoFuncRegen = new ArrayList();
 
@@ -407,70 +404,65 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	}
 	// FOR SKEYS
 	g_iButtons[client] = buttons;
-	switch (g_iSkeysMode[client]) {
-		case EDIT: {
-			g_fSkeysXLoc[client] = Math_Clamp(g_fSkeysXLoc[client] + 0.0005 * mouse[0], 0.0, 0.85);
-			g_fSkeysYLoc[client] = Math_Clamp(g_fSkeysYLoc[client]+ 0.0005 * mouse[1], 0.0, 0.90);
+
+	int observerMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
+	int clientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
+	if (g_bSKeysEnabled[client] && IsValidClient(clientToShow) && !(buttons & IN_SCORE) && observerMode != 7) {
+		bool isEditing;
+		if (g_iSkeysMode[client] == EDIT) {
+			isEditing = true;
+			g_fSkeysPos[client][XPOS] = Math_Clamp(g_fSkeysPos[client][XPOS] + 0.0005 * mouse[0], 0.0, 0.85);
+			g_fSkeysPos[client][YPOS] = Math_Clamp(g_fSkeysPos[client][YPOS] + 0.0005 * mouse[1], 0.0, 0.90);
 
 			if (buttons & (IN_ATTACK|IN_ATTACK2)) {
 				g_iSkeysMode[client] = DISPLAY;
-				SaveKeyPos(client, g_fSkeysXLoc[client], g_fSkeysYLoc[client]);
+				SaveKeyPos(client, g_fSkeysPos[client][XPOS], g_fSkeysPos[client][YPOS]);
 
 				CreateTimer(0.2, timerUnfreeze, client);
 			}
 			else if (buttons & (IN_ATTACK3|IN_JUMP)) {
-				g_fSkeysXLoc[client] = XPOSDEFAULT;
-				g_fSkeysYLoc[client] = YPOSDEFAULT;
+				g_fSkeysPos[client][XPOS] = XPOSDEFAULT;
+				g_fSkeysPos[client][YPOS] = YPOSDEFAULT;
 				
 				g_iSkeysMode[client] = DISPLAY;
-				SaveKeyPos(client, g_fSkeysXLoc[client], g_fSkeysYLoc[client]);
+				SaveKeyPos(client, g_fSkeysPos[client][XPOS], g_fSkeysPos[client][YPOS]);
 
 				CreateTimer(0.2, timerUnfreeze, client);
 			}
 		}
-	}
 
-	int observerMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
-	int clientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
-	if (IsValidClient(clientToShow) && g_bSKeysEnabled[client] && !(buttons & IN_SCORE) && observerMode != 7) {
 		int
-			  buttonsToShow = g_iButtons[clientToShow]
-			, R = g_iSkeysRed[client]
-			, G = g_iSkeysGreen[client]
-			, B = g_iSkeysBlue[client]
+			  buttonsToShow = isEditing ? ALLKEYS : g_iButtons[clientToShow]
+			, R = g_iSkeysColor[client][RED]
+			, G = g_iSkeysColor[client][GREEN]
+			, B = g_iSkeysColor[client][BLUE]
 			, alpha = 255;
 		bool
-			  isEditing = (g_iSkeysMode[client] == EDIT)
-			, W = (buttonsToShow & IN_FORWARD || isEditing)
-			, A = (buttonsToShow & IN_MOVELEFT || isEditing)
-			, S = (buttonsToShow & IN_BACK || isEditing)
-			, D = (buttonsToShow & IN_MOVERIGHT || isEditing)
-			, Duck = (buttonsToShow & IN_DUCK || isEditing)
-			, Jump = (buttonsToShow & IN_JUMP || isEditing)
-			, M1 = (buttonsToShow & IN_ATTACK || isEditing)
-			, M2 = (buttonsToShow & IN_ATTACK2 || isEditing);
+			  W = !!(buttonsToShow & IN_FORWARD)
+			, A = !!(buttonsToShow & IN_MOVELEFT)
+			, S = !!(buttonsToShow & IN_BACK)
+			, D = !!(buttonsToShow & IN_MOVERIGHT)
+			, Duck = !!(buttonsToShow & IN_DUCK)
+			, Jump = !!(buttonsToShow & IN_JUMP)
+			, M1 = !!(buttonsToShow & IN_ATTACK)
+			, M2 = !!(buttonsToShow & IN_ATTACK2);
 		float
 			  hold = 0.1
-			, X = g_fSkeysXLoc[client]
-			, Y = g_fSkeysYLoc[client];
+			, X = g_fSkeysPos[client][XPOS]
+			, Y = g_fSkeysPos[client][YPOS];
 
 		SetHudTextParams(X+(W?0.047:0.052), Y, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
 		ShowSyncHudText(client, g_hHudDisplayForward, (W?"W":"-"));
 
-		SetHudTextParams(X+0.04-(A?0.0042:0.0)-(S?0.0015:0.0), Y+0.05, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
-		ShowSyncHudText(client, g_hHudDisplayASD, "%s %s %s", (A?"A":"-"), (S?"S":"-"), (D?"D":"-"));
+		SetHudTextParams(X+0.04-(A?0.0042:0.0)-(S?0.0015:0.0), Y+0.04, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		ShowSyncHudText(client, g_hHudDisplayASD, "%c %c %c", (A?'A':'-'), (S?'S':'-'), (D?'D':'-'));
 
-		SetHudTextParams(X+0.09, Y+0.05, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
-		ShowSyncHudText(client, g_hHudDisplayDuck, (Duck?"Duck":""));
-
-		SetHudTextParams(X+0.09, Y, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
-		ShowSyncHudText(client, g_hHudDisplayJump, (Jump?"Jump":""));
+		SetHudTextParams(X+0.08, Y, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		ShowSyncHudText(client, g_hHudDisplayJump, "%s\n%s", (Duck?" Duck":""), (Jump?"Jump":""));
 
 		SetHudTextParams(X, Y, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
-		ShowSyncHudText(client, g_hHudDisplayM1, (M1?"M1":""));
+		ShowSyncHudText(client, g_hHudDisplayAttack, "%s\n%s", (M1?"M1":""), (M2?"M2":""));
 
-		SetHudTextParams(X, Y+0.05, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
-		ShowSyncHudText(client, g_hHudDisplayM2, (M2?"M2":""));
 		//.54 x def and .4 y def
 	}
 

@@ -1,29 +1,34 @@
+#define XPOS 0
+#define YPOS 1
 #define XPOSDEFAULT 0.54
 #define YPOSDEFAULT 0.4
+#define ALLKEYS 3615
+#define DEFAULTCOLOR {255, 255, 255}
 
 enum {
 	DISPLAY = 0,
 	EDIT
 }
 
+enum {
+	RED = 0,
+	GREEN,
+	BLUE
+}
+
 Handle
 	  g_hHudDisplayForward
 	, g_hHudDisplayASD
-	, g_hHudDisplayDuck
 	, g_hHudDisplayJump
-	, g_hHudDisplayM1
-	, g_hHudDisplayM2;
+	, g_hHudDisplayAttack;
 bool
 	  g_bSKeysEnabled[MAXPLAYERS+1];
 int
 	  g_iButtons[MAXPLAYERS+1]
-	, g_iSkeysRed[MAXPLAYERS+1] = {255, ...}
-	, g_iSkeysGreen[MAXPLAYERS+1] = {255, ...}
-	, g_iSkeysBlue[MAXPLAYERS+1] = {255, ...}
+	, g_iSkeysColor[MAXPLAYERS+1][3]
 	, g_iSkeysMode[MAXPLAYERS+1];
 float
-	  g_fSkeysXLoc[MAXPLAYERS+1]
-	, g_fSkeysYLoc[MAXPLAYERS+1];
+	  g_fSkeysPos[MAXPLAYERS+1][2];
 
 /* ======================================================================
    ------------------------------- Commands
@@ -81,7 +86,7 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 			PrintColoredChat(
 				  client,
 				"[%sSKEYS\x01] Update position using%s mouse movement\x01.\n"
-			... "[%sSKEYS\x01] Save with%s mouse1\x01.\n"
+			... "[%sSKEYS\x01] Save with%s attack\x01.\n"
 			... "[%sSKEYS\x01] Reset with%s jump\x01."
 				, cTheme1, cTheme2
 				, cTheme1, cTheme2
@@ -103,8 +108,9 @@ void SetAllSkeysDefaults() {
 }
 
 void SetSkeysDefaults(int client) {
-	g_fSkeysXLoc[client] = XPOSDEFAULT;
-	g_fSkeysYLoc[client] = YPOSDEFAULT;
+	g_fSkeysPos[client][XPOS] = XPOSDEFAULT;
+	g_fSkeysPos[client][YPOS] = YPOSDEFAULT;
+	g_iSkeysColor[client] = DEFAULTCOLOR;
 }
 
 int IsStringNumeric(const char[] MyString) {

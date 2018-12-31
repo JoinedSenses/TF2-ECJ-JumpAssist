@@ -191,12 +191,12 @@ void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] erro
 		return;
 	}
 	if (results.FetchRow()) {
-		g_iSkeysRed[client] = results.FetchInt(2);
-		g_iSkeysGreen[client] = results.FetchInt(3);
-		g_iSkeysBlue[client] = results.FetchInt(4);
+		g_iSkeysColor[client][RED] = results.FetchInt(2);
+		g_iSkeysColor[client][GREEN] = results.FetchInt(3);
+		g_iSkeysColor[client][BLUE] = results.FetchInt(4);
 
-		g_fSkeysXLoc[client] = results.FetchFloat(5);
-		g_fSkeysYLoc[client] = results.FetchFloat(6);
+		g_fSkeysPos[client][XPOS] = results.FetchFloat(5);
+		g_fSkeysPos[client][YPOS] = results.FetchFloat(6);
 
 		g_bLoadedPlayerSettings[client] = true;
 	}
@@ -479,9 +479,9 @@ void SQL_OnDeletePlayerData(Database db, DBResultSet results, const char[] error
 
 void SaveKeyColor(int client, char[] red, char[] green, char[] blue) {
 	char query[512];
-	g_iSkeysRed[client] = StringToInt(red);
-	g_iSkeysBlue[client] = StringToInt(blue);
-	g_iSkeysGreen[client] = StringToInt(green);
+	g_iSkeysColor[client][RED] = StringToInt(red);
+	g_iSkeysColor[client][GREEN] = StringToInt(blue);
+	g_iSkeysColor[client][BLUE] = StringToInt(green);
 
 	g_Database.Format(
 		query
@@ -492,9 +492,9 @@ void SaveKeyColor(int client, char[] red, char[] green, char[] blue) {
 			... "SKEYS_GREEN_COLOR = %i, "
 			... "SKEYS_BLUE_COLOR = %i "
 		... "WHERE steamid = '%s'"
-		, g_iSkeysRed[client]
-		, g_iSkeysGreen[client]
-		, g_iSkeysBlue[client]
+		, g_iSkeysColor[client][RED]
+		, g_iSkeysColor[client][GREEN]
+		, g_iSkeysColor[client][BLUE]
 		, g_sClientSteamID[client]
 	);
 	g_Database.Query(SQL_OnSetKeys, query, GetClientUserId(client));
