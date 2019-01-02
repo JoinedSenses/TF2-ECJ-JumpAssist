@@ -1,27 +1,24 @@
-bool g_bLoadedPlayerSettings[MAXPLAYERS+1];
-
 void ConnectToDatabase() {
 	Database.Connect(SQL_OnConnect, "jumpassist");
 }
 
 void SQL_OnConnect(Database db, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || strlen(error)) {
 		PrintToServer("[JumpAssist] Invalid database configuration, assuming none");
 		PrintToServer(error);
+		return;
 	}
-	else {
-		g_Database = db;
-		if (g_bLateLoad) {
-			for (int client = 1; client <= MaxClients; client++) {
-				if (IsValidClient(client)) {
-					ReloadPlayerData(client);
-					LoadPlayerProfile(client);
-					LoadMapCFG();
-				}
+	g_Database = db;
+	if (g_bLateLoad) {
+		for (int client = 1; client <= MaxClients; client++) {
+			if (IsValidClient(client)) {
+				ReloadPlayerData(client);
+				LoadPlayerProfile(client);
+				LoadMapCFG();
 			}
 		}
-		RunDBCheck();
 	}
+	RunDBCheck();
 }
 
 void RunDBCheck() {
@@ -105,10 +102,11 @@ void LoadMapCFG() {
 }
 
 void SQL_OnMapSettingsLoad(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("Query failed! %s", error);
+		return;
 	}
-	else if (results.FetchRow()) {
+	if (results.FetchRow()) {
 		g_iForceTeam = results.FetchInt(0);
 		if (g_bLateLoad && g_iForceTeam > 1) {
 			CheckTeams();
@@ -127,7 +125,7 @@ void CreateMapCFG() {
 }
 
 void SQL_CreateMapCFGCallback(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("SQL_CreateMapCFGCallback() - Query failed! %s", error);
 	}
 }
@@ -158,8 +156,9 @@ void SaveMapSettings(int client, char[] arg1, char[] arg2) {
 }
 
 void SQL_OnMapSettingsUpdated(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("Query failed! %s", error);
+		return;
 	}
 	int client;
 	if ((client = GetClientOfUserId(data)) > 0) {
@@ -176,18 +175,16 @@ void LoadPlayerProfile(int client) {
 		Format(query, sizeof(query), "SELECT * FROM player_profiles WHERE SteamID = '%s'", g_sClientSteamID[client]);
 		g_Database.Query(SQL_OnLoadPlayerProfile, query, GetClientUserId(client));
 	}
-	else {
-		g_bLoadedPlayerSettings[client] = true;
-	}
 }
 
 void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("OnLoadPlayerProfile() - Query failed!");
 		return;
 	}
 	int client;
 	if ((client = GetClientOfUserId(data)) < 1) {
+		PrintToChatAll("Returning");
 		return;
 	}
 	if (results.FetchRow()) {
@@ -197,8 +194,6 @@ void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] erro
 
 		g_fSkeysPos[client][XPOS] = results.FetchFloat(5);
 		g_fSkeysPos[client][YPOS] = results.FetchFloat(6);
-
-		g_bLoadedPlayerSettings[client] = true;
 	}
 	else if (IsValidClient(client)) {
 		// No profile
@@ -222,13 +217,13 @@ void CreatePlayerProfile(int client) {
 }
 
 void SQL_OnCreatePlayerProfile(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("OnCreatePlayerProfile() - Query failed! %s", error);
 		return;
 	}
 	int client;
 	if ((client = GetClientOfUserId(data)) > 0) {
-		g_bHardcore[client] = g_bLoadedPlayerSettings[client] = false;
+		g_bHardcore[client] = false;
 	}
 	
 }
@@ -258,7 +253,7 @@ void GetPlayerData(int client) {
 }
 
 void SQL_OnGetPlayerData(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("OnGetPlayerData() - Query failed! %s", error);
 		return;
 	}
@@ -347,7 +342,7 @@ void UpdatePlayerData(int client) {
 }
 
 void SQL_SaveLocCallback(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("SaveLocCallback() - %N, Query failed! %s", data, error);
 		return;
 	}
@@ -381,7 +376,7 @@ void ReloadPlayerData(int client) {
 }
 
 void SQL_OnReloadPlayerData(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("OnreloadPlayerData() - Query failed! %s", error);
 		return;
 	}
@@ -424,7 +419,7 @@ void LoadPlayerData(int client) {
 }
 
 void SQL_OnLoadPlayerData(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("OnLoadPlayerData() - Query failed! %s", error);
 		return;
 	}
@@ -466,7 +461,7 @@ void DeletePlayerData(int client) {
 }
 
 void SQL_OnDeletePlayerData(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("OnDeletePlayerData() - Query failed! %s", error);
 		return;
 	}
@@ -501,7 +496,7 @@ void SaveKeyColor(int client, char[] red, char[] green, char[] blue) {
 }
 
 void SQL_OnSetKeys(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("Query failed! %s", error);
 	}
 	int client;
@@ -528,7 +523,7 @@ void SaveKeyPos(int client, float x, float y) {
 }
 
 void SQL_UpdateSkeys(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null) {
+	if (db == null || results == null) {
 		LogError("Query failed! %s", error);
 		return;
 	}

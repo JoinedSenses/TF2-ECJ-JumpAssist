@@ -263,7 +263,7 @@ public void OnPluginStart() {
 		PrintColoredChatAll("[%sJA\x01]%s JumpAssist\x01 has been%s reloaded.", cTheme1, cTheme2, cTheme2);
 		GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 		for (int i = 1; i <= MaxClients; i++) {
-			if (IsValidClient(i, true)) {
+			if (IsValidClient(i)) {
 				g_iClientTeam[i] = GetClientTeam(i);
 				g_TFClientClass[i] = TF2_GetPlayerClass(i);
 				if (GetClientAuthId(i, AuthId_Steam2, g_sClientSteamID[i], sizeof(g_sClientSteamID[]))) {
@@ -272,6 +272,9 @@ public void OnPluginStart() {
 				SDKHook(i, SDKHook_WeaponEquipPost, hookOnWeaponEquipPost);
 				SDKHook(i, SDKHook_SetTransmit, hookSetTransmitClient);
 				GetClientWeapons(i);
+			}
+			else if (IsClientConnected(i) && IsClientInGame(i) && IsFakeClient(i)) {
+				SDKHook(i, SDKHook_SetTransmit, hookSetTransmitClient);
 			}
 		}
 		// HIDE
@@ -398,18 +401,18 @@ public void OnClientPostAdminCheck(int client) {
 		LogError("[JumpAssist] Unable to retrieve steam id on %N", client);
 		return;
 	}
-	
 	g_bFeaturesEnabled[client] = true;
 	LoadPlayerProfile(client);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2]) {
+	g_iButtons[client] = buttons;
+	
 	if (!IsValidClient(client)) {
 		return Plugin_Continue;
 	}
 	// FOR SKEYS
-	g_iButtons[client] = buttons;
-
+	
 	int observerMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
 	int clientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
 	if (IsValidClient(clientToShow, true) && (g_bSKeysEnabled[client] || IsFakeClient(clientToShow)) && !(buttons & IN_SCORE) && observerMode != 7) {
@@ -739,6 +742,9 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 		return Plugin_Continue;
 	}
 	int client = GetClientOfUserId(event.GetInt("userid"));
+	if (IsFakeClient(client)) {
+		return Plugin_Continue;
+	}
 
 	if (g_bJustSpawned[client]) {
 		return Plugin_Continue;
@@ -771,7 +777,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 			ReloadPlayerData(client);
 			g_bUsedReset[client] = false;
 		}
-		else if (!g_bTelePaused[client]) {
+		else {
 			EraseLocs(client);
 			LoadPlayerData(client);
 		}
@@ -819,6 +825,8 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 	if ((idx = g_aNoFuncRegen.FindValue(client)) != -1) {
 		g_aNoFuncRegen.Erase(idx);
 	}
+
+	g_bTelePaused[client] = false;
 }
 
 public void eventRoundStart(Handle event, const char[] name, bool dontBroadcast) {
@@ -1249,7 +1257,6 @@ void SetPlayerDefaults(int client) {
 	g_bIsPreviewing[client] = false;
 	g_bAmmoRegen[client] = false;
 	g_bHardcore[client] = false;
-	g_bLoadedPlayerSettings[client] = false;
 	g_bBeatTheMap[client] = false;
 	g_bSKeysEnabled[client] = false;
 	g_bUnkillable[client] = false;
@@ -1327,7 +1334,7 @@ void Teleport(int client) {
 	Format(teamName, sizeof(teamName), (g_iClientTeam[client] == TEAM_RED) ? "Red Team" : "Blue Team");
 	teamColor = (g_iClientTeam[client] == TEAM_RED) ? cRedTeam : cBlueTeam;
 
-	if (g_fOrigin[client][0] == 0.0) {
+	if (g_fOrigin[client][0] == 0.0 && g_fOrigin[client][1] == 0.0 && g_fOrigin[client][2] == 0.0) {
 		char className[33];
 		GetClassName(g_TFClientClass[client], className, sizeof(className));
 		PrintColoredChat(client, "[%sJA\x01] You don't have a save for%s %s\x01 on the%s %s\x01.", cTheme1, teamColor, className, teamColor, teamName);
