@@ -3,7 +3,7 @@
 #define XPOSDEFAULT 0.54
 #define YPOSDEFAULT 0.4
 #define ALLKEYS 3615
-#define DEFAULTCOLOR {255, 255, 255}
+#define DEFAULTSKEYSCOLOR {255, 255, 255}
 
 enum {
 	DISPLAY = 0,
@@ -110,7 +110,7 @@ void SetAllSkeysDefaults() {
 void SetSkeysDefaults(int client) {
 	g_fSkeysPos[client][XPOS] = XPOSDEFAULT;
 	g_fSkeysPos[client][YPOS] = YPOSDEFAULT;
-	g_iSkeysColor[client] = DEFAULTCOLOR;
+	g_iSkeysColor[client] = DEFAULTSKEYSCOLOR;
 }
 
 int IsStringNumeric(const char[] MyString) {

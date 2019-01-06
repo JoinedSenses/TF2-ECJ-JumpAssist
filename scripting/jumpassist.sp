@@ -19,9 +19,9 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.4"
+#define PLUGIN_VERSION "2.3.5"
 #define PLUGIN_NAME "[TF2] Jump Assist"
-#define PLUGIN_AUTHOR "rush - Updated by nolem, happs, joinedsenses"
+#define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 
 #include <sourcemod>
 #include <jumpassist>
@@ -30,20 +30,23 @@
 #include <color_literals>
 #include <clientprefs>
 #include "smlib/math.inc"
+#undef REQUIRE_PLUGIN
+#include "saveloc.inc"
+#define REQUIRE_PLUGIN
 
 enum {
-	TEAM_UNASSIGNED = 0,
-	TEAM_SPECTATOR,
-	TEAM_RED,
-	TEAM_BLUE
+	  TEAM_UNASSIGNED = 0
+	, TEAM_SPECTATOR
+	, TEAM_RED
+	, TEAM_BLUE
 }
 
 enum {
-	INTEL_PICKEDUP = 1,
-	INTEL_CAPTURED,
-	INTEL_DEFENDED,
-	INTEL_DROPPED,
-	INTEL_RETURNED
+	  INTEL_PICKEDUP = 1
+	, INTEL_CAPTURED
+	, INTEL_DEFENDED
+	, INTEL_DROPPED
+	, INTEL_RETURNED
 }
 
 bool
@@ -60,7 +63,8 @@ bool
 	, g_bUsedReset[MAXPLAYERS+1]
 	, g_bBeatTheMap[MAXPLAYERS+1]
 	, g_bUnkillable[MAXPLAYERS+1]
-	, g_bMapSetUsed;
+	, g_bMapSetUsed
+	, g_bSaveLoc;
 char
 	  g_sWebsite[128] = "http:// www.jump.tf/"
 	, g_sForum[128] = "http://tf2rj.com/forum/"
@@ -111,6 +115,7 @@ StringMap
 #include "jumpassist/preview.sp"
 #include "jumpassist/teleporting.sp"
 #include "jumpassist/hide.sp"
+#include "jumpassist/sl.sp"
 
 public Plugin myinfo = {
 	name = PLUGIN_NAME,
@@ -251,6 +256,8 @@ public void OnPluginStart() {
 	LoadTranslations("common.phrases");
 
 	g_hJAMessageCookie = RegClientCookie("JAMessage_cookie", "Jump Assist Message Cookie", CookieAccess_Protected);
+
+	g_bSaveLoc = LibraryExists("saveloc");
 
 	SetAllSkeysDefaults();
 	ConnectToDatabase();
@@ -564,7 +571,7 @@ public int Native_ToggleKeys(Handle plugin, int numParams) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
 	g_bSKeysEnabled[client] = GetNativeCell(2);
-	return 0;
+	return 1;
 }
 
 public int Native_PauseTeleport(Handle plugin, int numParams) {
@@ -577,7 +584,7 @@ public int Native_PauseTeleport(Handle plugin, int numParams) {
 	}
 	g_bTelePaused[client] = true;
 	CreateTimer(5.0, timerUnpauseTeleport, client);
-	return 0;
+	return 1;
 }
 
 /* ======================================================================
@@ -777,7 +784,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 			ReloadPlayerData(client);
 			g_bUsedReset[client] = false;
 		}
-		else {
+		else if (!g_bTelePaused[client]) {
 			EraseLocs(client);
 			LoadPlayerData(client);
 		}
@@ -863,7 +870,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	}
 	int client = event.GetInt("player");
 
-	if (IsFakeClient(client) || IsClientPreviewing(client)) {
+	if (IsFakeClient(client) || IsClientPreviewing(client) || g_bSaveLoc && SL_IsClientPracticing(client)) {
 		return Plugin_Continue;
 	}
 
@@ -1030,6 +1037,11 @@ public Action cmdSave(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
+	if (g_bSaveLoc && SL_IsClientPracticing(client)) {
+		PrintColoredChat(client, "[%sJA\x01] Can't save while using saveloc. Type%s /practice\x01 to disable", cTheme1, cTheme2);
+		return Plugin_Handled;
+	}
+
 	SaveLoc(client);
 	return Plugin_Handled;
 }

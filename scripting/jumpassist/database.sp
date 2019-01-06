@@ -184,7 +184,6 @@ void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] erro
 	}
 	int client;
 	if ((client = GetClientOfUserId(data)) < 1) {
-		PrintToChatAll("Returning");
 		return;
 	}
 	if (results.FetchRow()) {

@@ -26,7 +26,7 @@ public Action cmdPreview(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (IsClientRacing(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Can't use this feature while racing.", cTheme1);
+		PrintColoredChat(client, "[%sJA\x01] Can't use this feature while%s racing.", cTheme1, cTheme2);
 		return Plugin_Handled;
 	}
 
