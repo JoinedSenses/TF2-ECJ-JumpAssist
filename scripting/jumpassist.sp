@@ -257,8 +257,6 @@ public void OnPluginStart() {
 
 	g_hJAMessageCookie = RegClientCookie("JAMessage_cookie", "Jump Assist Message Cookie", CookieAccess_Protected);
 
-	g_bSaveLoc = LibraryExists("saveloc");
-
 	SetAllSkeysDefaults();
 	ConnectToDatabase();
 
@@ -292,6 +290,10 @@ public void OnPluginStart() {
 	}
 }
 
+public void OnAllPluginsLoaded() {
+	g_bSaveLoc = LibraryExists("saveloc");
+}
+
 public void OnPluginEnd() {
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsClientPreviewing(i)) {
@@ -305,6 +307,7 @@ public void OnMapStart() {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
+
 	g_bCPFallback = false;
 	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 
