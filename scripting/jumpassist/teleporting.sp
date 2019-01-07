@@ -20,7 +20,7 @@ public Action cmdBring(int client, int argc) {
 		return Plugin_Handled;
 	}
 	if (IsClientPreviewing(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to bring while in%s preview mode\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Unable to bring while in%s preview mode\x01.", cTheme2);
 		return Plugin_Handled;
 	}
 	
@@ -54,7 +54,7 @@ public Action cmdBring(int client, int argc) {
 	
 	for (int  i; i < iReturn; i++) {
 		TeleportEntity(iTargetsArray[i], fPosition, NULL_VECTOR, NULL_VECTOR);
-		PrintColoredChat(iTargetsArray[i], "[%sJA\x01]%s %N\x01 has brought you to their position", cTheme1, cTheme2, client);
+		PrintJAMessage(iTargetsArray[i], "%s%N\x01 has brought you to their position", cTheme2, client);
 	}
 
 	char plural[5];
@@ -62,7 +62,7 @@ public Action cmdBring(int client, int argc) {
 		Format(plural, sizeof(plural), "the ");
 	}
 
-	PrintColoredChat(client, "[%sJA\x01] You have brought %s%s%s\x01 to your position", cTheme1, plural, cTheme2, sName);
+	PrintJAMessage(client, "You have brought %s%s%s\x01 to your position", plural, cTheme2, sName);
 	LogAction(client, -1, "\"%L\" (sm_bring) %N brought %s%s to their position.", client, client, plural, sName);
 	return Plugin_Handled;
 }
@@ -89,22 +89,22 @@ public Action cmdGoTo(int client, int args) {
 	}
 
 	if (!IsPlayerAlive(target)) {
-		PrintColoredChat(client, "[%sJA\x01] Target must be alive.", cTheme1);
+		PrintJAMessage(client, "Target must be alive.");
 		return Plugin_Handled;
 	}
 
 	if (g_aGoToRecent[client].FindValue(target) != -1) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to teleport to recently targetted players.", cTheme1);
+		PrintJAMessage(client, "Unable to teleport to recently targetted players.");
 		return Plugin_Handled;
 	}
 
 	if (IsClientPreviewing(target)) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to teleport to players while they're in%s preview mode\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Unable to teleport to players while they're in%s preview mode\x01.", cTheme2);
 		return Plugin_Handled;
 	}
 
 	if (GetClientTeam(client) != GetClientTeam(target) && !(GetUserFlagBits(client) & (ADMFLAG_GENERIC|ADMFLAG_ROOT))) {
-		PrintColoredChat(client, "[%sJA\x01] Can't go to players on the%s opposite team", cTheme1, cTheme2);
+		PrintJAMessage(client, "Can't go to players on the%s opposite team", cTheme2);
 		return Plugin_Handled;
 	}
 
@@ -112,8 +112,8 @@ public Action cmdGoTo(int client, int args) {
 	GetClientAbsOrigin(target, fPosition);
 	TeleportEntity(client, fPosition, NULL_VECTOR, NULL_VECTOR);
 	
-	PrintColoredChat(client, "[%sJA\x01] You have teleported to%s %N\x01's position", cTheme1, cTheme2, target);
-	PrintColoredChat(target, "[%sJA\x01]%s %N\x01 has teleported to your position.", cTheme1, cTheme2, client);
+	PrintJAMessage(client, "You have teleported to%s %N\x01's position", cTheme2, target);
+	PrintJAMessage(target, "%s%N\x01 has teleported to your position.", cTheme2, client);
 
 	if (CheckCommandAccess(client, "sm_bring", ADMFLAG_GENERIC)) {
 		return Plugin_Handled;

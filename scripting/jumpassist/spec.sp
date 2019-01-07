@@ -19,7 +19,7 @@ public Action cmdSpec(int client, int args) {
 	}
 
 	if (GetRaceStatus(client) != STATUS_NONE) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to use this feature while racing.", cTheme1);
+		PrintJAMessage(client, "Unable to use this feature while racing.");
 		return Plugin_Handled;	
 	}
 
@@ -36,7 +36,7 @@ public Action cmdSpec(int client, int args) {
 	}
 
 	if (target == client) {
-		PrintToChat(client, "\x01[\x03Spec\x01] Unable to spectate yourself. That would be pretty weird.");
+		PrintJAMessage(client, "Unable to spectate yourself. That would be pretty weird.");
 		return Plugin_Handled;
 	}
 	
@@ -44,14 +44,14 @@ public Action cmdSpec(int client, int args) {
 	if (IsClientObserver(target)) {
 		target = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
 		if (target < 1) {
-			PrintColoredChat(client, "[%sJA\x01] Target is in spec, but not spectating anyone.", cTheme1);
+			PrintJAMessage(client, "Target is in spec, but not spectating anyone.");
 			return Plugin_Handled;
 		}
 		if (target == client) {
-			PrintColoredChat(client, "[%sJA\x01] Target is spectating you. Unable to spectate", cTheme1);
+			PrintJAMessage(client, "Target is spectating you. Unable to spectate");
 			return Plugin_Handled;
 		}
-		PrintColoredChat(client, "[%sJA\x01] Target is in spec. Now spectating their target", cTheme1);
+		PrintJAMessage(client, "Target is in spec. Now spectating their target");
 		isTargetInSpec = true;
 	}
 
@@ -61,7 +61,7 @@ public Action cmdSpec(int client, int args) {
 	}
 
 	if (!isTargetInSpec) {
-		PrintColoredChat(client, "[%sJA\x01] Spectating%s %N", cTheme1, cTheme2, target);
+		PrintJAMessage(client, "Spectating%s %N", cTheme2, target);
 	}
 
 	FakeClientCommand(client, "spec_player #%i", GetClientUserId(target));
@@ -76,7 +76,7 @@ public Action cmdSpecLock(int client, int args) {
 	}
 
 	if (GetRaceStatus(client) != STATUS_NONE) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to use this feature while racing.", cTheme1);
+		PrintJAMessage(client, "Unable to use this feature while racing.");
 		return Plugin_Handled;	
 	}
 
@@ -90,7 +90,7 @@ public Action cmdSpecLock(int client, int args) {
 
 	if (StrEqual(targetName, "off", false) || StrEqual(targetName, "0", false)) {
 		g_iSpecTarget[client] = 0;
-		PrintColoredChat(client, "[%sJA\x01] Spec lock disabled", cTheme1);
+		PrintJAMessage(client, "Spec lock disabled");
 		return Plugin_Handled;
 	}
 
@@ -100,8 +100,8 @@ public Action cmdSpecLock(int client, int args) {
 	}
 
 	if (IsClientObserver(target)) {
-		PrintColoredChat(client, "[%sJA\x01] Target is in spec, will resume with spec when they spawn.", cTheme1);
-		PrintColoredChat(client, "[%sJA\x01] To disable, type%s /speclock 0", cTheme1, cTheme2);
+		PrintJAMessage(client, "Target is in spec, will resume with spec when they spawn.");
+		PrintJAMessage(client, "To disable, type%s /speclock 0", cTheme2);
 	}
 
 	if (GetClientTeam(client) > 1) {
@@ -111,7 +111,7 @@ public Action cmdSpecLock(int client, int args) {
 
 	FakeClientCommand(client, "spec_player #%i", GetClientUserId(target));
 	FakeClientCommand(client, "spec_mode 1");
-	PrintColoredChat(client, "[%sJA\x01] Spectating%s %N", cTheme1, cTheme2, target);
+	PrintJAMessage(client, "Spectating%s %N", cTheme2, target);
 
 	g_iSpecTarget[client] = target;
 	return Plugin_Handled;
@@ -121,7 +121,7 @@ public Action cmdSpecLock(int client, int args) {
 
 public Action cmdForceSpec(int client, int args) {
 	if (args < 1) {
-		PrintColoredChat(client, "Usage: sm_fspec <target> <OPTIONAL:targetToSpec>");
+		PrintJAMessage(client, "Usage: sm_fspec <target> <OPTIONAL:targetToSpec>");
 		return Plugin_Handled;
 	}
 	char targetName[MAX_NAME_LENGTH];
@@ -133,18 +133,18 @@ public Action cmdForceSpec(int client, int args) {
 	}
 
 	if (GetRaceStatus(target) != STATUS_NONE) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to target this player while they racing.", cTheme1);
+		PrintJAMessage(client, "Unable to target this player while they racing.");
 		return Plugin_Handled;	
 	}
 
 	if (IsClientFSpecRestoring(target)) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to target this player while they're restoring from fspec.", cTheme1);
+		PrintJAMessage(client, "Unable to target this player while they're restoring from fspec.");
 		return Plugin_Handled;		
 	}
 
 	if (IsClientForcedSpec(target)) {
 		RestoreFSpecLocation(target);
-		PrintColoredChat(client, "[%xJA\x01] %N status restored.", cTheme1);
+		PrintJAMessage(client, "%N's status has been restored.", target);
 		return Plugin_Handled;
 	}
 
@@ -156,7 +156,7 @@ public Action cmdForceSpec(int client, int args) {
 			return Plugin_Handled;
 		}
 		if (IsClientObserver(targetToSpec)) {
-			PrintColoredChat(client, "[%sJA\x01] Target%s %N\x01 must be alive.", cTheme1, cTheme2, targetToSpec);
+			PrintJAMessage(client, "Target%s %N\x01 must be alive.", cTheme2, targetToSpec);
 			return Plugin_Handled;
 		}
 		Format(targetToSpecName, sizeof(targetToSpecName), "%N", targetToSpec);
@@ -176,7 +176,7 @@ public Action cmdForceSpec(int client, int args) {
 	FakeClientCommand(target, "spec_player #%i", GetClientUserId(targetToSpec));
 	FakeClientCommand(target, "spec_mode 1");
 
-	PrintColoredChat(client, "[%sJA\x01] Forced%s %N\x01 to spectate%s %s", cTheme1, cTheme2, target, cTheme2, targetToSpecName);
+	PrintJAMessage(client, "Forced%s %N\x01 to spectate%s %s", cTheme2, target, cTheme2, targetToSpecName);
 	g_bFSpec[target] = true;
 	return Plugin_Handled;
 }
@@ -217,12 +217,12 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 			int userid = StringToInt(targetid);
 			if (userid == 0) {
 				ChangeClientTeam(param1, 1);
-				PrintColoredChat(param1, "[%sJA\x01] Sent to spec", cTheme1);
+				PrintJAMessage(param1, "Sent to spec");
 				delete menu;
 				return 0;
 			}
 			if (GetClientOfUserId(userid) == 0) {
-				PrintColoredChat(param1, "[%sJA\x01] Player no longer in game", cTheme1);
+				PrintJAMessage(param1, "Player no longer in game");
 				menuSpec(param1);
 				delete menu;
 				return 0;
@@ -261,12 +261,12 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 			int target;
 			if (userid == 0) {
 				g_iSpecTarget[param1] = 0;
-				PrintColoredChat(param1, "[%sJA\x01] Spec lock is now disabled", cTheme1);
+				PrintJAMessage(param1, "Spec lock is now disabled");
 				delete menu;
 				return 0;
 			}
 			if ((target = GetClientOfUserId(userid)) < 0) {
-				PrintColoredChat(param1, "[%sJA\x01] Player no longer in game", cTheme1);
+				PrintJAMessage(param1, "Player no longer in game");
 				menuSpec(param1);
 				delete menu;
 				return 0;

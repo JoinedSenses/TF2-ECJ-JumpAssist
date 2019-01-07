@@ -36,7 +36,7 @@ float
 
 public Action cmdGetClientKeys(int client, int args) {
 	g_bSKeysEnabled[client] = !g_bSKeysEnabled[client];
-	PrintColoredChat(client, "[%sJA\x01] HUD keys are%s %s\x01.", cTheme1, cTheme2, g_bSKeysEnabled[client]?"enabled":"disabled");
+	PrintJAMessage(client, "HUD keys are%s %s\x01.", cTheme2, g_bSKeysEnabled[client]?"enabled":"disabled");
 	return Plugin_Handled;
 }
 
@@ -49,7 +49,7 @@ public Action cmdChangeSkeysColor(int client, int args) {
 	char green[4];
 	
 	if (args < 1) {
-		PrintColoredChat(client, "[%sJA\x01]%s Usage\x01: sm_skeys_color <R> <G> <B>", cTheme1, cTheme2);
+		PrintJAMessage(client, "%sUsage\x01: sm_skeys_color <R> <G> <B>", cTheme2);
 		return Plugin_Handled;
 	}
 
@@ -58,7 +58,7 @@ public Action cmdChangeSkeysColor(int client, int args) {
 	GetCmdArg(3, blue, sizeof(blue));
 
 	if (!IsStringNumeric(red) || !IsStringNumeric(blue) || !IsStringNumeric(green)) {
-		PrintColoredChat(client, "[%sJA\x01] Invalid numeric value", cTheme1);
+		PrintJAMessage(client, "Invalid numeric value");
 		return Plugin_Handled;
 	}
 
@@ -71,7 +71,7 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (IsClientObserver(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Cannot use this feature while in spectate", cTheme1);
+		PrintJAMessage(client, "Cannot use this feature while in spectate");
 		return Plugin_Handled;
 	}
 	g_bSKeysEnabled[client] = true;

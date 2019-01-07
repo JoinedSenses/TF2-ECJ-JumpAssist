@@ -495,12 +495,14 @@ void SaveKeyColor(int client, char[] red, char[] green, char[] blue) {
 }
 
 void SQL_OnSetKeys(Database db, DBResultSet results, const char[] error, any data) {
+	bool isError;
 	if (db == null || results == null) {
 		LogError("Query failed! %s", error);
+		isError = true;
 	}
 	int client;
 	if ((client = GetClientOfUserId(data)) > 0) {
-		PrintColoredChat(client, "\x01[%sJA\x01] Your settings were %s%ssaved\x01.", cTheme1, cTheme2, (db == null)?"NOT ":"");
+		PrintJAMessage(client, "Your settings were %s%ssaved\x01.", cTheme2, isError?"NOT ":"");
 	}
 }
 
@@ -528,6 +530,6 @@ void SQL_UpdateSkeys(Database db, DBResultSet results, const char[] error, any d
 	}
 	int client;
 	if ((client = GetClientOfUserId(data)) > 0) {
-		PrintColoredChat(client, "[%sJA\x01] Key position updated", cTheme1);
+		PrintJAMessage(client, "Key position updated");
 	}
 }

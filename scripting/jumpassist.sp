@@ -22,6 +22,7 @@
 #define PLUGIN_VERSION "2.3.5"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
+#define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
 
 #include <sourcemod>
 #include <jumpassist>
@@ -120,7 +121,7 @@ StringMap
 public Plugin myinfo = {
 	name = PLUGIN_NAME,
 	author = PLUGIN_AUTHOR,
-	description = "Tools to run a jump server with ease.",
+	description = PLUGIN_DESCRIPTION,
 	version = PLUGIN_VERSION,
 	url = "https://github.com/JoinedSenses/TF2-ECJ-JumpAssist"
 }
@@ -137,12 +138,14 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("JA_IsClientRacing", Native_IsClientRacing);
 	CreateNative("JA_ToggleKeys", Native_ToggleKeys);
 	CreateNative("JA_PauseTeleport", Native_PauseTeleport);
+	CreateNative("JA_PrintMessage", Native_PrintMessage);
+	CreateNative("JA_PrintMessageAll", Native_PrintMessageAll);
 	return APLRes_Success;
 }
 
 public void OnPluginStart() {
 	// CONVAR
-	CreateConVar("jumpassist_version", PLUGIN_VERSION, "JumpAssist Version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
+	CreateConVar("jumpassist_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
 	g_cvarHostname = FindConVar("hostname");
 	g_cvarWaitingForPlayers = FindConVar("mp_waitingforplayers_time");
 	g_cvarPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NONE);
@@ -265,7 +268,7 @@ public void OnPluginStart() {
 	
 	// LATELOAD
 	if (g_bLateLoad) {
-		PrintColoredChatAll("[%sJA\x01]%s JumpAssist\x01 has been%s reloaded.", cTheme1, cTheme2, cTheme2);
+		PrintJAMessageAll("%sJumpAssist\x01 has been%s reloaded.", cTheme2, cTheme2);
 		GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 		for (int i = 1; i <= MaxClients; i++) {
 			if (IsValidClient(i)) {
@@ -298,7 +301,7 @@ public void OnPluginEnd() {
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsClientPreviewing(i)) {
 		   DisablePreview(i, IsClientInGame(i));
-		   PrintColoredChat(i, "Plugin reloading: Restoring location");
+		   PrintJAMessage(i, "Plugin reloading: Restoring location");
 		}
 	}
 }
@@ -590,6 +593,30 @@ public int Native_PauseTeleport(Handle plugin, int numParams) {
 	return 1;
 }
 
+public int Native_PrintMessage(Handle plugin, int numParams) {
+	int client = GetNativeCell(1);
+	if (!IsValidClient(client)) {
+		return 0;
+	}
+	char buffer[1024]; 
+	int written;
+
+	FormatNativeString(0, 2, 3, sizeof(buffer), written, buffer);
+
+	PrintJAMessage(client, buffer);
+	return 1;
+}
+
+public int Native_PrintMessageAll(Handle plugin, int numParams) {
+	char buffer[1024]; 
+	int written;
+
+	FormatNativeString(0, 1, 2, sizeof(buffer), written, buffer);
+
+	PrintJAMessageAll(buffer);
+	return 1;
+}
+
 /* ======================================================================
    ------------------------------- CVAR Hook
 */
@@ -615,11 +642,11 @@ public Action listenerJoinClass(int client, const char[] command, int args) {
 		return Plugin_Continue;
 	}
 	if (IsClientPreviewing(client)) {
-		PrintColoredChat(client, "[%sJA\x01] You may not change class during\x03 preview mode\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "You may not change class during%s preview mode\x01.", cTheme2);
 		return Plugin_Handled;
 	}
 	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client) && g_bRaceClassForce[g_iRaceID[client]]) {
-		PrintColoredChat(client, "[%sJA\x01] Cannot change class while racing.", cTheme1);
+		PrintJAMessage(client, "Cannot change class while racing.");
 		return Plugin_Handled;
 	}
 	return Plugin_Continue;
@@ -630,14 +657,14 @@ public Action listenerJoinTeam(int client, const char[] command, int args) {
 		return Plugin_Continue;
 	}
 	if (IsClientPreviewing(client)) {
-		PrintColoredChat(client, "[%sJA\x01] You may not change team during\x03 preview mode\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "You may not change team during%s preview mode\x01.", cTheme2);
 		return Plugin_Handled;
 	}
 	// Get clients raceid for readability
 	int raceID = g_iRaceID[client];
 	// If raceid > 0 and player is in a race, prevent them from changing teams
 	if (raceID && (g_iRaceStatus[raceID] == STATUS_COUNTDOWN || g_iRaceStatus[raceID] == STATUS_RACING)) {
-		PrintColoredChat(client, "[%sJA\x01] You may not change teams during the race.", cTheme1);
+		PrintJAMessage(client, "You may not change teams during a race.");
 		return Plugin_Handled;
 	}
 
@@ -966,13 +993,14 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 		char color[8];
 		Format(color, sizeof(color), (g_iClientTeam[client] == 2) ? cRedTeam : cBlueTeam);
 
-		PrintColoredChatAll("[%sJA\x01] %s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", cTheme1, g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", color, client, cTheme2, cpName, color, className);
+		PrintJAMessageAll("%s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", color, client, cTheme2, cpName, color, className);
 		EmitSoundToAll("misc/freeze_cam.wav");
 	
 		if (g_iCPsTouched[client] == g_iCPCount) {
 			g_bBeatTheMap[client] = true;
 		}
 	}
+
 	g_bCPTouched[client][area] = true;
 	g_iCPsTouched[client]++;
 	return Plugin_Continue;
@@ -1045,7 +1073,7 @@ public Action cmdSave(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (g_bSaveLoc && SL_IsClientPracticing(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Can't save while using saveloc. Type%s /practice\x01 to disable", cTheme1, cTheme2);
+		PrintJAMessage(client, "Can't save while using saveloc. Type%s /practice\x01 to disable", cTheme2);
 		return Plugin_Handled;
 	}
 
@@ -1089,7 +1117,7 @@ public Action cmdRestart(int client, int args) {
 	}
 	TF2_RespawnPlayer(client);
 	if (!g_bHideMessage[client]) {
-		PrintColoredChat(client, "[%sJA\x01] You have been%s restarted\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "You have been%s restarted\x01.", cTheme2);
 	}
 
 	if (IsClientPreviewing(client)) {
@@ -1102,7 +1130,7 @@ public Action cmdRestart(int client, int args) {
 
 public Action cmdUndo(int client, int args) {
 	if (!IsValidPosition(g_fLastSavePos[client])) {
-		PrintColoredChat(client, "[%sJA\x01]%s No save\x01 to restore\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "%sNo save\x01 to restore\x01.", cTheme2);
 		return Plugin_Handled;
 	}
 
@@ -1112,7 +1140,7 @@ public Action cmdUndo(int client, int args) {
 	g_fLastSavePos[client] = nullVector;
 	g_fLastSaveAngles[client] = nullVector;
 		
-	PrintColoredChat(client, "[%sJA\x01] Previous save has been%s restored\x01.", cTheme1, cTheme2);
+	PrintJAMessage(client, "Previous save has been%s restored\x01.", cTheme2);
 	return Plugin_Handled;
 }
 
@@ -1121,15 +1149,15 @@ public Action cmdToggleAmmo(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)) {
-		PrintColoredChat(client, "[%sJA\x01] You may not change regen during a race", cTheme1);
+		PrintJAMessage(client, "You may not change regen during a race");
 		return Plugin_Handled;
 	}
 	if (g_bHardcore[client]) {
-		PrintColoredChat(client, "[%sJA\x01] Cannot toggle ammo with %sHardcore\x01 enabled", cTheme1, cTheme2);
+		PrintJAMessage(client, "Cannot toggle ammo with %sHardcore\x01 enabled", cTheme2);
 		return Plugin_Handled;
 	}
 	g_bAmmoRegen[client] = !g_bAmmoRegen[client];
-	PrintColoredChat(client, "[%sJA\x01] Ammo regen%s %s\x01.", cTheme1, cTheme2, g_bAmmoRegen[client]?"enabled":"disabled");
+	PrintJAMessage(client, "Ammo regen%s %s\x01.", cTheme2, g_bAmmoRegen[client]?"enabled":"disabled");
 	return Plugin_Handled;
 }
 
@@ -1138,12 +1166,12 @@ public Action cmdUnkillable(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (!g_cvarSuperman.BoolValue && !IsUserAdmin(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Command disabled by server admin.", cTheme1);
+		PrintJAMessage(client, "Command disabled by server admin.", cTheme1);
 		return Plugin_Handled;
 	}
 	g_bUnkillable[client] = !g_bUnkillable[client];
 	SetEntProp(client, Prop_Data, "m_takedamage", g_bUnkillable[client]?1:2, 1);
-	PrintColoredChat(client, "[%sJA\x01] Superman%s %s", cTheme1, cTheme2, g_bUnkillable[client]?"enabled":"disabled");
+	PrintJAMessage(client, "Superman%s %s", cTheme2, g_bUnkillable[client]?"enabled":"disabled");
 	return Plugin_Handled;
 }
 
@@ -1157,7 +1185,7 @@ public Action cmdToggleHardcore(int client, int args) {
 
 public Action cmdHideMessage(int client, int args) {
 	g_bHideMessage[client] = !g_bHideMessage[client];
-	PrintColoredChat(client, "[%sJA\x01] Messages will now be%s %s", cTheme1, cTheme2, g_bHideMessage[client]?"hidden":"displayed");
+	PrintJAMessage(client, "Messages will now be%s %s", cTheme2, g_bHideMessage[client]?"hidden":"displayed");
 	SetClientCookie(client, g_hJAMessageCookie, g_bHideMessage[client]?"1":"0");
 	return Plugin_Handled;
 }
@@ -1167,11 +1195,11 @@ public Action cmdSendPlayer(int client,int args) {
 		return Plugin_Handled;
 	}	
 	if (g_Database == null) {
-		PrintColoredChat(client, "[%sJA\x01] This feature is not supported without a database configuration", cTheme1);
+		PrintJAMessage(client, "This feature is not supported without a database configuration");
 		return Plugin_Handled;
 	}
 	if (args < 2) {
-		PrintColoredChat(client, "[%sJA\x01] %sUsage\x01: sm_send <playerName> <targetName>", cTheme1, cTheme2);
+		PrintJAMessage(client, "%sUsage\x01: sm_send <playerName> <targetName>", cTheme2);
 		return Plugin_Handled;
 	}
 	char arg1[MAX_NAME_LENGTH];
@@ -1188,11 +1216,11 @@ public Action cmdSendPlayer(int client,int args) {
 	}
 
 	if (IsClientPreviewing(target1)) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme1, cTheme2, target1, cTheme2);
+		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target1, cTheme2);
 		return Plugin_Handled;
 	}
 	if (IsClientPreviewing(target2)) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme1, cTheme2, target2, cTheme2);
+		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target2, cTheme2);
 		return Plugin_Handled;
 	}
 
@@ -1203,8 +1231,8 @@ public Action cmdSendPlayer(int client,int args) {
 	GetClientAbsAngles(target2, pAngle);
 	TeleportEntity(target1, TargetOrigin, pAngle, nullVector);
 	
-	PrintColoredChat(client, "[%sJA\x01] Sent%s %N\x01 to%s %N\x01.", cTheme1, cTheme2, target1, cTheme2, target2);
-	PrintColoredChat(target1, "[%sJA\x01]%s %N\x01 sent you to%s %N\x01.", cTheme1, cTheme2, client, cTheme2, target2);
+	PrintJAMessage(client, "Sent%s %N\x01 to%s %N\x01.", cTheme2, target1, cTheme2, target2);
+	PrintJAMessage(target1, "%s%N\x01 sent you to%s %N\x01.", cTheme2, client, cTheme2, target2);
 	return Plugin_Handled;
 }
 
@@ -1213,11 +1241,11 @@ public Action cmdMapSet(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (g_Database == null) {
-		PrintColoredChat(client, "[%sJA\x01] This feature is not supported without a database configuration", cTheme1);
+		PrintJAMessage(client, "This feature is not supported without a database configuration");
 		return Plugin_Handled;
 	}
 	if (args < 2) {
-		PrintColoredChat(client, "[%sJA\x01] %sUsage\x01: !mapset <team|class|lockcps> <team color|class|on off>", cTheme1, cTheme2);
+		PrintJAMessage(client, "%sUsage\x01: !mapset <team|class|lockcps> <team color|class|on off>", cTheme2);
 		return Plugin_Handled;
 	}
 
@@ -1299,28 +1327,28 @@ void SaveLoc(int client) {
 		return;
 	}
 	if (!g_bFeaturesEnabled[client]) {
-		PrintColoredChat(client, "[%sJA\x01] Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.", cTheme1);
+		PrintJAMessage(client, "Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.");
 		return;
 	}
 	if (g_bHardcore[client]) {
-		PrintColoredChat(client, "[%sJA\x01]%s Hardcore:\x01 Saves are%s disabled\x01.", cTheme1, cHardcore, cTheme2);
+		PrintJAMessage(client, "%sHardcore:\x01 Saves are%s disabled\x01.", cHardcore, cTheme2);
 		return;
 	}
 	if (!IsPlayerAlive(client) || IsClientObserver(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Must be%s alive\x01 to save.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Must be%s alive\x01 to save.", cTheme2);
 		return;
 	}
 	int flags = GetEntityFlags(client);
 	if (!(flags & FL_ONGROUND)) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to save while%s in the air\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Unable to save while%s in the air\x01.", cTheme2);
 		return;
 	}
 	if ((flags & FL_DUCKING)) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to save while%s ducked\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Unable to save while%s ducked\x01.", cTheme2);
 		return;
 	}
 	if ((GetEntityMoveType(client) == MOVETYPE_NOCLIP)) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to save while%s noclipped\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Unable to save while%s noclipped\x01.", cTheme2);
 		return;
 	}
 
@@ -1339,19 +1367,19 @@ void Teleport(int client) {
 		return;
 	}
 	if (!g_bFeaturesEnabled[client]) {
-		PrintColoredChat(client, "[%sJA\x01] Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.", cTheme1);
+		PrintJAMessage(client, "Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.");
 		return;
 	}
 	if (g_iRaceID[client] && (g_iRaceStatus[g_iRaceID[client]] == STATUS_COUNTDOWN || g_iRaceStatus[g_iRaceID[client]] == STATUS_RACING)) {
-		PrintColoredChat(client, "[%sJA\x01] Cannot teleport while racing.", cTheme1);
+		PrintJAMessage(client, "Cannot teleport while racing.");
 		return;
 	}
 	if (g_bHardcore[client]) {
-		PrintColoredChat(client, "[%sJA\x01]%s Hardcore:\x01 Teleports are%s disabled\x01.", cTheme1, cHardcore, cTheme2);
+		PrintJAMessage(client, "%sHardcore:\x01 Teleports are%s disabled\x01.", cHardcore, cTheme2);
 		return;
 	}
 	if (!IsPlayerAlive(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to teleport while%s dead\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Unable to teleport while%s dead\x01.", cTheme2);
 		return;
 	}
 
@@ -1364,13 +1392,13 @@ void Teleport(int client) {
 	if (g_fOrigin[client][0] == 0.0 && g_fOrigin[client][1] == 0.0 && g_fOrigin[client][2] == 0.0) {
 		char className[33];
 		GetClassName(g_TFClientClass[client], className, sizeof(className));
-		PrintColoredChat(client, "[%sJA\x01] You don't have a save for%s %s\x01 on the%s %s\x01.", cTheme1, teamColor, className, teamColor, teamName);
+		PrintJAMessage(client, "You don't have a save for%s %s\x01 on the%s %s\x01.", teamColor, className, teamColor, teamName);
 		return;
 	}
 
 	TeleportEntity(client, g_fOrigin[client], g_fAngles[client], nullVector);
 	if (!g_bHideMessage[client]) {
-		PrintColoredChat(client, "[%sJA\x01] You have been%s teleported\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "You have been%s teleported\x01.", cTheme2);
 	}
 }
 
@@ -1391,13 +1419,13 @@ void Hardcore(int client) {
 		g_bAmmoRegen[client] = false;
 		EraseLocs(client);
 		TF2_RespawnPlayer(client);
-		PrintColoredChat(client, "[%sJA\x01]%s Hardcore%s enabled\x01.", cTheme1, cHardcore, cTheme2);
+		PrintJAMessage(client, "%sHardcore%s enabled\x01.", cHardcore, cTheme2);
 		return;
 	}
 
 	g_bHardcore[client] = false;
 	LoadPlayerData(client);
-	PrintColoredChat(client, "[%sJA\x01]%s Hardcore%s disabled\x01.", cTheme1, cHardcore, cTheme2);
+	PrintJAMessage(client, "%sHardcore%s disabled\x01.", cHardcore, cTheme2);
 }
 
 bool IsClientHardcore(int client) {
@@ -1620,7 +1648,7 @@ void CheckTeams() {
 		}
 		ChangeClientTeam(i, g_iForceTeam);
 		g_iClientTeam[i] = g_iForceTeam;
-		PrintColoredChat(i, "[%sJA\x01] Your team has been%s switched\x01.", cTheme1, cTheme2);
+		PrintJAMessage(i, "Your team has been%s switched\x01.", cTheme2);
 	}
 }
 
@@ -1631,7 +1659,7 @@ void SendToStart(int client) {
 	g_bUsedReset[client] = true;
 	TF2_RespawnPlayer(client);
 	if (!g_bHideMessage[client] && g_iRaceID[client] < 1) {
-		PrintColoredChat(client, "[%sJA\x01] You have been%s sent to map start\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "You have been%s sent to map start\x01.", cTheme2);
 	}
 }
 
@@ -1759,6 +1787,33 @@ int FindTarget2(int client, const char[] target, bool nobots = false, bool immun
 		return target_list[0];
 	}
 	return -1;
+}
+
+void PrintJAMessage(int client, char[] message, any ...) {
+	if (!IsValidClient(client)) {
+		return;
+	}
+	char tag[24];
+	Format(tag, sizeof(tag), "[%sJA\x01] ", cTheme1);
+
+	char output[1024];
+	VFormat(output, sizeof(output), message, 3);
+
+	PrintColoredChat(client, "%s%s", tag, output);
+}
+
+void PrintJAMessageAll(char[] message, any...) {
+	char tag[24];
+	Format(tag, sizeof(tag), "[%sJA\x01] ", cTheme1);
+
+	char output[1024];
+	VFormat(output, sizeof(output), message, 2);
+
+	for (int i = 1; i <= MaxClients; i++) {
+		if (IsValidClient(i)) {
+			PrintColoredChat(i, "%s%s", tag, output);
+		}
+	}
 }
 
 /* ======================================================================

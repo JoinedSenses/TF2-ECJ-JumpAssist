@@ -52,6 +52,25 @@ native void JA_ToggleKeys(int client, bool enable);
 native void JA_PauseTeleport(int client);
 
 /**
+ * Sends a jumpassist message to a target
+ *
+ * @param client		client index
+ * @param format		formatting rules
+ * @param any			Variable number of format parameters.
+ * @noreturn
+ */
+native void JA_PrintMessage(int client, char[] format, any ...);
+
+/**
+ * Sends a jumpassist message to all clients
+ *
+ * @param format		formatting rules
+ * @param any			Variable number of format parameters.
+ * @noreturn
+ */
+native void JA_PrintMessageAll(char[] format, any...);
+
+/**
  * Called when a client's show keys are about to be set
  *
  * @param client		Client index
@@ -62,8 +81,7 @@ native void JA_PauseTeleport(int client);
  */
 forward Action OnClientKeys(int client, int &buttons);
 
-public SharedPlugin __pl_jumpassist = 
-{
+public SharedPlugin __pl_jumpassist = {
 	name = "jumpassist",
 	file = "jumpassist.smx",
 #if defined REQUIRE_PLUGIN

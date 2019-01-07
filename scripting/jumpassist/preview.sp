@@ -26,7 +26,7 @@ public Action cmdPreview(int client, int args) {
 		return Plugin_Handled;
 	}
 	if (IsClientRacing(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Can't use this feature while%s racing.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Can't use this feature while%s racing.", cTheme2);
 		return Plugin_Handled;
 	}
 
@@ -48,11 +48,11 @@ public Action cmdPreview(int client, int args) {
 void EnablePreview(int client) {
 	int flags = GetEntityFlags(client);
 	if (!(flags & FL_ONGROUND)) {
-		PrintColoredChat(client, "[%sJA\x01] Can't begin preview mode while%s in the air\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Can't begin preview mode while%s in the air\x01.", cTheme2);
 		return;
 	}
 	if ((flags & FL_DUCKING)) {
-		PrintColoredChat(client, "[%sJA\x01] Can't begin preview mode while%s ducking\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Can't begin preview mode while%s ducking\x01.", cTheme2);
 		return;
 	}
 
@@ -71,7 +71,7 @@ void EnablePreview(int client) {
 
 	g_bIsPreviewing[client] = true;
 
-	PrintColoredChat(client, "[%sJA\x01] Preview mode%s enabled\x01.", cTheme1, cTheme2);
+	PrintJAMessage(client, "Preview mode%s enabled\x01.", cTheme2);
 }
 
 void DisablePreview(int client, bool restore = false, bool click = false) {
@@ -91,7 +91,7 @@ void DisablePreview(int client, bool restore = false, bool click = false) {
 		SDKUnhook(client, SDKHook_WeaponSwitch, hookWeaponSwitch);
 	}
 	if (IsClientInGame(client)) {
-		PrintColoredChat(client, "[%sJA\x01] Preview mode%s disabled\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Preview mode%s disabled\x01.", cTheme2);
 	}
 }
 
