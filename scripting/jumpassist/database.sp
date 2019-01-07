@@ -433,7 +433,7 @@ void SQL_OnLoadPlayerData(Database db, DBResultSet results, const char[] error, 
 
 		g_fAngles[client][1] = results.FetchFloat(3);
 
-		if (!g_bHardcore[client] && !IsClientRacing(client)) {
+		if (!IsClientHardcore(client) && !IsClientRacing(client) && !IsTeleportPaused(client) && !IsClientForcedSpec(client)) {
 			Teleport(client);
 			g_iLastTeleport[client] = RoundFloat(GetEngineTime());
 		}

@@ -141,7 +141,7 @@ public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PL
 
 	for (int i = 0; i < numClients; i++) {
 		int client = clients[i];
-		if (IsValidClient(client) && g_bHide[client] && client != entity && client != owner && g_iClientTeam[client] != 1) {
+		if (IsValidClient(client) && IsClientHiding(client) && client != entity && client != owner && g_iClientTeam[client] != 1) {
 			//Remove the client from the array if they have hide toggled, if they are not the creator of the sound, and if they are not in spectate.
 			for (int j = i; j < numClients-1; j++) {
 				clients[j] = clients[j+1];
@@ -157,7 +157,7 @@ public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PL
 public Action hookSetTransmitClient(int entity, int client) {
 	setFlags(entity);
 	//Transmit hook on player models.
-	if ((entity != client && (g_bHide[client] || IsClientPreviewing(entity)) && g_iClientTeam[client] > 1)) {
+	if ((entity != client && (IsClientHiding(client) || IsClientPreviewing(entity)) && g_iClientTeam[client] > 1)) {
 		return Plugin_Handled;
 	}
 
@@ -165,7 +165,7 @@ public Action hookSetTransmitClient(int entity, int client) {
 }
 
 public Action hookSetTransmitPipes(int entity, int client) {
-	if (!g_bHide[client] || g_iClientTeam[client] == 1) {
+	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
 		return Plugin_Continue;
 	}
 
@@ -175,7 +175,7 @@ public Action hookSetTransmitPipes(int entity, int client) {
 
 public Action hookSetTransmitOwnerEntity(int entity, int client) {
 	setFlags(entity);
-	if (!g_bHide[client] || g_iClientTeam[client] == 1) {
+	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
 		return Plugin_Continue;
 	}
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
@@ -183,7 +183,7 @@ public Action hookSetTransmitOwnerEntity(int entity, int client) {
 }
 
 public Action hookSetTransmitObjects(int entity, int client) {
-	if (!g_bHide[client] || g_iClientTeam[client] == 1) {
+	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
 		return Plugin_Continue;
 	}
 
@@ -192,7 +192,7 @@ public Action hookSetTransmitObjects(int entity, int client) {
 }
 
 public Action hookSetTransmitProjectiles(int entity, int client) {
-	if (!g_bHide[client] || g_iClientTeam[client] == 1) {
+	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
 		return Plugin_Continue;
 	}
 	return Plugin_Handled;
@@ -205,7 +205,7 @@ public Action hookSetTransmitParticle(int entity, int client) {
 
 public Action hookSetTransmitIntel(int entity, int client) {
 	setFlags(entity);
-	if (!g_bHide[client] || g_iClientTeam[client] == 1) {
+	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
 		return Plugin_Continue;
 	}
 	return g_bIntelPickedUp ? Plugin_Handled : Plugin_Continue;
@@ -230,7 +230,7 @@ public Action hookTempEnt(const char[] te_name, const int[] players, int numClie
 
 public Action hookTouch(int entity, int other) {
 	//If valid client and hide is toggled, prevent them from touching buildings
-	if (0 < other <= MaxClients && g_bHide[other]) {
+	if (0 < other <= MaxClients && IsClientHiding(other)) {
 		return Plugin_Handled;
 	}
 	return Plugin_Continue;
@@ -255,4 +255,8 @@ void setFlags(int edict) {
 	if (GetEdictFlags(edict) & FL_EDICT_ALWAYS) {
 		SetEdictFlags(edict, (GetEdictFlags(edict) & ~FL_EDICT_ALWAYS));
 	}
+}
+
+bool IsClientHiding(int client) {
+	return g_bHide[client];
 }

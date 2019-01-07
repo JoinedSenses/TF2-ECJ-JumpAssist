@@ -1,4 +1,12 @@
 int g_iSpecTarget[MAXPLAYERS+1];
+bool g_bFSpec[MAXPLAYERS+1];
+bool g_bFSpecRestoring[MAXPLAYERS+1];
+
+int g_iFSpecTeam[MAXPLAYERS+1];
+TFClassType g_TFFSpecClass[MAXPLAYERS+1];
+float g_vFSpecOrigin[MAXPLAYERS+1][3];
+float g_vFSpecAngles[MAXPLAYERS+1][3];
+
 
 /* ======================================================================
    ------------------------------- Commands
@@ -125,8 +133,19 @@ public Action cmdForceSpec(int client, int args) {
 	}
 
 	if (GetRaceStatus(target) != STATUS_NONE) {
-		PrintColoredChat(client, "[%sJA\x01] Unable to target this player while they racing.");
+		PrintColoredChat(client, "[%sJA\x01] Unable to target this player while they racing.", cTheme1);
 		return Plugin_Handled;	
+	}
+
+	if (IsClientFSpecRestoring(target)) {
+		PrintColoredChat(client, "[%sJA\x01] Unable to target this player while they're restoring from fspec.", cTheme1);
+		return Plugin_Handled;		
+	}
+
+	if (IsClientForcedSpec(target)) {
+		RestoreFSpecLocation(target);
+		PrintColoredChat(client, "[%xJA\x01] %N status restored.", cTheme1);
+		return Plugin_Handled;
 	}
 
 	char targetToSpecName[MAX_NAME_LENGTH];
@@ -147,6 +166,8 @@ public Action cmdForceSpec(int client, int args) {
 		targetToSpec = client;
 	}
 
+	SaveFSpecLocation(target);
+
 	if (GetClientTeam(target) > 1) {
 		ChangeClientTeam(target, 1);
 		g_iClientTeam[client] = TEAM_SPECTATOR;
@@ -156,6 +177,7 @@ public Action cmdForceSpec(int client, int args) {
 	FakeClientCommand(target, "spec_mode 1");
 
 	PrintColoredChat(client, "[%sJA\x01] Forced%s %N\x01 to spectate%s %s", cTheme1, cTheme2, target, cTheme2, targetToSpecName);
+	g_bFSpec[target] = true;
 	return Plugin_Handled;
 }
 
@@ -284,4 +306,47 @@ int isValidClient(int client) {
 		return 0;
 	}
 	return GetClientUserId(client);
+}
+
+bool IsClientForcedSpec(int client) {
+	return g_bFSpec[client];
+}
+
+bool IsClientFSpecRestoring(int client) {
+	return g_bFSpecRestoring[client];
+}
+
+void DisableForceSpec(int client) {
+	g_bFSpec[client] = false;
+	g_bFSpecRestoring[client] = false;
+}
+
+void SaveFSpecLocation(int client) {
+	g_iFSpecTeam[client] = GetClientTeam(client);
+	g_TFFSpecClass[client] = TF2_GetPlayerClass(client);
+	GetClientAbsOrigin(client, g_vFSpecOrigin[client]);
+	GetClientAbsAngles(client, g_vFSpecAngles[client]);
+}
+
+void RestoreFSpecLocation(int client) {
+	g_bFSpecRestoring[client] = true;
+	if (GetClientTeam(client) != g_iFSpecTeam[client]) {
+		ChangeClientTeam(client, g_iFSpecTeam[client]);
+	}
+	if (!IsPlayerAlive(client)) {
+		TF2_RespawnPlayer(client);
+	}
+	RequestFrame(frameRequestFSpecRestore, client);
+}
+
+void frameRequestFSpecRestore(int client) {
+	if (TF2_GetPlayerClass(client) != g_TFFSpecClass[client]) {
+		TF2_SetPlayerClass(client, g_TFFSpecClass[client]);
+	}
+	TeleportEntity(client, g_vFSpecOrigin[client], g_vFSpecAngles[client], nullVector);
+	CreateTimer(5.0, timerDisableFSpec, client);
+}
+
+Action timerDisableFSpec(Handle timer, int  client) {
+	DisableForceSpec(client);
 }

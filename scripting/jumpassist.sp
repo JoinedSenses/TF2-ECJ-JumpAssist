@@ -540,7 +540,7 @@ public int Native_IsClientHiding(Handle plugin, int numParams) {
 	if (!IsClientConnected(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
-	return g_bHide[client];
+	return IsClientHiding(client);
 }
 
 public int Native_IsClientHardcore(Handle plugin, int numParams) {
@@ -551,7 +551,7 @@ public int Native_IsClientHardcore(Handle plugin, int numParams) {
 	if (!IsClientConnected(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
-	return g_bHardcore[client];
+	return IsClientHardcore(client);
 }
 
 public int Native_IsClientRacing(Handle plugin, int numParams) {
@@ -585,8 +585,8 @@ public int Native_PauseTeleport(Handle plugin, int numParams) {
 	if (!IsClientConnected(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
-	g_bTelePaused[client] = true;
-	CreateTimer(5.0, timerUnpauseTeleport, client);
+
+	PauseTeleport(client);
 	return 1;
 }
 
@@ -770,6 +770,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	g_iSpecTarget[client] = 0;
 	g_bUnkillable[client] = false;
 	g_fLastSavePos[client] = nullVector;
+	g_iRaceSpec[client] = 0;
 
 	if (IsClientPreviewing(client)) {
 		DisablePreview(client);
@@ -780,6 +781,10 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	// Disable func_regenerate if player is using beggers bazooka
 	CheckBeggars(client);
 
+	if (IsClientForcedSpec(client)) {
+		RestoreFSpecLocation(client);
+	}
+
 	if (g_Database != null && g_bFeaturesEnabled[client]) {
 		CreateTimer(0.3, timerSpawnedBool, client);
 		g_bJustSpawned[client] = true;
@@ -787,13 +792,12 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 			ReloadPlayerData(client);
 			g_bUsedReset[client] = false;
 		}
-		else if (!g_bTelePaused[client]) {
+		else {
 			EraseLocs(client);
 			LoadPlayerData(client);
 		}
 	}
-
-	g_iRaceSpec[client] = 0;
+	
 	return Plugin_Continue;
 }
 
@@ -1266,6 +1270,14 @@ public Action cmdJumpAssist(int client, int args) {
 /* ======================================================================
    ------------------------------- Internal Functions
 */
+void PauseTeleport(int client) {
+	g_bTelePaused[client] = true;
+	CreateTimer(5.0, timerUnpauseTeleport, client);
+}
+
+bool IsTeleportPaused(int client) {
+	return g_bTelePaused[client];
+}
 
 void SetPlayerDefaults(int client) {
 	g_bFeaturesEnabled[client] = false;
@@ -1386,6 +1398,10 @@ void Hardcore(int client) {
 	g_bHardcore[client] = false;
 	LoadPlayerData(client);
 	PrintColoredChat(client, "[%sJA\x01]%s Hardcore%s disabled\x01.", cTheme1, cHardcore, cTheme2);
+}
+
+bool IsClientHardcore(int client) {
+	return g_bHardcore[client];
 }
 
 // Support for beggar's bazooka
