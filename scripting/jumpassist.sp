@@ -1793,25 +1793,20 @@ void PrintJAMessage(int client, char[] message, any ...) {
 	if (!IsValidClient(client)) {
 		return;
 	}
-	char tag[24];
-	Format(tag, sizeof(tag), "[%sJA\x01] ", cTheme1);
 
 	char output[1024];
 	VFormat(output, sizeof(output), message, 3);
 
-	PrintColoredChat(client, "%s%s", tag, output);
+	PrintColoredChat(client, "[%sJA\x01] %s", cTheme1, output);
 }
 
 void PrintJAMessageAll(char[] message, any...) {
-	char tag[24];
-	Format(tag, sizeof(tag), "[%sJA\x01] ", cTheme1);
-
 	char output[1024];
 	VFormat(output, sizeof(output), message, 2);
 
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsValidClient(i)) {
-			PrintColoredChat(i, "%s%s", tag, output);
+			PrintColoredChat(i, "[%sJA\x01] %s", cTheme1, output);
 		}
 	}
 }
