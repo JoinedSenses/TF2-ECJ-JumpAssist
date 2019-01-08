@@ -37,6 +37,9 @@ Command | Description
 **sm_hide** | Hide other players.  
 **sm_hidemessage** | Toggles display of JA messages, such as save and teleport  
 **sm_preview** | Toggle noclip to preview map/stage. Location is restored after use.  
+======== Spec ======== |  
+**sm_spec \<optional:targetname>** | Open spectate menu or type a players name to spectate  
+**sm_speclock** | Spec lock another player (Retarget player if they die, change teams/class)  
 ======== ShowKeys ======== |  
 **sm_skeys** | Toggle showing a client's keys  
 **sm_skeyscolor, sm_skeyscolors** | Changes the color of the text for skeys.  
@@ -54,6 +57,7 @@ Command | Description
 **sm_server_race, sm_s_race** | Invite everyone to a server wide race  
 **sm_mapset** | Change map settings  
 **sm_send** | Send target to another target.  
+**sm_fspec \<targetname> \<optional:targettospec>** | Force target to spectate
 
 ## CVars
 CVar | Def | Description  
