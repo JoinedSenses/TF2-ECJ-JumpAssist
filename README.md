@@ -31,8 +31,9 @@ Command | Description
 **sm_ammo, sm_regen** | Regenerates weapon ammunition  
 **sm_superman** | Makes you strong like superman. (Reduces damage taken)  
 **sm_hardcore** | Enables hardcore mode (No regen, no saves)  
-**sm_hidemessage** | Toggles display of JA messages, such as save and teleport
-**sm_preview** | Toggle noclip to preview map/stage. Location is restored after use.
+**sm_hide** | Hide other players.  
+**sm_hidemessage** | Toggles display of JA messages, such as save and teleport  
+**sm_preview** | Toggle noclip to preview map/stage. Location is restored after use.  
 ======== ShowKeys ======== |  
 **sm_skeys** | Toggle showing a client's keys  
 **sm_skeyscolor, sm_skeyscolors** | Changes the color of the text for skeys.  
