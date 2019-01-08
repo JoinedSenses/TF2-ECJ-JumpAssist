@@ -1,7 +1,7 @@
 # TF2-ECJ-JumpAssist
 
 ## Various differences compared to nolem's version:
-#### Too many to really list at this point. TL;DR this version is more efficient
+#### Too many to really list. TL;DR this version is more efficient
   
 Syntax updates  
 Database structure  
@@ -13,6 +13,9 @@ Removed sm_goto (Available in another plugin used on ECJ)
 Removed speedrun functionality (Available in self-race)  
 Showkeys improvements (Efficiency/responsiveness. Also improved /skeyspos)  
 Tons of other undocumented misc changes.  
+
+This plugin supports SaveLoc functionality found here:  
+https://github.com/JoinedSenses/SM-SaveLoc  
   
 ## Public Commands
 Command | Description
