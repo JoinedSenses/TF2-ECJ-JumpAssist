@@ -67,3 +67,4 @@ CVar | Def | Description
 **ja_ammocheat** | 1 | Allows engineers infinite sentrygun ammo?  
 **ja_crits** | 0 | Allow critical hits?  
 **ja_superman** | 1 | Allows everyone to be invincible?  
+**sm_hide_explosions** | 1 | Enable/Disable hiding explosions
