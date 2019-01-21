@@ -128,6 +128,53 @@ public Action cmdGoTo(int client, int args) {
 	return Plugin_Handled;
 }
 
+public Action cmdSendPlayer(int client,int args) {
+	if (!g_cvarPluginEnabled.BoolValue) {
+		return Plugin_Handled;
+	}	
+	if (g_Database == null) {
+		PrintJAMessage(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+	if (args < 2) {
+		PrintJAMessage(client, "%sUsage\x01: sm_send <playerName> <targetName>", cTheme2);
+		return Plugin_Handled;
+	}
+	char arg1[MAX_NAME_LENGTH];
+	char arg2[MAX_NAME_LENGTH];
+
+	GetCmdArg(1, arg1, sizeof(arg1));
+	GetCmdArg(2, arg2, sizeof(arg2));
+
+	int target1 = FindTarget2(client, arg1, false, false);
+	int target2 = FindTarget2(client, arg2, false, false);
+
+	if (target1 < 1 || target2 < 1) {
+		return Plugin_Handled;
+	}
+
+	if (IsClientPreviewing(target1)) {
+		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target1, cTheme2);
+		return Plugin_Handled;
+	}
+	if (IsClientPreviewing(target2)) {
+		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target2, cTheme2);
+		return Plugin_Handled;
+	}
+
+	float TargetOrigin[3];
+	float pAngle[3];
+
+	GetClientAbsOrigin(target2, TargetOrigin);
+	GetClientAbsAngles(target2, pAngle);
+	
+	TeleportEntity(target1, TargetOrigin, pAngle, nullVector);
+	
+	PrintJAMessage(client, "Sent%s %N\x01 to%s %N\x01.", cTheme2, target1, cTheme2, target2);
+	PrintJAMessage(target1, "%s%N\x01 sent you to%s %N\x01.", cTheme2, client, cTheme2, target2);
+	return Plugin_Handled;
+}
+
 /* ======================================================================
    ------------------------------- Menu
 */

@@ -533,9 +533,6 @@ void SendRaceToStart(int raceid, TFClassType class, int team) {
 			ChangeClientTeam(i, team);
 			SendToStart(i);
 			g_bIsPreviewing[i] = false;
-			if (g_bSaveLoc) {
-				SL_DisablePractice(i);
-			}
 		}
 	}
 }

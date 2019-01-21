@@ -991,7 +991,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 		GetClassName(g_TFClientClass[client], className, sizeof(className));
 
 		char color[8];
-		Format(color, sizeof(color), (g_iClientTeam[client] == 2) ? cRedTeam : cBlueTeam);
+		Format(color, sizeof(color), (g_iClientTeam[client] == TEAM_RED) ? cRedTeam : cBlueTeam);
 
 		PrintJAMessageAll("%s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", color, client, cTheme2, cpName, color, className);
 		EmitSoundToAll("misc/freeze_cam.wav");
@@ -1129,7 +1129,7 @@ public Action cmdRestart(int client, int args) {
 }
 
 public Action cmdUndo(int client, int args) {
-	if (!IsValidPosition(g_fLastSavePos[client])) {
+	if (IsZeroVector(g_fLastSavePos[client])) {
 		PrintJAMessage(client, "%sNo save\x01 to restore\x01.", cTheme2);
 		return Plugin_Handled;
 	}
@@ -1187,52 +1187,6 @@ public Action cmdHideMessage(int client, int args) {
 	g_bHideMessage[client] = !g_bHideMessage[client];
 	PrintJAMessage(client, "Messages will now be%s %s", cTheme2, g_bHideMessage[client]?"hidden":"displayed");
 	SetClientCookie(client, g_hJAMessageCookie, g_bHideMessage[client]?"1":"0");
-	return Plugin_Handled;
-}
-
-public Action cmdSendPlayer(int client,int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Handled;
-	}	
-	if (g_Database == null) {
-		PrintJAMessage(client, "This feature is not supported without a database configuration");
-		return Plugin_Handled;
-	}
-	if (args < 2) {
-		PrintJAMessage(client, "%sUsage\x01: sm_send <playerName> <targetName>", cTheme2);
-		return Plugin_Handled;
-	}
-	char arg1[MAX_NAME_LENGTH];
-	char arg2[MAX_NAME_LENGTH];
-
-	GetCmdArg(1, arg1, sizeof(arg1));
-	GetCmdArg(2, arg2, sizeof(arg2));
-
-	int target1 = FindTarget2(client, arg1, false, false);
-	int target2 = FindTarget2(client, arg2, false, false);
-
-	if (target1 < 1 || target2 < 1) {
-		return Plugin_Handled;
-	}
-
-	if (IsClientPreviewing(target1)) {
-		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target1, cTheme2);
-		return Plugin_Handled;
-	}
-	if (IsClientPreviewing(target2)) {
-		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target2, cTheme2);
-		return Plugin_Handled;
-	}
-
-	float TargetOrigin[3];
-	float pAngle[3];
-
-	GetClientAbsOrigin(target2, TargetOrigin);
-	GetClientAbsAngles(target2, pAngle);
-	TeleportEntity(target1, TargetOrigin, pAngle, nullVector);
-	
-	PrintJAMessage(client, "Sent%s %N\x01 to%s %N\x01.", cTheme2, target1, cTheme2, target2);
-	PrintJAMessage(target1, "%s%N\x01 sent you to%s %N\x01.", cTheme2, client, cTheme2, target2);
 	return Plugin_Handled;
 }
 
@@ -1298,6 +1252,7 @@ public Action cmdJumpAssist(int client, int args) {
 /* ======================================================================
    ------------------------------- Internal Functions
 */
+
 void PauseTeleport(int client) {
 	g_bTelePaused[client] = true;
 	CreateTimer(5.0, timerUnpauseTeleport, client);
@@ -1389,7 +1344,7 @@ void Teleport(int client) {
 	Format(teamName, sizeof(teamName), (g_iClientTeam[client] == TEAM_RED) ? "Red Team" : "Blue Team");
 	teamColor = (g_iClientTeam[client] == TEAM_RED) ? cRedTeam : cBlueTeam;
 
-	if (g_fOrigin[client][0] == 0.0 && g_fOrigin[client][1] == 0.0 && g_fOrigin[client][2] == 0.0) {
+	if (IsZeroVector(g_fOrigin[client])) {
 		char className[33];
 		GetClassName(g_TFClientClass[client], className, sizeof(className));
 		PrintJAMessage(client, "You don't have a save for%s %s\x01 on the%s %s\x01.", teamColor, className, teamColor, teamName);
@@ -1762,13 +1717,13 @@ bool IsUserAdmin(int client) {
 	return GetUserAdmin(client).HasFlag(Admin_Generic);
 }
 
-bool IsValidPosition(const float vect[3]) {
-	return (vect[0] != 0.0 || vect[1] != 0.0 || vect[2] != 0.0);
-}
-
 bool IsValidWeapon(int entity) {
 	char strClassname[128];
 	return (IsValidEntity(entity) && GetEntityClassname(entity, strClassname, sizeof(strClassname)) && StrContains(strClassname, "tf_weapon", false) != -1);
+}
+
+bool IsZeroVector(float vector[3]) {
+	return vector[0] == 0.0 && vector[1] == 0.0 && vector[2] == 0.0;
 }
 
 int FindTarget2(int client, const char[] target, bool nobots = false, bool immunity = true) {
@@ -1797,7 +1752,7 @@ void PrintJAMessage(int client, char[] message, any ...) {
 	char output[1024];
 	VFormat(output, sizeof(output), message, 3);
 
-	PrintColoredChat(client, "[%sJA\x01] %s", cTheme1, output);
+	PrintColoredChatEx(client, CHAT_SOURCE_SERVER, "[%sJA\x01] %s", cTheme1, output);
 }
 
 void PrintJAMessageAll(char[] message, any...) {
@@ -1806,7 +1761,7 @@ void PrintJAMessageAll(char[] message, any...) {
 
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsValidClient(i)) {
-			PrintColoredChat(i, "[%sJA\x01] %s", cTheme1, output);
+			PrintColoredChatEx(i, CHAT_SOURCE_SERVER, "[%sJA\x01] %s", cTheme1, output);
 		}
 	}
 }

@@ -274,11 +274,6 @@ void SavePlayerData(int client) {
 	}
 
 	char sQuery[1024];
-	float SavePos1[MAXPLAYERS+1][3];
-	float SavePos2[MAXPLAYERS+1][3];
-
-	GetClientAbsOrigin(client, SavePos1[client]);
-	GetClientAbsAngles(client, SavePos2[client]);
 
 	g_Database.Format(
 		sQuery
@@ -299,21 +294,16 @@ void SavePlayerData(int client) {
 		, view_as<int>(g_TFClientClass[client])
 		, g_iClientTeam[client]
 		, g_sCurrentMap
-		, SavePos1[client][0]
-		, SavePos1[client][1]
-		, SavePos1[client][2]
-		, SavePos2[client][1]
+		, g_fOrigin[client][0]
+		, g_fOrigin[client][1]
+		, float(RoundToCeil(g_fOrigin[client][2]))
+		, g_fAngles[client][1]
 	);
 	g_Database.Query(SQL_SaveLocCallback, sQuery, GetClientUserId(client));
 }
 
 void UpdatePlayerData(int client) {
 	char sQuery[1024];
-	float SavePos1[MAXPLAYERS+1][3];
-	float SavePos2[MAXPLAYERS+1][3];
-
-	GetClientAbsOrigin(client, SavePos1[client]);
-	GetClientAbsAngles(client, SavePos2[client]);
 
 	g_Database.Format(
 		sQuery
@@ -328,10 +318,10 @@ void UpdatePlayerData(int client) {
 		... "AND playerTeam = '%i' "	// g_iClientTeam[client]
 		... "AND playerClass = '%i' "	// view_as<int>(g_TFClientClass[client])
 		... "AND playerMap = '%s'"		// g_sCurrentMap
-		, SavePos1[client][0]
-		, SavePos1[client][1]
-		, SavePos1[client][2]
-		, SavePos2[client][1]
+		, g_fOrigin[client][0]
+		, g_fOrigin[client][1]
+		, float(RoundToCeil(g_fOrigin[client][2]))
+		, g_fAngles[client][1]
 		, g_sClientSteamID[client]
 		, g_iClientTeam[client]
 		, view_as<int>(g_TFClientClass[client])
