@@ -991,7 +991,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 		GetClassName(g_TFClientClass[client], className, sizeof(className));
 
 		char color[8];
-		Format(color, sizeof(color), (g_iClientTeam[client] == TEAM_RED) ? cRedTeam : cBlueTeam);
+		strcopy(color, sizeof(color), (g_iClientTeam[client] == TEAM_RED) ? cRedTeam : cBlueTeam);
 
 		PrintJAMessageAll("%s%s%N\x01 has reached %s%s\x01 as %s%s\x01.", g_bHardcore[client] ? "[\x07FF4500Hardcore\x01] " : "", color, client, cTheme2, cpName, color, className);
 		EmitSoundToAll("misc/freeze_cam.wav");
@@ -1341,7 +1341,7 @@ void Teleport(int client) {
 	char teamName[32];
 	char teamColor[16];
 
-	Format(teamName, sizeof(teamName), (g_iClientTeam[client] == TEAM_RED) ? "Red Team" : "Blue Team");
+	strcopy(teamName, sizeof(teamName), (g_iClientTeam[client] == TEAM_RED) ? "Red Team" : "Blue Team");
 	teamColor = (g_iClientTeam[client] == TEAM_RED) ? cRedTeam : cBlueTeam;
 
 	if (IsZeroVector(g_fOrigin[client])) {
@@ -1697,15 +1697,15 @@ int menuHandlerJAHelpSubMenu(Menu menu, MenuAction action, int param1, int param
 
 void GetClassName(TFClassType class, char[] buffer, int size) {
 	switch(class) {
-		case TFClass_Scout: Format(buffer, size, "Scout");
-		case TFClass_Sniper: Format(buffer, size, "Sniper");
-		case TFClass_Soldier: Format(buffer, size, "Soldier");
-		case TFClass_DemoMan: Format(buffer, size, "Demoman");
-		case TFClass_Medic: Format(buffer, size, "Medic");
-		case TFClass_Heavy: Format(buffer, size, "Heavy");
-		case TFClass_Pyro: Format(buffer, size, "Pyro");
-		case TFClass_Spy: Format(buffer, size, "Spy");
-		case TFClass_Engineer: Format(buffer, size, "Engineer");
+		case TFClass_Scout: strcopy(buffer, size, "Scout");
+		case TFClass_Sniper: strcopy(buffer, size, "Sniper");
+		case TFClass_Soldier: strcopy(buffer, size, "Soldier");
+		case TFClass_DemoMan: strcopy(buffer, size, "Demoman");
+		case TFClass_Medic: strcopy(buffer, size, "Medic");
+		case TFClass_Heavy: strcopy(buffer, size, "Heavy");
+		case TFClass_Pyro: strcopy(buffer, size, "Pyro");
+		case TFClass_Spy: strcopy(buffer, size, "Spy");
+		case TFClass_Engineer: strcopy(buffer, size, "Engineer");
 	}
 }
 
