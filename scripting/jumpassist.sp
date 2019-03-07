@@ -23,6 +23,7 @@
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
+#define MAX_CAP_POINTS 32
 
 #include <sourcemod>
 #include <jumpassist>
@@ -58,7 +59,7 @@ bool
 	, g_bIsPreviewing[MAXPLAYERS+1]
 	, g_bAmmoRegen[MAXPLAYERS+1]
 	, g_bHardcore[MAXPLAYERS+1]
-	, g_bCPTouched[MAXPLAYERS+1][32]
+	, g_bCPTouched[MAXPLAYERS+1][MAX_CAP_POINTS]
 	, g_bJustSpawned[MAXPLAYERS+1]
 	, g_bTelePaused[MAXPLAYERS+1]
 	, g_bUsedReset[MAXPLAYERS+1]
@@ -1584,10 +1585,11 @@ void EraseLocs(int client) {
 	g_fOrigin[client] = nullVector;
 	g_fAngles[client] = nullVector;
 
-	for (int j = 0; j < 8; j++) {
+	for (int j = 0; j < MAX_CAP_POINTS; j++) {
 		g_bCPTouched[client][j] = false;
-		g_iCPsTouched[client] = 0;
 	}
+
+	g_iCPsTouched[client] = 0;
 	g_bBeatTheMap[client] = false;
 }
 
@@ -1595,12 +1597,14 @@ void CheckTeams() {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
+
 	CreateTimer(0.1, timerMapSetUsed);
 	g_bMapSetUsed = true;
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!IsClientInGame(i) || IsClientObserver(i) || g_iClientTeam[i] == g_iForceTeam) {
 			continue;
 		}
+
 		ChangeClientTeam(i, g_iForceTeam);
 		g_iClientTeam[i] = g_iForceTeam;
 		PrintJAMessage(i, "Your team has been%s switched\x01.", cTheme2);
@@ -1611,8 +1615,10 @@ void SendToStart(int client) {
 	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client) || IsClientObserver(client)) {
 		return;
 	}
+	
 	g_bUsedReset[client] = true;
 	TF2_RespawnPlayer(client);
+
 	if (!g_bHideMessage[client] && g_iRaceID[client] < 1) {
 		PrintJAMessage(client, "You have been%s sent to map start\x01.", cTheme2);
 	}
