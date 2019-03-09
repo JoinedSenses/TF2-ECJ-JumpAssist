@@ -789,7 +789,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	}
 
 	// spec lock
-	for (int i = 1; i <= GetMaxClients(); i++) {
+	for (int i = 1; i <= MaxClients; i++) {
 		if (g_iSpecTarget[i] == client) {
 			FakeClientCommand(i, "spec_player #%i", GetClientUserId(client));
 			FakeClientCommand(i, "spec_mode 1");

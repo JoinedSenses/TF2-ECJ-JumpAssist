@@ -12,7 +12,8 @@ char g_sSoundHook[][] = {
 	"pain",
 	"fall_damage",
 	"grenade_jump",
-	"fleshbreak"
+	"fleshbreak",
+	"drown"
 };
 
 //Entities to get m_hOwnerEntity net prop for

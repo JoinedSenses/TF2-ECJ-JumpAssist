@@ -151,7 +151,7 @@ void SaveMapSettings(int client, char[] arg1, char[] arg2) {
 			return;	
 		}
 		g_Database.Format(query, sizeof(query), "UPDATE map_settings SET Team = '%i' WHERE Map = '%s'", g_iForceTeam, g_sCurrentMap);
-		g_Database.Query(SQL_OnMapSettingsUpdated, query, GetClientUserId(client));
+		g_Database.Query(SQL_OnMapSettingsUpdated, query, client > 0 ? GetClientUserId(client) : 0);
 	}
 }
 
@@ -160,8 +160,9 @@ void SQL_OnMapSettingsUpdated(Database db, DBResultSet results, const char[] err
 		LogError("Query failed! %s", error);
 		return;
 	}
+
 	int client;
-	if ((client = GetClientOfUserId(data)) > 0) {
+	if (data > 0 && (client = GetClientOfUserId(data)) > 0) {
 		PrintColoredChat(client, "[%sJA\x01] Map settings were%s %ssaved\x01.", cTheme1, cTheme2, (db == null)?"NOT ":"");
 	}
 }
@@ -170,6 +171,7 @@ void LoadPlayerProfile(int client) {
 	if (!IsValidClient(client)) {
 		return;
 	}
+
 	char query[1024];
 	if (g_Database != null) {
 		Format(query, sizeof(query), "SELECT * FROM player_profiles WHERE SteamID = '%s'", g_sClientSteamID[client]);

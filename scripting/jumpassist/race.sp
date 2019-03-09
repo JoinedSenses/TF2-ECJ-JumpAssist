@@ -444,7 +444,7 @@ void displayRaceTimesMenu(int client, int clientToShow) {
 
 	char name[32];
 	for (int i = 1; i <= MaxClients; i++) {
-		if (IsClientInRace(i, race) && !IsPlayerFinishedRacing(i)) {
+		if (IsClientInGame(i) && IsClientInRace(i, race) && !IsPlayerFinishedRacing(i)) {
 			GetClientName(i, name, sizeof(name));
 			panel.DrawText(name);
 		}
