@@ -19,7 +19,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.5"
+#define PLUGIN_VERSION "2.3.6"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
@@ -623,15 +623,15 @@ public int Native_PrintMessageAll(Handle plugin, int numParams) {
 */
 
 public void cvarAmmoCheatChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
-	FindConVar("tf_sentrygun_ammocheat").SetInt(!(StringToInt(newValue) == 0));
+	FindConVar("tf_sentrygun_ammocheat").SetInt(!!StringToInt(newValue));
 }
 
 public void cvarWelcomeMsgChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
-	g_cvarWelcomeMsg.SetBool(!(StringToInt(newValue) == 0));
+	g_cvarWelcomeMsg.SetBool(!!StringToInt(newValue));
 }
 
 public void cvarSupermanChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
-	g_cvarSuperman.SetBool(!(StringToInt(newValue) == 0));
+	g_cvarSuperman.SetBool(!!StringToInt(newValue));
 }
 
 /* ======================================================================

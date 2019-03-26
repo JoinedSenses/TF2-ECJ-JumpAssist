@@ -36,7 +36,7 @@ void RunDBCheck() {
 		, sizeof(query)
 		, "CREATE TABLE IF NOT EXISTS player_saves "
 		... "("
-			... "RecID INT NOT NULL PRIMARY KEY %s, "
+			... "RecID INTEGER PRIMARY KEY %s, "
 			... "steamID VARCHAR(32) NOT NULL, "
 			... "playerClass TINYINT UNSIGNED NOT NULL, "
 			... "playerTeam TINYINT UNSIGNED NOT NULL, "
@@ -59,7 +59,7 @@ void RunDBCheck() {
 		, sizeof(query)
 		, "CREATE TABLE IF NOT EXISTS player_profiles "
 		... "("
-			... "ID INT PRIMARY KEY %s NOT NULL, "
+			... "ID INTEGER PRIMARY KEY %s, "
 			... "SteamID TEXT NOT NULL, "
 			... "SKEYS_RED_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
 			... "SKEYS_GREEN_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
@@ -81,7 +81,7 @@ void RunDBCheck() {
 		, sizeof(query)
 		, "CREATE TABLE IF NOT EXISTS map_settings "
 		... "("
-			... "ID INT PRIMARY KEY %s NOT NULL, "
+			... "ID INTEGER PRIMARY KEY %s, "
 			... "Map TEXT NOT NULL, "
 			... "Team TINYINT UNSIGNED NOT NULL"
 		... ")"
