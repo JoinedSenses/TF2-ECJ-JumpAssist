@@ -118,6 +118,7 @@ public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PL
 		}
 	}
 
+	// stop sounds coming from clients in preview mode.
 	for (int i = 0; i < numClients; i++) {
 		int client = clients[i];
 		if (IsClientPreviewing(client) && entity == client) {
@@ -142,7 +143,7 @@ public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PL
 
 	for (int i = 0; i < numClients; i++) {
 		int client = clients[i];
-		if (IsValidClient(client) && IsClientHiding(client) && client != entity && client != owner && g_iClientTeam[client] != 1) {
+		if (!IsClientInGame(client) || (IsValidClient(client) && IsClientHiding(client) && client != entity && client != owner && g_iClientTeam[client] != 1)) {
 			//Remove the client from the array if they have hide toggled, if they are not the creator of the sound, and if they are not in spectate.
 			for (int j = i; j < numClients-1; j++) {
 				clients[j] = clients[j+1];

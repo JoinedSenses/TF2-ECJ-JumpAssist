@@ -712,9 +712,9 @@ public Action listenerJoinTeam(int client, const char[] command, int args) {
 		return Plugin_Handled;
 	}
 
-	g_fOrigin[client] = nullVector;
-	g_fAngles[client] = nullVector;
-	g_fLastSavePos[client] = nullVector;
+	g_fOrigin[client] = NULL_VECTOR;
+	g_fAngles[client] = NULL_VECTOR;
+	g_fLastSavePos[client] = NULL_VECTOR;
 
 	if (newTeam == TEAM_SPECTATOR || g_iForceTeam < 2 || newTeam == g_iForceTeam) {
 		// if client joining spec, no team forced, or client joining already forced team,
@@ -797,7 +797,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	}
 	g_iSpecTarget[client] = 0;
 	g_bUnkillable[client] = false;
-	g_fLastSavePos[client] = nullVector;
+	g_fLastSavePos[client] = NULL_VECTOR;
 	g_iRaceSpec[client] = 0;
 
 	if (IsClientPreviewing(client)) {
@@ -1138,8 +1138,8 @@ public Action cmdUndo(int client, int args) {
 	g_fOrigin[client] = g_fLastSavePos[client];
 	g_fAngles[client] = g_fLastSaveAngles[client];
 		
-	g_fLastSavePos[client] = nullVector;
-	g_fLastSaveAngles[client] = nullVector;
+	g_fLastSavePos[client] = NULL_VECTOR;
+	g_fLastSaveAngles[client] = NULL_VECTOR;
 		
 	PrintJAMessage(client, "Previous save has been%s restored\x01.", cTheme2);
 	return Plugin_Handled;
@@ -1272,8 +1272,9 @@ void SetPlayerDefaults(int client) {
 	g_bSKeysEnabled[client] = false;
 	g_bUnkillable[client] = false;
 	g_sClientSteamID[client][0] = '\0';
-	EraseLocs(client);
 	g_iRaceID[client] = 0;
+
+	EraseLocs(client);
 	SetSkeysDefaults(client);
 	ClearGoToArray(client);
 }
@@ -1582,8 +1583,8 @@ void EraseLocs(int client) {
 		return;
 	}
 	
-	g_fOrigin[client] = nullVector;
-	g_fAngles[client] = nullVector;
+	g_fOrigin[client] = NULL_VECTOR;
+	g_fAngles[client] = NULL_VECTOR;
 
 	for (int j = 0; j < MAX_CAP_POINTS; j++) {
 		g_bCPTouched[client][j] = false;
