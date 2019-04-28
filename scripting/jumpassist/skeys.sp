@@ -44,6 +44,7 @@ public Action cmdChangeSkeysColor(int client, int args) {
 	if (client == 0) {
 		return Plugin_Handled;
 	}
+
 	char red[4];
 	char blue[4];
 	char green[4];
@@ -70,11 +71,14 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 	if (client == 0) {
 		return Plugin_Handled;
 	}
+
 	if (IsClientObserver(client)) {
 		PrintJAMessage(client, "Cannot use this feature while in spectate");
 		return Plugin_Handled;
 	}
+
 	g_bSKeysEnabled[client] = true;
+
 	switch (g_iSkeysMode[client]) {
 		case EDIT: {
 			g_iSkeysMode[client] = DISPLAY;
@@ -83,14 +87,18 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 		case DISPLAY: {
 			g_iSkeysMode[client] = EDIT;
 			SetEntityFlags(client, GetEntityFlags(client)|FL_ATCONTROLS|FL_FROZEN);
+
+			char tag[32];
+			FormatEx(tag, sizeof(tag), "[%sSKEYS\x01]", cTheme1);
+
 			PrintColoredChat(
 				  client,
-				"[%sSKEYS\x01] Update position using%s mouse movement\x01.\n"
-			... "[%sSKEYS\x01] Save with%s attack\x01.\n"
-			... "[%sSKEYS\x01] Reset with%s jump\x01."
-				, cTheme1, cTheme2
-				, cTheme1, cTheme2
-				, cTheme1, cTheme2
+				"%s Update position using%s mouse movement\x01.\n"
+			... "%s Save with%s attack\x01.\n"
+			... "%s Reset with%s jump\x01."
+				, tag, cTheme2
+				, tag, cTheme2
+				, tag, cTheme2
 			);
 		}
 	}
@@ -121,5 +129,6 @@ int IsStringNumeric(const char[] MyString) {
 		}
 		n++;
 	}
+	
 	return true;
 }

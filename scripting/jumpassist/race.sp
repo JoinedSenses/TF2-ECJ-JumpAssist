@@ -43,22 +43,27 @@ public Action cmdRace(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client)) {
 		return Plugin_Handled;
 	}
+
 	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
 		PrintJAMessage(client, "Must be alive and on a team to use this command.");
 		return Plugin_Handled;
 	}
+
 	if (g_iCPCount == 0 && !g_bCPFallback) {
 		PrintJAMessage(client, "You may only race on maps with control points.");
 		return Plugin_Handled;
 	}
+
 	if (IsClientPreviewing(client)) {
 		PrintJAMessage(client, "Unable to bein race while previewing.");
 		return Plugin_Handled;
 	}
+
 	if (IsClientRacing(client) || g_iRaceID[client] != 0) {
 		PrintJAMessage(client, "You are already in a race. Wait for it to finish or type %s/r_leave\x01 to leave.", cTheme2);
 		return Plugin_Handled;
 	}
+
 	displayRaceCPMenu(client);
 	return Plugin_Handled;
 }
@@ -68,9 +73,11 @@ public Action cmdRaceLeave(int client, int args) {
 		PrintJAMessage(client, "You are not in a race.");
 		return Plugin_Handled;
 	}
+
 	LeaveRace(client);
 	PrintJAMessage(client, "You have%s left\x01 the race.", cTheme2);
 	PostRaceClientRestore(client);
+
 	return Plugin_Handled;
 }
 
@@ -78,10 +85,12 @@ public Action cmdRaceSpec(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
+
 	if (args == 0) {
 		PrintJAMessage(client, "No target race selected.");
 		return Plugin_Handled;
 	}
+
 	char arg1[32];
 
 	GetCmdArg(1, arg1, sizeof(arg1));
@@ -89,31 +98,36 @@ public Action cmdRaceSpec(int client, int args) {
 	if (target == -1) {
 		return Plugin_Handled;
 	}
-	else {
-		if (target == client) {
-			PrintJAMessage(client, "You may not spectate yourself.");
-			return Plugin_Handled;
-		}
-		if (!IsClientRacing(target)) {
-			PrintJAMessage(client, "%N is not in a race.", target);
-			return Plugin_Handled;
-		}
-		if (IsClientObserver(target)) {
-			PrintJAMessage(client, "You may not spectate a spectator.");
-			return Plugin_Handled;
-		}
-		if (IsClientRacing(client)) {
-			LeaveRace(client);
-		}
-		if (!IsClientObserver(client)) {
-			ChangeClientTeam(client, 1);
-			g_iClientTeam[client] = 1;
-			ForcePlayerSuicide(client);
-		}
-		g_iRaceSpec[client] = g_iRaceID[target];
-		SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_iRaceID[target]);
-		SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
+
+	if (target == client) {
+		PrintJAMessage(client, "You may not spectate yourself.");
+		return Plugin_Handled;
 	}
+
+	if (!IsClientRacing(target)) {
+		PrintJAMessage(client, "%N is not in a race.", target);
+		return Plugin_Handled;
+	}
+
+	if (IsClientObserver(target)) {
+		PrintJAMessage(client, "You may not spectate a spectator.");
+		return Plugin_Handled;
+	}
+
+	if (IsClientRacing(client)) {
+		LeaveRace(client);
+	}
+
+	if (!IsClientObserver(client)) {
+		ChangeClientTeam(client, 1);
+		g_iClientTeam[client] = 1;
+		ForcePlayerSuicide(client);
+	}
+
+	g_iRaceSpec[client] = g_iRaceID[target];
+	SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_iRaceID[target]);
+	SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
+
 	return Plugin_Continue;
 }
 
@@ -128,6 +142,7 @@ public Action cmdRaceList(int client, int args) {
 			if (!IsValidClient(client) || !IsValidClient(clientToShow) || iObserverMode == 7) {
 				return Plugin_Handled;
 			}
+
 			if (!IsClientRacing(clientToShow)) {
 				PrintJAMessage(client, "%N is not in a race", clientToShow);
 				return Plugin_Handled;
@@ -161,6 +176,7 @@ public Action cmdRaceInfo(int client, int args) {
 			if (!IsValidClient(client) || !IsValidClient(clientToShow) || iObserverMode == 6) {
 				return Plugin_Handled;
 			}
+
 			if (!IsClientRacing(clientToShow)) {
 				PrintJAMessage(client, "%N is not in a race", clientToShow);
 				return Plugin_Handled;
@@ -183,17 +199,21 @@ public Action cmdRaceServer(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
+
 	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
 		PrintJAMessage(client, "Must be%s alive\x01 and on a%s team\x01 to use this command.", cTheme2, cTheme2);
 		return Plugin_Handled;
 	}
+
 	if (g_iCPCount == 0 && !g_bCPFallback) {
 		PrintJAMessage(client, "You may only race on maps with control points.");
 		return Plugin_Handled;
 	}
+
 	if (IsPlayerFinishedRacing(client)) {
 		LeaveRace(client);
 	}
+
 	if (IsClientRacing(client)) {
 		PrintJAMessage(client, "[%sJA\x01] You are already in a race. Type%s /r_leave\x01 to leave.", cTheme1, cTheme2);
 		return Plugin_Handled;
@@ -212,7 +232,7 @@ void displayRaceCPMenu(int client, bool serverRace = false) {
 	char buffer[32];
 	int entity;
 
-	Menu menu = new Menu(serverRace ? menuHandlerServerRaceCP : menuHandlerRaceCP, MENU_ACTIONS_DEFAULT);
+	Menu menu = new Menu(serverRace ? menuHandlerServerRaceCP : menuHandlerRaceCP);
 	menu.SetTitle("Select End Control Point");
 
 	int count;
@@ -280,11 +300,12 @@ int menuHandlerServerRaceCP(Menu menu, MenuAction action, int param1, int param2
 				delete menu;
 				return 0;
 			}
+
 			g_iRaceEndPoint[param1] = StringToInt(info);
 			Panel panel;
 			for (int i = 1; i <= MaxClients; i++) {
 				if (IsValidClient(i) && param1 != i && !g_bWaitingInvite[i] && g_iRaceID[i] == 0) {
-					Format(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
+					FormatEx(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
 					g_iRaceInvitedTo[i] = param1;
 
 					panel = new Panel();
@@ -314,6 +335,7 @@ void displayRaceInviteMenu(int client) {
 	Menu menu = new Menu(menuHandlerInvitePlayers, MENU_ACTIONS_DEFAULT);
 	menu.ExitBackButton = true;	
 	menu.AddItem("*[Begin Race]*","*[Begin Race]*");
+
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsValidClient(i) && i != client && !g_bWaitingInvite[i] && g_iRaceID[i] < 1) {
 			IntToString(i, buffer, sizeof(buffer));
@@ -322,6 +344,7 @@ void displayRaceInviteMenu(int client) {
 		}
 		menu.SetTitle("Select Players to Invite:");
 	}
+
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -331,11 +354,13 @@ int menuHandlerInvitePlayers(Menu menu, MenuAction action, int param1, int param
 			char buffer[128];
 			char sPlayer[32];
 			menu.GetItem(param2, sPlayer, sizeof(sPlayer));
+
 			if (StrEqual(sPlayer, "*[Begin Race]*")) {
 				BeginRace(param1);
 				delete menu;
 				return 0;
 			}
+
 			int iPlayer = StringToInt(sPlayer);
 
 			menu.RemoveItem(param2);
@@ -346,7 +371,7 @@ int menuHandlerInvitePlayers(Menu menu, MenuAction action, int param1, int param
 				return 0;
 			}
 			PrintJAMessage(param1, "You have invited%s %N \x01to race.", cTheme2, iPlayer);
-			Format(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
+			FormatEx(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
 			
 			Panel panel = new Panel();
 			panel.SetTitle(buffer);
@@ -382,10 +407,12 @@ int menuHandlerInvitePlayers(Menu menu, MenuAction action, int param1, int param
 int panelHandlerInvites(Menu menu, MenuAction action, int param1, int param2) {
 	int leader = g_iRaceInvitedTo[param1];
 	int target = param1;
+
 	if (!IsClientInGame(leader)) {
 		g_iRaceID[target] = 0;
 		return;
 	}
+
 	switch (param2) {
 		case 1: {
 			if (HasRaceStarted(leader)) {
@@ -419,7 +446,7 @@ void displayRaceTimesMenu(int client, int clientToShow) {
 	bool space;
 
 	GetClientName(g_iRaceID[clientToShow], leader, sizeof(leader));
-	Format(leaderFormatted, sizeof(leaderFormatted), "%s's Race", leader);
+	FormatEx(leaderFormatted, sizeof(leaderFormatted), "%s's Race", leader);
 	
 	Panel panel = new Panel();
 	panel.DrawText(leaderFormatted);
@@ -429,15 +456,18 @@ void displayRaceTimesMenu(int client, int clientToShow) {
 	for (int i = 0; i <= MaxClients && (racer = g_iRaceFinishedPlayers[race][i]) != 0; i++) {
 		space = true;
 		racerTimes = TimeFormat(g_fRaceTimes[race][i] - g_fRaceStartTime[race]);
+
 		if (g_fRaceFirstTime[race] != g_fRaceTimes[race][i]) {
 			racerDiff = TimeFormat(g_fRaceTimes[race][i] - g_fRaceFirstTime[race]);
 		}
 		else {
 			racerDiff = "00:00:000";
 		}
-		Format(racerEntryFormatted, sizeof(racerEntryFormatted), "%d. %N - %s (+%s)", (i+1), racer, racerTimes, racerDiff);
+
+		FormatEx(racerEntryFormatted, sizeof(racerEntryFormatted), "%d. %N - %s (+%s)", (i+1), racer, racerTimes, racerDiff);
 		panel.DrawText(racerEntryFormatted);
 	}
+
 	if (space) {
 		panel.DrawText(" ");
 	}
@@ -449,6 +479,7 @@ void displayRaceTimesMenu(int client, int clientToShow) {
 			panel.DrawText(name);
 		}
 	}
+
 	panel.DrawText(" ");
 	panel.DrawItem("Exit");
 	panel.Send(client, panelHandlerDoNothing, 30);
@@ -463,7 +494,7 @@ void displayRaceInfoPanel(int client, int clientToShow) {
 	char classForce[32];
 
 	GetClientName(g_iRaceID[clientToShow], leader, sizeof(leader));
-	Format(leaderFormatted, sizeof(leaderFormatted), "Race Host: %s", leader);
+	FormatEx(leaderFormatted, sizeof(leaderFormatted), "Race Host: %s", leader);
 
 	switch (GetRaceStatus(clientToShow)) {
 		case STATUS_INVITING: {
@@ -479,7 +510,8 @@ void displayRaceInfoPanel(int client, int clientToShow) {
 			status = "Race Status: Waiting for finishers";
 		}
 	}
-	Format(classForce, sizeof(classForce), "Class Force: %s", g_bRaceClassForce[g_iRaceID[clientToShow]] ? "Enabled" : "Disabled");
+
+	FormatEx(classForce, sizeof(classForce), "Class Force: %s", g_bRaceClassForce[g_iRaceID[clientToShow]] ? "Enabled" : "Disabled");
 		
 	Panel panel = new Panel();
 	panel.DrawText(leaderFormatted);
@@ -506,6 +538,7 @@ void BeginRace(int raceid) {
 	if (!IsValidClient(raceid)) {
 		return;
 	}
+
 	LockRacePlayers(raceid);
 	
 	// apply race settings
@@ -527,9 +560,11 @@ void SendRaceToStart(int raceid, TFClassType class, int team) {
 		if (IsClientInRace(i, raceid)) {
 			// Get client's pre-race info so they can have it restored after a race.
 			PreRaceClientRetrieve(i);
+
 			if (g_bRaceClassForce[raceid]) {
 				TF2_SetPlayerClass(i, class);
 			}
+
 			ChangeClientTeam(i, team);
 			SendToStart(i);
 			g_bIsPreviewing[i] = false;
@@ -551,20 +586,21 @@ Action RaceCountDown(Handle timer, int raceID) {
 			g_iRaceStatus[raceID] = STATUS_RACING;
 		}
 		default: {
-			Format(value, sizeof(value), "  %i", g_iCountDown[raceID]);
+			FormatEx(value, sizeof(value), "  %i", g_iCountDown[raceID]);
 			CreateTimer(1.0, RaceCountDown, raceID);
 			g_iCountDown[raceID]--;
 		}
 	}
-	Format(message, sizeof(message), "\n \n \n \n \n%s \n \n%s\x03%s\x01\n \n%s", g_sAsterisk, g_sTab, value, g_sAsterisk);
+	FormatEx(message, sizeof(message), "\n \n \n \n \n%s \n \n%s\x03%s\x01\n \n%s", g_sAsterisk, g_sTab, value, g_sAsterisk);
 	PrintToRaceEx(raceID, message);
 }
 
 Action timerPostRace1(Handle timer, DataPack dp) {
 	dp.Reset();
 	int client = dp.ReadCell();
-	PrintJAMessage(client, "%sRestoring\x01 pre-race%s status\x01 in 5 seconds.", cTheme2, cTheme2);
 	CreateTimer(5.0, timerPostRace2, dp);
+
+	PrintJAMessage(client, "%sRestoring\x01 pre-race%s status\x01 in 5 seconds.", cTheme2, cTheme2);
 }
 
 Action timerPostRace2(Handle timer, DataPack dp) {
@@ -572,6 +608,7 @@ Action timerPostRace2(Handle timer, DataPack dp) {
 	int client = dp.ReadCell();
 	int raceID = dp.ReadCell();
 	delete dp;
+
 	if (g_iRaceID[client] == raceID) {	
 		g_iRaceID[client] = 0;
 		g_iRaceStatus[client] = STATUS_NONE;
@@ -604,7 +641,7 @@ char[] TimeFormat(float timeTaken) {
 	char hoursString[128];
 	
 	float ms = timeTaken-RoundToZero(timeTaken);
-	Format(msFormat, sizeof(msFormat), "%.3f", ms);
+	FormatEx(msFormat, sizeof(msFormat), "%.3f", ms);
 	strcopy(msFormatFinal, sizeof(msFormatFinal), msFormat[2]);
 	
 	int intTimeTaken = RoundToZero(timeTaken);
@@ -616,17 +653,18 @@ char[] TimeFormat(float timeTaken) {
 	hoursString = FormatTimeComponent(hours);
 	
 	if (hours != 0) {
-		Format(final, sizeof(final), "%s:%s:%s:%s", hoursString, minutesString, secondsString, msFormatFinal);
+		FormatEx(final, sizeof(final), "%s:%s:%s:%s", hoursString, minutesString, secondsString, msFormatFinal);
 	}
 	else {
-		Format(final, sizeof(final), "%s:%s:%s", minutesString, secondsString, msFormatFinal);
+		FormatEx(final, sizeof(final), "%s:%s:%s", minutesString, secondsString, msFormatFinal);
 	}
+
 	return final;
 }
 
 char[] FormatTimeComponent(int time) {
 	char final[8];
-	Format(final, sizeof(final), (time > 9) ? "%d" : "0%d", time);
+	FormatEx(final, sizeof(final), (time > 9) ? "%d" : "0%d", time);
 	return final;
 }
 
@@ -685,10 +723,12 @@ void LeaveRace(int client, bool raceFinished = false) {
 	if (raceID == 0) {
 		return;
 	}
+
 	if (GetPlayersStillRacing(raceID) < 2) {
 		ResetRace(raceID);
 		raceID = 0;
 	}
+
 	if (client == raceID) {
 		if (HasRaceStarted(raceID)) {
 			for (int i = 1; i <= MaxClients; i++) {
@@ -730,9 +770,10 @@ void LeaveRace(int client, bool raceFinished = false) {
 		g_bRaceLocked[client] = false;
 		g_iRaceEndPoint[client] = -1;
 	}
+
 	if (!raceFinished) {
 		char buffer[128];
-		Format(buffer, sizeof(buffer), "%N has left the race.", client);
+		FormatEx(buffer, sizeof(buffer), "%N has left the race.", client);
 		PrintToRace(raceID, buffer);
 	}
 }
@@ -746,6 +787,7 @@ void ResetRace(int raceID, bool raceEnded = true) {
 			g_bRaceLocked[i] = g_bRaceAmmoRegen[i] = false;
 			g_iRaceEndPoint[i] = -1;
 			g_bRaceClassForce[i] = true;
+
 			if (raceEnded && IsClientInGame(i)) {
 				DataPack dp = new DataPack();
 				dp.WriteCell(i);
@@ -754,6 +796,7 @@ void ResetRace(int raceID, bool raceEnded = true) {
 				PrintJAMessage(i, "Race has%s ended\x01.", cTheme2);				
 			}
 		}
+
 		g_fRaceTimes[raceID][i] = 0.0;
 		g_iRaceFinishedPlayers[raceID][i] = 0;
 	}
@@ -775,6 +818,7 @@ void PostRaceClientRestore(int client) {
 	if (!IsValidClient(client)) {
 		return;
 	}
+
 	g_iCPsTouched[client] = g_iClientPreRaceCPsTouched[client];
 	g_bBeatTheMap[client] = g_bClientPreRaceBeatTheMap[client];
 	g_bAmmoRegen[client] = g_bClientPreRaceAmmoRegen[client];
@@ -814,8 +858,9 @@ bool IsClientSpectatingRace(int client, int race) {
 	if (!IsValidClient(client) || !IsClientObserver(client)) {
 		return false;
 	}
+
 	int iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
 	int clientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
 
-	return (IsValidClient(client) && IsValidClient(clientToShow) && iObserverMode != 6 && IsClientInRace(clientToShow, race));
+	return (IsValidClient(clientToShow) && iObserverMode != 6 && IsClientInRace(clientToShow, race));
 }

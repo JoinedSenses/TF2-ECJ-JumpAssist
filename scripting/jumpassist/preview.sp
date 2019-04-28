@@ -25,6 +25,7 @@ public Action cmdPreview(int client, int args) {
 	if (!IsValidClient(client) || !IsPlayerAlive(client)) {
 		return Plugin_Handled;
 	}
+
 	if (IsClientRacing(client)) {
 		PrintJAMessage(client, "Can't use this feature while%s racing.", cTheme2);
 		return Plugin_Handled;
@@ -51,6 +52,7 @@ void EnablePreview(int client) {
 		PrintJAMessage(client, "Can't begin preview mode while%s in the air\x01.", cTheme2);
 		return;
 	}
+
 	if ((flags & FL_DUCKING)) {
 		PrintJAMessage(client, "Can't begin preview mode while%s ducking\x01.", cTheme2);
 		return;
@@ -90,6 +92,7 @@ void DisablePreview(int client, bool restore = false, bool click = false) {
 
 		SDKUnhook(client, SDKHook_WeaponSwitch, hookWeaponSwitch);
 	}
+	
 	if (IsClientInGame(client)) {
 		PrintJAMessage(client, "Preview mode%s disabled\x01.", cTheme2);
 	}

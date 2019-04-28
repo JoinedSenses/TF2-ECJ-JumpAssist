@@ -47,10 +47,12 @@ public Action cmdSpec(int client, int args) {
 			PrintJAMessage(client, "Target is in spec, but not spectating anyone.");
 			return Plugin_Handled;
 		}
+
 		if (target == client) {
 			PrintJAMessage(client, "Target is spectating you. Unable to spectate");
 			return Plugin_Handled;
 		}
+
 		PrintJAMessage(client, "Target is in spec. Now spectating their target");
 		isTargetInSpec = true;
 	}
@@ -94,8 +96,8 @@ public Action cmdSpecLock(int client, int args) {
 		return Plugin_Handled;
 	}
 
-	int target;
-	if ((target = FindTarget(client, targetName, false, false)) < 1) {
+	int target = FindTarget(client, targetName, false, false);
+	if (target < 1) {
 		return Plugin_Handled;
 	}
 
@@ -124,6 +126,7 @@ public Action cmdForceSpec(int client, int args) {
 		PrintJAMessage(client, "Usage: sm_fspec <target> <OPTIONAL:targetToSpec>");
 		return Plugin_Handled;
 	}
+
 	char targetName[MAX_NAME_LENGTH];
 	GetCmdArg(1, targetName, sizeof(targetName));
 
@@ -155,14 +158,16 @@ public Action cmdForceSpec(int client, int args) {
 		if ((targetToSpec = FindTarget(client, targetToSpecName, false, false)) < 1) {
 			return Plugin_Handled;
 		}
+
 		if (IsClientObserver(targetToSpec)) {
 			PrintJAMessage(client, "Target%s %N\x01 must be alive.", cTheme2, targetToSpec);
 			return Plugin_Handled;
 		}
-		Format(targetToSpecName, sizeof(targetToSpecName), "%N", targetToSpec);
+
+		FormatEx(targetToSpecName, sizeof(targetToSpecName), "%N", targetToSpec);
 	}
 	else {
-		Format(targetToSpecName, sizeof(targetToSpecName), "you");
+		FormatEx(targetToSpecName, sizeof(targetToSpecName), "you");
 		targetToSpec = client;
 	}
 
@@ -192,6 +197,7 @@ void menuSpec(int client, bool lock = false) {
 	if (GetClientTeam(client) > 1 && !lock) {
 		menu.AddItem("", "QUICK SPEC");
 	}
+
 	if (lock && g_iSpecTarget[client] > 0) {
 		menu.AddItem("", "DISABLE LOCK");
 	}
@@ -201,11 +207,12 @@ void menuSpec(int client, bool lock = false) {
 	char clientName[MAX_NAME_LENGTH];
 	for (int i = 1; i <= MaxClients; i++) {
 		if ((id = isValidClient(i)) > 0 && client != i) {
-			Format(userid, sizeof(userid), "%i", id);
-			Format(clientName, sizeof(clientName), "%N", i);
+			FormatEx(userid, sizeof(userid), "%i", id);
+			FormatEx(clientName, sizeof(clientName), "%N", i);
 			menu.AddItem(userid, clientName);
 		}
 	}
+
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -214,6 +221,7 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 		case MenuAction_Select: {
 			char targetid[6];
 			menu.GetItem(param2, targetid, sizeof(targetid));
+
 			int userid = StringToInt(targetid);
 			if (userid == 0) {
 				ChangeClientTeam(param1, 1);
@@ -221,18 +229,22 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 				delete menu;
 				return 0;
 			}
+
 			if (GetClientOfUserId(userid) == 0) {
 				PrintJAMessage(param1, "Player no longer in game");
 				menuSpec(param1);
 				delete menu;
 				return 0;
 			}
+
 			if (GetClientTeam(param1) > 1) {
 				ChangeClientTeam(param1, 1);
 				g_iClientTeam[param1] = TEAM_SPECTATOR;
 			}
+
 			FakeClientCommand(param1, "spec_player #%i", userid);
 			FakeClientCommand(param1, "spec_mode 1");
+
 			menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
 		}
 		case MenuAction_DrawItem: {
@@ -257,32 +269,39 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 		case MenuAction_Select: {
 			char targetid[6];
 			menu.GetItem(param2, targetid, sizeof(targetid));
+
 			int userid = StringToInt(targetid);
-			int target;
 			if (userid == 0) {
 				g_iSpecTarget[param1] = 0;
 				PrintJAMessage(param1, "Spec lock is now disabled");
 				delete menu;
 				return 0;
 			}
-			if ((target = GetClientOfUserId(userid)) < 0) {
+
+			int target = GetClientOfUserId(userid);
+			if (target < 0) {
 				PrintJAMessage(param1, "Player no longer in game");
 				menuSpec(param1);
 				delete menu;
 				return 0;
 			}
+
 			if (GetClientTeam(param1) > 1) {
 				ChangeClientTeam(param1, 1);
 				g_iClientTeam[param1] = TEAM_SPECTATOR;
 			}
+
 			FakeClientCommand(param1, "spec_player #%i", userid);
 			FakeClientCommand(param1, "spec_mode 1");
+
 			g_iSpecTarget[param1] = target;
+
 			menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
 		}
 		case MenuAction_DrawItem: {
 			char targetid[6];
 			menu.GetItem(param2, targetid, sizeof(targetid));
+
 			int target = GetClientOfUserId(StringToInt(targetid));
 			if (IsClientObserver(param1) && GetEntPropEnt(param1, Prop_Send, "m_hObserverTarget") == target) {
 				return ITEMDRAW_DISABLED;
@@ -294,6 +313,7 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 			}
 		}
 	}
+
 	return 0;
 }
 
@@ -305,6 +325,7 @@ int isValidClient(int client) {
 	if (!IsClientInGame(client) || !IsPlayerAlive(client)) {
 		return 0;
 	}
+
 	return GetClientUserId(client);
 }
 
@@ -330,12 +351,15 @@ void SaveFSpecLocation(int client) {
 
 void RestoreFSpecLocation(int client) {
 	g_bFSpecRestoring[client] = true;
+
 	if (GetClientTeam(client) != g_iFSpecTeam[client]) {
 		ChangeClientTeam(client, g_iFSpecTeam[client]);
 	}
+
 	if (!IsPlayerAlive(client)) {
 		TF2_RespawnPlayer(client);
 	}
+
 	RequestFrame(frameRequestFSpecRestore, client);
 }
 
@@ -343,6 +367,7 @@ void frameRequestFSpecRestore(int client) {
 	if (TF2_GetPlayerClass(client) != g_TFFSpecClass[client]) {
 		TF2_SetPlayerClass(client, g_TFFSpecClass[client]);
 	}
+	
 	TeleportEntity(client, g_vFSpecOrigin[client], g_vFSpecAngles[client], nullVector);
 	CreateTimer(5.0, timerDisableFSpec, client);
 }

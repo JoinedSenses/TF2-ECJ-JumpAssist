@@ -19,7 +19,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.6"
+#define PLUGIN_VERSION "2.3.7"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
@@ -349,7 +349,7 @@ void SetUpCapturePoints() {
 	while ((entity = FindEntityByClassname(entity, "team_control_point")) != INVALID_ENT_REFERENCE) {
 		GetEntPropString(entity, Prop_Data, "m_iszPrintName", name, sizeof(name));
 		idx = GetEntProp(entity, Prop_Data, "m_iPointIndex");
-		Format(areaidx, sizeof(areaidx), "%i", idx);
+		FormatEx(areaidx, sizeof(areaidx), "%i", idx);
 
 		g_smCapturePoint.SetValue(name, idx);
 		g_smCapturePointName.SetString(areaidx, name);
@@ -363,7 +363,7 @@ void SetUpCapturePoints() {
 		GetEntPropString(entity, Prop_Data, "m_iszCapPointName", name, sizeof(name));
 		g_smCaptureArea.SetValue(name, g_iCPCount);
 
-		Format(areaidx, sizeof(areaidx), "%i", g_iCPCount);
+		FormatEx(areaidx, sizeof(areaidx), "%i", g_iCPCount);
 		g_smCaptureAreaName.SetString(areaidx, name);
 
 		SetVariantString("2 0");
@@ -541,9 +541,11 @@ public int Native_IsClientHiding(Handle plugin, int numParams) {
 	if (client < 1 || client > MaxClients) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
 	}
+
 	if (!IsClientConnected(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
+
 	return IsClientHiding(client);
 }
 
@@ -552,9 +554,11 @@ public int Native_IsClientHardcore(Handle plugin, int numParams) {
 	if (client < 1 || client > MaxClients) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
 	}
+
 	if (!IsClientConnected(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
+
 	return IsClientHardcore(client);
 }
 
@@ -563,9 +567,11 @@ public int Native_IsClientRacing(Handle plugin, int numParams) {
 	if (client < 1 || client > MaxClients) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
 	}
+
 	if (!IsClientConnected(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
+
 	return IsClientRacing(client);
 }
 
@@ -574,9 +580,11 @@ public int Native_ToggleKeys(Handle plugin, int numParams) {
 	if (client < 1 || client > MaxClients) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
 	}
+
 	if (!IsClientConnected(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
+
 	g_bSKeysEnabled[client] = GetNativeCell(2);
 	return 1;
 }
@@ -586,6 +594,7 @@ public int Native_PauseTeleport(Handle plugin, int numParams) {
 	if (client < 1 || client > MaxClients) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
 	}
+
 	if (!IsClientConnected(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
@@ -599,6 +608,7 @@ public int Native_PrintMessage(Handle plugin, int numParams) {
 	if (!IsValidClient(client)) {
 		return 0;
 	}
+
 	char buffer[1024]; 
 	int written;
 
@@ -642,14 +652,17 @@ public Action listenerJoinClass(int client, const char[] command, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Continue;
 	}
+
 	if (IsClientPreviewing(client)) {
 		PrintJAMessage(client, "You may not change class during%s preview mode\x01.", cTheme2);
 		return Plugin_Handled;
 	}
+
 	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client) && g_bRaceClassForce[g_iRaceID[client]]) {
 		PrintJAMessage(client, "Cannot change class while racing.");
 		return Plugin_Handled;
 	}
+
 	return Plugin_Continue;
 }
 
@@ -657,10 +670,12 @@ public Action listenerJoinTeam(int client, const char[] command, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Continue;
 	}
+
 	if (IsClientPreviewing(client)) {
 		PrintJAMessage(client, "You may not change team during%s preview mode\x01.", cTheme2);
 		return Plugin_Handled;
 	}
+
 	// Get clients raceid for readability
 	int raceID = g_iRaceID[client];
 	// If raceid > 0 and player is in a race, prevent them from changing teams
@@ -738,7 +753,9 @@ public Action listenerJoinTeam(int client, const char[] command, int args) {
 public void eventPlayerChangeTeam(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	int team = event.GetInt("team");
+
 	g_iClientTeam[client] = team;
+
 	if (g_iIntelCarrier == client) {
 		int ent = -1;
 		while((ent = FindEntityByClassname(ent, "item_teamflag")) != INVALID_ENT_REFERENCE) {
@@ -752,7 +769,9 @@ public void eventPlayerChangeTeam(Event event, const char[] name, bool dontBroad
 public void eventPlayerChangeClass(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	int class = event.GetInt("class");
+
 	g_TFClientClass[client] = view_as<TFClassType>(class);
+
 	if (IsPlayerAlive(client)) {
 		TF2_RespawnPlayer(client);
 	}
@@ -772,6 +791,7 @@ public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcas
 	if (IsClientPreviewing(client)) {
 		DisablePreview(client, IsClientInGame(client));
 	}
+
 	return Plugin_Handled;
 }
 
@@ -779,6 +799,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Continue;
 	}
+
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if (IsFakeClient(client)) {
 		return Plugin_Continue;
@@ -795,6 +816,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 			FakeClientCommand(i, "spec_mode 1");
 		}
 	}
+
 	g_iSpecTarget[client] = 0;
 	g_bUnkillable[client] = false;
 	g_fLastSavePos[client] = NULL_VECTOR;
@@ -816,6 +838,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	if (g_Database != null && g_bFeaturesEnabled[client]) {
 		CreateTimer(0.3, timerSpawnedBool, client);
 		g_bJustSpawned[client] = true;
+
 		if (g_bUsedReset[client]) {
 			ReloadPlayerData(client);
 			g_bUsedReset[client] = false;
@@ -834,6 +857,7 @@ public void eventInventoryUpdate(Event event, char[] strName, bool bDontBroadcas
 	if (!IsValidClient(client)) {
 		return;
 	}
+
 	CheckBeggars(client);
 }
 
@@ -841,9 +865,11 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
+
 	if (event.GetBool("bot")) {
 		return;
 	}
+
 	int client = GetClientOfUserId(event.GetInt("userid"));
 
 	// spec lock
@@ -863,6 +889,7 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 	if (g_iRaceID[client] != 0) {
 		LeaveRace(client);
 	}
+
 	int idx;
 	if ((idx = g_aNoFuncRegen.FindValue(client)) != -1) {
 		g_aNoFuncRegen.Erase(idx);
@@ -927,7 +954,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 		timeString = TimeFormat(timeTaken);
 
 		if (RoundToNearest(g_fRaceFirstTime[raceID]) == 0) {
-			Format(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 won the race in%s %s\x01!", cTheme1, cTheme2, client, cTheme2, timeString);
+			FormatEx(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 won the race in%s %s\x01!", cTheme1, cTheme2, client, cTheme2, timeString);
 			g_fRaceFirstTime[raceID] = time;
 			g_iRaceStatus[raceID] = STATUS_WAITING;
 			for (int i = 0; i < MaxClients; i++) {
@@ -957,13 +984,14 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 					break;
 				}
 			}
-			Format(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 finished the race in%s %s \x01(%s+%s\x01)!", cTheme1, cTheme2, client, cTheme2, timeString, cTheme2, diffFormatted);
+			FormatEx(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 finished the race in%s %s \x01(%s+%s\x01)!", cTheme1, cTheme2, client, cTheme2, timeString, cTheme2, diffFormatted);
 			for (int j = 1; j <= MaxClients; j++) {
 				if (g_iRaceID[j] == raceID) {
 					EmitSoundToClient(j, "misc/freeze_cam.wav");
 				}
 			}
 		}
+
 		if (RoundToZero(g_fRaceFirstTime[raceID]) == 0) {
 			g_fRaceFirstTime[raceID] = time;
 		}
@@ -985,7 +1013,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	else if (!g_bCPTouched[client][area] && ((RoundFloat(GetEngineTime()) - g_iLastTeleport[client]) > 10)) {
 		char cpName[32];
 		char areaidx[3];
-		Format(areaidx, sizeof(areaidx), "%i", area);
+		FormatEx(areaidx, sizeof(areaidx), "%i", area);
 		(g_bCPFallback ? g_smCaptureAreaName : g_smCapturePointName).GetString(areaidx, cpName, sizeof(cpName));
 
 		char className[33];
@@ -1073,6 +1101,7 @@ public Action cmdSave(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
+
 	if (g_bSaveLoc && SL_IsClientPracticing(client)) {
 		PrintJAMessage(client, "Can't save while using saveloc. Type%s /practice\x01 to disable", cTheme2);
 		return Plugin_Handled;
@@ -1086,6 +1115,7 @@ public Action cmdTele(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
+
 	Teleport(client);
 	g_iLastTeleport[client] = RoundFloat(GetEngineTime());
 	return Plugin_Handled;
@@ -1116,7 +1146,9 @@ public Action cmdRestart(int client, int args) {
 	if (g_Database != null) {
 		ResetPlayerPos(client);
 	}
+
 	TF2_RespawnPlayer(client);
+
 	if (!g_bHideMessage[client]) {
 		PrintJAMessage(client, "You have been%s restarted\x01.", cTheme2);
 	}
@@ -1149,14 +1181,17 @@ public Action cmdToggleAmmo(int client, int args) {
 	if (client == 0) {
 		return Plugin_Handled;
 	}
+
 	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)) {
 		PrintJAMessage(client, "You may not change regen during a race");
 		return Plugin_Handled;
 	}
+
 	if (g_bHardcore[client]) {
 		PrintJAMessage(client, "Cannot toggle ammo with %sHardcore\x01 enabled", cTheme2);
 		return Plugin_Handled;
 	}
+
 	g_bAmmoRegen[client] = !g_bAmmoRegen[client];
 	PrintJAMessage(client, "Ammo regen%s %s\x01.", cTheme2, g_bAmmoRegen[client]?"enabled":"disabled");
 	return Plugin_Handled;
@@ -1166,10 +1201,12 @@ public Action cmdUnkillable(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
+
 	if (!g_cvarSuperman.BoolValue && !IsUserAdmin(client)) {
 		PrintJAMessage(client, "Command disabled by server admin.", cTheme1);
 		return Plugin_Handled;
 	}
+
 	g_bUnkillable[client] = !g_bUnkillable[client];
 	SetEntProp(client, Prop_Data, "m_takedamage", g_bUnkillable[client]?1:2, 1);
 	PrintJAMessage(client, "Superman%s %s", cTheme2, g_bUnkillable[client]?"enabled":"disabled");
@@ -1180,6 +1217,7 @@ public Action cmdToggleHardcore(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
+
 	Hardcore(client);
 	return Plugin_Handled;
 }
@@ -1195,10 +1233,12 @@ public Action cmdMapSet(int client, int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
 	}
+
 	if (g_Database == null) {
 		PrintJAMessage(client, "This feature is not supported without a database configuration");
 		return Plugin_Handled;
 	}
+
 	if (args < 2) {
 		PrintJAMessage(client, "%sUsage\x01: !mapset <team|class|lockcps> <team color|class|on off>", cTheme2);
 		return Plugin_Handled;
@@ -1222,32 +1262,33 @@ public Action cmdJAHelp(int client, int args) {
 			... "mapset - Change map settings"
 		);
 	}
+
 	JAHelpMenu(client);
 	return Plugin_Handled;
 }
 
 public Action cmdJumpTF(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
+	if (g_cvarPluginEnabled.BoolValue) {
+		ShowMOTDPanel(client, "Jump Assist Help", g_sWebsite, MOTDPANEL_TYPE_URL);
 	}
-	ShowMOTDPanel(client, "Jump Assist Help", g_sWebsite, MOTDPANEL_TYPE_URL);
-	return;
+	
+	return Plugin_Handled;
 }
 
 public Action cmdJumpForums(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
+	if (g_cvarPluginEnabled.BoolValue) {
+		ShowMOTDPanel(client, "Jump Assist Help", g_sForum, MOTDPANEL_TYPE_URL);
 	}
-	ShowMOTDPanel(client, "Jump Assist Help", g_sForum, MOTDPANEL_TYPE_URL);
-	return;
+	
+	return Plugin_Handled;
 }
 
 public Action cmdJumpAssist(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
+	if (g_cvarPluginEnabled.BoolValue) {
+		ShowMOTDPanel(client, "Jump Assist Help", g_sJumpAssist, MOTDPANEL_TYPE_URL);
 	}
-	ShowMOTDPanel(client, "Jump Assist Help", g_sJumpAssist, MOTDPANEL_TYPE_URL);
-	return;
+	
+	return Plugin_Handled;
 }
 
 /* ======================================================================
@@ -1283,27 +1324,33 @@ void SaveLoc(int client) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return;
 	}
+
 	if (!g_bFeaturesEnabled[client]) {
 		PrintJAMessage(client, "Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.");
 		return;
 	}
+
 	if (g_bHardcore[client]) {
 		PrintJAMessage(client, "%sHardcore:\x01 Saves are%s disabled\x01.", cHardcore, cTheme2);
 		return;
 	}
+
 	if (!IsPlayerAlive(client) || IsClientObserver(client)) {
 		PrintJAMessage(client, "Must be%s alive\x01 to save.", cTheme2);
 		return;
 	}
+
 	int flags = GetEntityFlags(client);
 	if (!(flags & FL_ONGROUND)) {
 		PrintJAMessage(client, "Unable to save while%s in the air\x01.", cTheme2);
 		return;
 	}
+
 	if ((flags & FL_DUCKING)) {
 		PrintJAMessage(client, "Unable to save while%s ducked\x01.", cTheme2);
 		return;
 	}
+
 	if ((GetEntityMoveType(client) == MOVETYPE_NOCLIP)) {
 		PrintJAMessage(client, "Unable to save while%s noclipped\x01.", cTheme2);
 		return;
@@ -1314,6 +1361,7 @@ void SaveLoc(int client) {
 
 	GetClientAbsOrigin(client, g_fOrigin[client]);
 	GetClientAbsAngles(client, g_fAngles[client]);
+
 	if (g_Database != null && IsClientInGame(client)) {
 		GetPlayerData(client);
 	}
@@ -1323,18 +1371,22 @@ void Teleport(int client) {
 	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client)) {
 		return;
 	}
+
 	if (!g_bFeaturesEnabled[client]) {
 		PrintJAMessage(client, "Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.");
 		return;
 	}
+
 	if (g_iRaceID[client] && (g_iRaceStatus[g_iRaceID[client]] == STATUS_COUNTDOWN || g_iRaceStatus[g_iRaceID[client]] == STATUS_RACING)) {
 		PrintJAMessage(client, "Cannot teleport while racing.");
 		return;
 	}
+
 	if (g_bHardcore[client]) {
 		PrintJAMessage(client, "%sHardcore:\x01 Teleports are%s disabled\x01.", cHardcore, cTheme2);
 		return;
 	}
+
 	if (!IsPlayerAlive(client)) {
 		PrintJAMessage(client, "Unable to teleport while%s dead\x01.", cTheme2);
 		return;
@@ -1360,10 +1412,9 @@ void Teleport(int client) {
 }
 
 void ResetPlayerPos(int client) {
-	if (!g_cvarPluginEnabled.BoolValue || !IsClientInGame(client) || IsClientObserver(client) || !g_bFeaturesEnabled[client]) {
-		return;
+	if (g_cvarPluginEnabled.BoolValue && IsClientInGame(client) && !IsClientObserver(client) && g_bFeaturesEnabled[client]) {
+		DeletePlayerData(client);
 	}
-	DeletePlayerData(client);
 }
 
 void Hardcore(int client) {
@@ -1398,7 +1449,7 @@ void CheckBeggars(int client) {
 			g_aNoFuncRegen.Push(client);
 		}
 	}
-	else if (index != -1){
+	else if (index != -1) {
 		g_aNoFuncRegen.Erase(index);
 	}
 }
@@ -1447,8 +1498,9 @@ void ReSupply(int client, int weapon) {
 			case 414: {
 				SetEntProp(weapon, Prop_Send, "m_iClip1", 5);
 			}
-			// Beggar's Bazooka - This is here so we don't keep refilling its clip infinitely.
+			// Beggar's Bazooka
 			case 730: {
+				// This is here so we don't keep refilling its clip infinitely.
 			}
 			default: {
 				SetEntProp(weapon, Prop_Send, "m_iClip1", 4);
@@ -1742,12 +1794,15 @@ int FindTarget2(int client, const char[] target, bool nobots = false, bool immun
 	if (nobots) {
 		flags |= COMMAND_FILTER_NO_BOTS;
 	}
+
 	if (!immunity) {
 		flags |= COMMAND_FILTER_NO_IMMUNITY;
 	}
+
 	if ((ProcessTargetString(target, client, target_list, 1, flags, target_name, sizeof(target_name), tn_is_ml)) > 0) {
 		return target_list[0];
 	}
+
 	return -1;
 }
 
@@ -1782,9 +1837,11 @@ void framerequestChangeTeam(DataPack dp) {
 	int client = dp.ReadCell();
 	int team = dp.ReadCell();
 	delete dp;
+
 	if (GetClientTeam(client) < 2) {
 		SetEntProp(client, Prop_Send, "m_lifeState", 1);
 	}
+
 	g_iClientTeam[client] = team;
 	ChangeClientTeam(client, team);
 }
@@ -1795,12 +1852,14 @@ void framerequestRespawn(any data) {
 	}
 }
 
-Action WelcomePlayer(Handle timer, any client) {
-	char sHostname[64];
-	g_cvarHostname.GetString(sHostname, sizeof(sHostname));
+Action WelcomePlayer(Handle timer, int client) {
 	if (!IsClientInGame(client)) {
 		return Plugin_Handled;
 	}
+
+	char sHostname[64];
+	g_cvarHostname.GetString(sHostname, sizeof(sHostname));
+
 	PrintColoredChat(client, "\n \x03--------------------------------------------------------");
 	PrintColoredChat(client, "\x07FFA500[\x03+\x07FFA500]\x01 Welcome to\x079999FF %s", sHostname);
 	PrintColoredChat(client, "\x07FFA500[\x03+\x07FFA500]\x01 For help with\x03 JumpAssist\x01, type\x07FFA500 !ja_help");

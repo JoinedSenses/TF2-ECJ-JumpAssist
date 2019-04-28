@@ -180,6 +180,7 @@ public Action hookSetTransmitOwnerEntity(int entity, int client) {
 	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
 		return Plugin_Continue;
 	}
+
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 	return (owner == client) ? Plugin_Continue : Plugin_Handled;
 }
@@ -197,6 +198,7 @@ public Action hookSetTransmitProjectiles(int entity, int client) {
 	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
 		return Plugin_Continue;
 	}
+
 	return Plugin_Handled;
 }
 
@@ -210,6 +212,7 @@ public Action hookSetTransmitIntel(int entity, int client) {
 	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
 		return Plugin_Continue;
 	}
+
 	return g_bIntelPickedUp ? Plugin_Handled : Plugin_Continue;
 }
 
@@ -235,6 +238,7 @@ public Action hookTouch(int entity, int other) {
 	if (0 < other <= MaxClients && IsClientHiding(other)) {
 		return Plugin_Handled;
 	}
+	
 	return Plugin_Continue;
 }
 

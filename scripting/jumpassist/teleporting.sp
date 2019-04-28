@@ -19,6 +19,7 @@ public Action cmdBring(int client, int argc) {
 	if (!client || !IsClientInGame(client)) {
 		return Plugin_Handled;
 	}
+
 	if (IsClientPreviewing(client)) {
 		PrintJAMessage(client, "Unable to bring while in%s preview mode\x01.", cTheme2);
 		return Plugin_Handled;
@@ -30,7 +31,7 @@ public Action cmdBring(int client, int argc) {
 			return Plugin_Handled;
 		}
 
-		ReplyToCommand(client, "%s <client>", cTheme1, sCommand);
+		ReplyToCommand(client, "%s <client>", sCommand);
 		return Plugin_Handled;
 	}
 	
@@ -59,11 +60,12 @@ public Action cmdBring(int client, int argc) {
 
 	char plural[5];
 	if (tn_is_ml) {
-		Format(plural, sizeof(plural), "the ");
+		strcopy(plural, sizeof(plural), "the ");
 	}
 
 	PrintJAMessage(client, "You have brought %s%s%s\x01 to your position", plural, cTheme2, sName);
 	LogAction(client, -1, "\"%L\" (sm_bring) %N brought %s%s to their position.", client, client, plural, sName);
+
 	return Plugin_Handled;
 }
 
@@ -131,15 +133,18 @@ public Action cmdGoTo(int client, int args) {
 public Action cmdSendPlayer(int client,int args) {
 	if (!g_cvarPluginEnabled.BoolValue) {
 		return Plugin_Handled;
-	}	
+	}
+
 	if (g_Database == null) {
 		PrintJAMessage(client, "This feature is not supported without a database configuration");
 		return Plugin_Handled;
 	}
+
 	if (args < 2) {
 		PrintJAMessage(client, "%sUsage\x01: sm_send <playerName> <targetName>", cTheme2);
 		return Plugin_Handled;
 	}
+
 	char arg1[MAX_NAME_LENGTH];
 	char arg2[MAX_NAME_LENGTH];
 
@@ -157,6 +162,7 @@ public Action cmdSendPlayer(int client,int args) {
 		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target1, cTheme2);
 		return Plugin_Handled;
 	}
+
 	if (IsClientPreviewing(target2)) {
 		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target2, cTheme2);
 		return Plugin_Handled;
@@ -172,6 +178,7 @@ public Action cmdSendPlayer(int client,int args) {
 	
 	PrintJAMessage(client, "Sent%s %N\x01 to%s %N\x01.", cTheme2, target1, cTheme2, target2);
 	PrintJAMessage(target1, "%s%N\x01 sent you to%s %N\x01.", cTheme2, client, cTheme2, target2);
+
 	return Plugin_Handled;
 }
 
@@ -185,10 +192,10 @@ void MainMenu(int client) {
 	for (int i = 1; i <= MaxClients; i++) {
 		if (IsValidClient(i) && IsPlayerAlive(i) && !IsClientPreviewing(i)) {
 			char name[MAX_NAME_LENGTH];
-			Format(name, sizeof(name), "%N", i);
+			FormatEx(name, sizeof(name), "%N", i);
 
 			char userid[16];
-			Format(userid, sizeof(userid), "%i", GetClientUserId(i));
+			FormatEx(userid, sizeof(userid), "%i", GetClientUserId(i));
 
 			menu.AddItem(userid, name);
 		}
@@ -237,7 +244,6 @@ Action timerRecentTargetCooldown(Handle timer, int client) {
 	if (g_aGoToRecent[client].Length) {
 		g_aGoToRecent[client].Erase(0);
 	}
-	
 }
 
 Action timerGoToCooldown(Handle timer, int client) {
