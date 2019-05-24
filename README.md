@@ -1,8 +1,8 @@
 # TF2-ECJ-JumpAssist
 
 ## Various differences compared to nolem's (arispoloway) version:
-#### Too many to really list. TL;DR this version is more efficient
-**If switching from nolem's version, a new database would need to be created due to changes in the database structure.**
+#### If switching from nolem's version to this one, a new database will need to be created due to changes in the database structure.  
+#### Too many differences to really list. TL;DR this version is more efficient
   
 Syntax updates  
 Database structure  
