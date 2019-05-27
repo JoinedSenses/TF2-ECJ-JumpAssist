@@ -19,7 +19,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.7"
+#define PLUGIN_VERSION "2.3.8"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
@@ -419,14 +419,20 @@ public void OnClientPostAdminCheck(int client) {
 	LoadPlayerProfile(client);
 }
 
+public void OnGameFrame() {
+	for (int i = 1; i <= MaxClients; i++) {
+		if (IsClientInGame(i)) {
+			g_iButtons[i] = GetClientButtons(i);
+		}
+	}
+}
+
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2]) {
-	g_iButtons[client] = buttons;
-	
 	if (!IsValidClient(client)) {
 		return Plugin_Continue;
 	}
+
 	// FOR SKEYS
-	
 	int observerMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
 	int clientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
 	if (IsValidClient(clientToShow, true) && (g_bSKeysEnabled[client] || IsFakeClient(clientToShow)) && !(buttons & IN_SCORE) && observerMode != 7) {
