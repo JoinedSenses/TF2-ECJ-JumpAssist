@@ -130,8 +130,8 @@ public Action cmdForceSpec(int client, int args) {
 	char targetName[MAX_NAME_LENGTH];
 	GetCmdArg(1, targetName, sizeof(targetName));
 
-	int target;
-	if ((target = FindTarget(client, targetName, false, false)) < 1) {
+	int target = FindTarget(client, targetName, false);
+	if (target < 1) {
 		return Plugin_Handled;
 	}
 
@@ -367,7 +367,7 @@ void frameRequestFSpecRestore(int client) {
 	if (TF2_GetPlayerClass(client) != g_TFFSpecClass[client]) {
 		TF2_SetPlayerClass(client, g_TFFSpecClass[client]);
 	}
-	
+
 	TeleportEntity(client, g_vFSpecOrigin[client], g_vFSpecAngles[client], nullVector);
 	CreateTimer(5.0, timerDisableFSpec, client);
 }

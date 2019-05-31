@@ -96,7 +96,7 @@ public Action cmdGoTo(int client, int args) {
 	}
 
 	if (g_aGoToRecent[client].FindValue(target) != -1) {
-		PrintJAMessage(client, "Unable to teleport to recently targetted players.");
+		PrintJAMessage(client, "Unable to teleport to recently targeted players.");
 		return Plugin_Handled;
 	}
 

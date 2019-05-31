@@ -97,9 +97,10 @@ ConVar
 	, g_cvarSuperman
 	, g_cvarAmmoCheat
 	, g_cvarWaitingForPlayers;
-Handle
-	  g_hJAMessageCookie
-	, g_hForwardSKeys;
+Cookie
+	  g_hJAMessageCookie;
+GlobalForward
+	  g_hForwardSKeys;
 ArrayList
 	  g_aNoFuncRegen;
 Database
@@ -242,7 +243,7 @@ public void OnPluginStart() {
 	AddTempEntHook("TFBlood", hookTempEnt);
 	AddTempEntHook("TFParticleEffect", hookTempEnt);
 
-	g_hForwardSKeys = CreateGlobalForward("OnClientKeys", ET_Event, Param_Cell, Param_CellByRef);
+	g_hForwardSKeys = new GlobalForward("OnClientKeys", ET_Event, Param_Cell, Param_CellByRef);
 
 	// SKEYS Objects
 	g_hHudDisplayForward = CreateHudSynchronizer();
@@ -259,7 +260,7 @@ public void OnPluginStart() {
 
 	LoadTranslations("common.phrases");
 
-	g_hJAMessageCookie = RegClientCookie("JAMessage_cookie", "Jump Assist Message Cookie", CookieAccess_Protected);
+	g_hJAMessageCookie = new Cookie("JAMessage_cookie", "Jump Assist Message Cookie", CookieAccess_Protected);
 
 	SetAllSkeysDefaults();
 	ConnectToDatabase();
@@ -275,9 +276,7 @@ public void OnPluginStart() {
 			if (IsValidClient(i)) {
 				g_iClientTeam[i] = GetClientTeam(i);
 				g_TFClientClass[i] = TF2_GetPlayerClass(i);
-				if (GetClientAuthId(i, AuthId_Steam2, g_sClientSteamID[i], sizeof(g_sClientSteamID[]))) {
-					g_bFeaturesEnabled[i] = true;
-				}
+				g_bFeaturesEnabled[i] = GetClientAuthId(i, AuthId_Steam2, g_sClientSteamID[i], sizeof(g_sClientSteamID[]));
 				SDKHook(i, SDKHook_WeaponEquipPost, hookOnWeaponEquipPost);
 				SDKHook(i, SDKHook_SetTransmit, hookSetTransmitClient);
 				GetClientWeapons(i);
@@ -387,7 +386,7 @@ public void OnConfigsExecuted() {
 
 public void OnClientCookiesCached(int client) {
 	char sValue[8];
-	GetClientCookie(client, g_hJAMessageCookie, sValue, sizeof(sValue));
+	g_hJAMessageCookie.Get(client, sValue, sizeof(sValue));
 	g_bHideMessage[client] = (sValue[0] != '\0' && StringToInt(sValue));
 }
 
@@ -1231,7 +1230,7 @@ public Action cmdToggleHardcore(int client, int args) {
 public Action cmdHideMessage(int client, int args) {
 	g_bHideMessage[client] = !g_bHideMessage[client];
 	PrintJAMessage(client, "Messages will now be%s %s", cTheme2, g_bHideMessage[client]?"hidden":"displayed");
-	SetClientCookie(client, g_hJAMessageCookie, g_bHideMessage[client]?"1":"0");
+	g_hJAMessageCookie.Set(client, g_bHideMessage[client]?"1":"0");
 	return Plugin_Handled;
 }
 
