@@ -1006,10 +1006,11 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 		if (GetPlayersStillRacing(raceID) == 0) {
 			PrintToRace(raceID, "[%sJA\x01] Everyone has finished the race.", cTheme1);
 			for (int player = 1; player <= MaxClients; player++) {
-				if (g_iRaceID[player] == raceID || IsClientSpectatingRace(player, raceID)) {
+				if (IsClientInGame(player) && g_iRaceID[player] == raceID || IsClientSpectatingRace(player, raceID)) {
 					displayRaceTimesMenu(player, player);
 				}
 			}
+			
 			ResetRace(raceID);
 			g_iRaceStatus[raceID] = STATUS_NONE;
 		}
