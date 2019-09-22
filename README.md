@@ -7,10 +7,9 @@
 Syntax updates  
 Database structure  
 Improved race functionality  
-Removed soundhook sound blocking (Included in TF2-Hide plugin)  
+Integrated hide plugin  
 Changed chat messages/colors (Change theme colors by editing cTheme1/2 and recompiling)  
 Removed updater.  
-Removed sm_goto (Available in another plugin used on ECJ)  
 Removed speedrun functionality (Available in self-race)  
 Showkeys improvements (Efficiency/responsiveness. Also improved /skeyspos)  
 Tons of other undocumented misc changes.  
