@@ -287,7 +287,7 @@ public void OnPluginStart() {
 		}
 		// HIDE
 		int ent = -1;
-		while((ent = FindEntityByClassname(ent, "item_teamflag")) != INVALID_ENT_REFERENCE) {
+		while((ent = FindEntityByClassname(ent, "item_teamflag")) != -1) {
 			SDKHook(ent, SDKHook_SetTransmit, hookSetTransmitIntel);
 		}
 	}
@@ -318,6 +318,7 @@ public void OnMapStart() {
 		ResetRace(i);
 		g_iLastTeleport[i] = 0;
 	}
+
 	if (g_Database != null) {
 		LoadMapCFG();
 	}
@@ -345,7 +346,7 @@ void SetUpCapturePoints() {
 	int idx;
 	char name[64];
 	char areaidx[3];
-	while ((entity = FindEntityByClassname(entity, "team_control_point")) != INVALID_ENT_REFERENCE) {
+	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1) {
 		GetEntPropString(entity, Prop_Data, "m_iszPrintName", name, sizeof(name));
 		idx = GetEntProp(entity, Prop_Data, "m_iPointIndex");
 		FormatEx(areaidx, sizeof(areaidx), "%i", idx);
@@ -356,7 +357,7 @@ void SetUpCapturePoints() {
 		cpCount++;
 	}
 
-	while ((entity = FindEntityByClassname(entity, "trigger_capture_area")) != INVALID_ENT_REFERENCE) {
+	while ((entity = FindEntityByClassname(entity, "trigger_capture_area")) != -1) {
 		SDKHook(entity, SDKHook_StartTouchPost, hookCPStartTouchPost);
 
 		GetEntPropString(entity, Prop_Data, "m_iszCapPointName", name, sizeof(name));
@@ -763,7 +764,7 @@ public void eventPlayerChangeTeam(Event event, const char[] name, bool dontBroad
 
 	if (g_iIntelCarrier == client) {
 		int ent = -1;
-		while((ent = FindEntityByClassname(ent, "item_teamflag")) != INVALID_ENT_REFERENCE) {
+		while((ent = FindEntityByClassname(ent, "item_teamflag")) != -1) {
 			AcceptEntityInput(ent, "ForceDrop");
 			AcceptEntityInput(ent, "ForceReset");
 			g_iIntelCarrier = 0;
@@ -1462,7 +1463,7 @@ void CheckBeggars(int client) {
 
 void HookFuncRegenerate() {
 	int entity = -1;
-	while ((entity = FindEntityByClassname(entity, "func_regenerate")) != INVALID_ENT_REFERENCE) {
+	while ((entity = FindEntityByClassname(entity, "func_regenerate")) != -1) {
 		// Support for concmap*, and quad* maps that are imported from TFC.
 		SDKUnhook(entity, SDKHook_StartTouch, hookStartTouchFuncRegenerate);
 		SDKUnhook(entity, SDKHook_Touch, hookStartTouchFuncRegenerate);
