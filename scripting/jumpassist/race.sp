@@ -249,7 +249,7 @@ void displayRaceCPMenu(int client, bool serverRace = false) {
 			GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 			IntToString(pIndex, buffer, sizeof(buffer));
 			menu.AddItem(buffer, cpName);
-			count++;
+			++count;
 		}		
 	}
 
@@ -692,7 +692,7 @@ int GetPlayersStillRacing(int raceID) {
 	int players;
 	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInRace(i, raceID) && !IsPlayerFinishedRacing(i)) {
-			players++;
+			++players;
 		}
 	}
 	if (players != 0) {

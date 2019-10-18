@@ -127,7 +127,7 @@ int IsStringNumeric(const char[] MyString) {
 		if (!IsCharNumeric(MyString[n])) {
 			return false;
 		}
-		n++;
+		++n;
 	}
 	
 	return true;

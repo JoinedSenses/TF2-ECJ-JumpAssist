@@ -1038,7 +1038,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	}
 
 	g_bCPTouched[client][area] = true;
-	g_iCPsTouched[client]++;
+	++g_iCPsTouched[client];
 	return Plugin_Continue;
 }
 
