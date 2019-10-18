@@ -303,7 +303,7 @@ int menuHandlerServerRaceCP(Menu menu, MenuAction action, int param1, int param2
 
 			g_iRaceEndPoint[param1] = StringToInt(info);
 			Panel panel;
-			for (int i = 1; i <= MaxClients; i++) {
+			for (int i = 1; i <= MaxClients; ++i) {
 				if (IsValidClient(i) && param1 != i && !g_bWaitingInvite[i] && g_iRaceID[i] == 0) {
 					FormatEx(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
 					g_iRaceInvitedTo[i] = param1;
@@ -336,7 +336,7 @@ void displayRaceInviteMenu(int client) {
 	menu.ExitBackButton = true;	
 	menu.AddItem("*[Begin Race]*","*[Begin Race]*");
 
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsValidClient(i) && i != client && !g_bWaitingInvite[i] && g_iRaceID[i] < 1) {
 			IntToString(i, buffer, sizeof(buffer));
 			GetClientName(i, clientName, sizeof(clientName));
@@ -453,7 +453,7 @@ void displayRaceTimesMenu(int client, int clientToShow) {
 	panel.DrawText(" ");
 	
 	int racer;
-	for (int i = 0; i <= MaxClients && (racer = g_iRaceFinishedPlayers[race][i]) != 0; i++) {
+	for (int i = 0; i <= MaxClients && (racer = g_iRaceFinishedPlayers[race][i]) != 0; ++i) {
 		space = true;
 		racerTimes = TimeFormat(g_fRaceTimes[race][i] - g_fRaceStartTime[race]);
 
@@ -473,7 +473,7 @@ void displayRaceTimesMenu(int client, int clientToShow) {
 	}
 
 	char name[32];
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInGame(i) && IsClientInRace(i, race) && !IsPlayerFinishedRacing(i)) {
 			GetClientName(i, name, sizeof(name));
 			panel.DrawText(name);
@@ -542,7 +542,7 @@ void BeginRace(int raceid) {
 	LockRacePlayers(raceid);
 	
 	// apply race settings
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInRace(i, raceid)) {
 			g_bAmmoRegen[i] = g_bRaceAmmoRegen[g_iRaceID[i]];
 		}
@@ -556,7 +556,7 @@ void BeginRace(int raceid) {
 }
 
 void SendRaceToStart(int raceid, TFClassType class, int team) {
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInRace(i, raceid)) {
 			// Get client's pre-race info so they can have it restored after a race.
 			PreRaceClientRetrieve(i);
@@ -671,7 +671,7 @@ char[] FormatTimeComponent(int time) {
 void PrintToRace(int raceID, char[] message, any ...) {
 	char output[1024];
 	VFormat(output, sizeof(output), message, 3);
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInGame(i) && (IsClientInRace(i, raceID) || IsClientSpectatingRace(i, raceID))) {
 			PrintJAMessage(i, "%s", output);
 		}
@@ -681,7 +681,7 @@ void PrintToRace(int raceID, char[] message, any ...) {
 void PrintToRaceEx(int raceID, char[] message, any ...) {
 	char output[1024];
 	VFormat(output, sizeof(output), message, 3);
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInGame(i) && (IsClientInRace(i, raceID) || IsClientSpectatingRace(i, raceID))) {
 			PrintColoredChat(i, "%s", output);
 		}		
@@ -690,7 +690,7 @@ void PrintToRaceEx(int raceID, char[] message, any ...) {
 
 int GetPlayersStillRacing(int raceID) {
 	int players;
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInRace(i, raceID) && !IsPlayerFinishedRacing(i)) {
 			players++;
 		}
@@ -702,7 +702,7 @@ int GetPlayersStillRacing(int raceID) {
 }
 
 void LockRacePlayers(int raceID) {
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInRace(i, raceID)) {
 			g_bRaceLocked[i] = true;
 		}
@@ -710,7 +710,7 @@ void LockRacePlayers(int raceID) {
 }
 
 void UnlockRacePlayers(int raceID) {
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInRace(i, raceID)) {
 			g_bRaceLocked[i] = false;
 		}
@@ -731,7 +731,7 @@ void LeaveRace(int client, bool raceFinished = false) {
 
 	if (client == raceID) {
 		if (HasRaceStarted(raceID)) {
-			for (int i = 1; i <= MaxClients; i++) {
+			for (int i = 1; i <= MaxClients; ++i) {
 				if (IsClientInRace(i, raceID) && IsClientRacing(i) && !IsRaceLeader(i, raceID)) {
 					int newRace = i;
 					int emptyInt[32];
@@ -751,7 +751,7 @@ void LeaveRace(int client, bool raceFinished = false) {
 					g_bRaceLocked[client] = false;
 					g_iRaceEndPoint[client] = -1;
 					// assign race to someone else if leader has left
-					for (int j = 1; j <= MaxClients; j++) {
+					for (int j = 1; j <= MaxClients; ++j) {
 						if (IsClientRacing(j) && !IsRaceLeader(j, raceID)) {
 							g_iRaceID[j] = newRace;
 						}
@@ -779,7 +779,7 @@ void LeaveRace(int client, bool raceFinished = false) {
 }
 
 void ResetRace(int raceID, bool raceEnded = true) {
-	for (int i = 0; i <= MaxClients; i++) {
+	for (int i = 0; i <= MaxClients; ++i) {
 		if (g_iRaceID[i] == raceID) {
 			g_iRaceID[i] = 0;
 			g_iRaceStatus[i] = STATUS_NONE;

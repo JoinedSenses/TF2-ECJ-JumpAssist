@@ -6,7 +6,7 @@ ArrayList g_aGoToRecent[MAXPLAYERS+1];
 */
 
 void CreateGoToArrays() {
-	for (int i = 0; i <= MaxClients; i++) {
+	for (int i = 0; i <= MaxClients; ++i) {
 		g_aGoToRecent[i] = new ArrayList();
 	}
 }
@@ -53,7 +53,7 @@ public Action cmdBring(int client, int argc) {
 	float fPosition[3];
 	GetClientAbsOrigin(client, fPosition);
 	
-	for (int  i; i < iReturn; i++) {
+	for (int i = 0; i < iReturn; ++i) {
 		TeleportEntity(iTargetsArray[i], fPosition, NULL_VECTOR, NULL_VECTOR);
 		PrintJAMessage(iTargetsArray[i], "%s%N\x01 has brought you to their position", cTheme2, client);
 	}
@@ -189,7 +189,7 @@ public Action cmdSendPlayer(int client,int args) {
 void MainMenu(int client) {
 	Menu menu = new Menu(MenuHandler_Main, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem);
 	menu.SetTitle("GoTo Menu!");
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsValidClient(i) && IsPlayerAlive(i) && !IsClientPreviewing(i)) {
 			char name[MAX_NAME_LENGTH];
 			FormatEx(name, sizeof(name), "%N", i);

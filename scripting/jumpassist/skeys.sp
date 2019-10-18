@@ -110,7 +110,7 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 */
 
 void SetAllSkeysDefaults() {
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		SetSkeysDefaults(i);
 	}
 }

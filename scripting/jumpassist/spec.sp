@@ -205,7 +205,7 @@ void menuSpec(int client, bool lock = false) {
 	int id;
 	char userid[6];
 	char clientName[MAX_NAME_LENGTH];
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if ((id = isValidClient(i)) > 0 && client != i) {
 			FormatEx(userid, sizeof(userid), "%i", id);
 			FormatEx(clientName, sizeof(clientName), "%N", i);

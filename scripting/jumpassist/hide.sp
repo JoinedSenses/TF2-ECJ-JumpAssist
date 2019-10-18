@@ -47,7 +47,7 @@ public void OnEntityCreated(int entity, const char[] classname) {
 		return;
 	}
 
-	for (int i = 0; i < sizeof(g_sOwnerList); i++) {
+	for (int i = 0; i < sizeof(g_sOwnerList); ++i) {
 		if (StrContains(classname, g_sOwnerList[i]) != -1) {
 			SDKHook(entity, SDKHook_SetTransmit, hookSetTransmitOwnerEntity);
 			return;
@@ -68,7 +68,7 @@ public void OnEntityCreated(int entity, const char[] classname) {
 		}
 	}
 
-	for (int i = 0; i < sizeof(g_sGeneralList); i++) {
+	for (int i = 0; i < sizeof(g_sGeneralList); ++i) {
 		if (StrContains(classname, g_sGeneralList[i]) != -1) {
 			SDKHook(entity, SDKHook_SetTransmit, hookSetTransmitProjectiles);
 			return;
@@ -112,14 +112,14 @@ public Action cmdHide(int client, int args) {
 
 public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags, char soundEntry[PLATFORM_MAX_PATH], int &seed) {
 	//Block sounds within g_sSoundHook list.
-	for (int i = 0; i < sizeof(g_sSoundHook); i++) {
+	for (int i = 0; i < sizeof(g_sSoundHook); ++i) {
 		if (StrContains(sample, g_sSoundHook[i], false) != -1) {
 			return Plugin_Stop; 
 		}
 	}
 
 	// stop sounds coming from clients in preview mode.
-	for (int i = 0; i < numClients; i++) {
+	for (int i = 0; i < numClients; ++i) {
 		int client = clients[i];
 		if (IsClientPreviewing(client) && entity == client) {
 			return Plugin_Stop;
@@ -141,11 +141,11 @@ public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PL
 		owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 	}
 
-	for (int i = 0; i < numClients; i++) {
+	for (int i = 0; i < numClients; ++i) {
 		int client = clients[i];
 		if (!IsClientInGame(client) || (IsValidClient(client) && IsClientHiding(client) && client != entity && client != owner && g_iClientTeam[client] != 1)) {
 			//Remove the client from the array if they have hide toggled, if they are not the creator of the sound, and if they are not in spectate.
-			for (int j = i; j < numClients-1; j++) {
+			for (int j = i; j < numClients-1; ++j) {
 				clients[j] = clients[j+1];
 			}
 			numClients--;
@@ -247,7 +247,7 @@ public Action hookTouch(int entity, int other) {
 */
 
 bool checkHooks() {	
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsValidClient(i) && g_bHide[i]) {
 			return true;
 		}

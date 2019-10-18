@@ -15,10 +15,10 @@ void SQL_OnConnect(Database db, const char[] error, any data) {
 	if (g_bLateLoad) {
 		LoadMapCFG();
 
-		for (int client = 1; client <= MaxClients; client++) {
-			if (IsValidClient(client)) {
-				ReloadPlayerData(client);
-				LoadPlayerProfile(client);		
+		for (int i = 1; i <= MaxClients; ++i) {
+			if (IsValidClient(i)) {
+				ReloadPlayerData(i);
+				LoadPlayerProfile(i);		
 			}
 		}
 	}

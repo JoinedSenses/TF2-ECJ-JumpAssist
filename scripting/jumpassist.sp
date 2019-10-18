@@ -272,7 +272,7 @@ public void OnPluginStart() {
 	if (g_bLateLoad) {
 		PrintJAMessageAll("%sJumpAssist\x01 has been%s reloaded.", cTheme2, cTheme2);
 		GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
-		for (int i = 1; i <= MaxClients; i++) {
+		for (int i = 1; i <= MaxClients; ++i) {
 			if (IsValidClient(i)) {
 				g_iClientTeam[i] = GetClientTeam(i);
 				g_TFClientClass[i] = TF2_GetPlayerClass(i);
@@ -298,7 +298,7 @@ public void OnAllPluginsLoaded() {
 }
 
 public void OnPluginEnd() {
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientPreviewing(i)) {
 		   DisablePreview(i, IsClientInGame(i));
 		   PrintJAMessage(i, "Plugin reloading: Restoring location");
@@ -314,7 +314,7 @@ public void OnMapStart() {
 	g_bCPFallback = false;
 	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		ResetRace(i);
 		g_iLastTeleport[i] = 0;
 	}
@@ -354,7 +354,7 @@ void SetUpCapturePoints() {
 		g_smCapturePoint.SetValue(name, idx);
 		g_smCapturePointName.SetString(areaidx, name);
 
-		cpCount++;
+		++cpCount;
 	}
 
 	while ((entity = FindEntityByClassname(entity, "trigger_capture_area")) != -1) {
@@ -370,7 +370,7 @@ void SetUpCapturePoints() {
 		AcceptEntityInput(entity, "SetTeamCanCap");
 		SetVariantString("3 0");
 		AcceptEntityInput(entity, "SetTeamCanCap");
-		g_iCPCount++;
+		++g_iCPCount;
 	}
 	//PrintToChatAll("CPCount = %i trigger count = %i", cpCount, g_iCPCount);
 	if (cpCount < g_iCPCount) {
@@ -420,7 +420,7 @@ public void OnClientPostAdminCheck(int client) {
 }
 
 public void OnGameFrame() {
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInGame(i)) {
 			g_iButtons[i] = GetClientButtons(i);
 		}
@@ -519,7 +519,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	}
 
 	if (g_bAmmoRegen[client] && buttons & (IN_ATTACK|IN_ATTACK2) && !IsClientObserver(client)) {
-		for (int i = 0; i <= 2; i++) {
+		for (int i = 0; i <= 2; ++i) {
 			ReSupply(client, g_iClientWeapons[client][i]);
 		}
 	}
@@ -816,7 +816,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	}
 
 	// spec lock
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (g_iSpecTarget[i] == client) {
 			FakeClientCommand(i, "spec_player #%i", GetClientUserId(client));
 			FakeClientCommand(i, "spec_mode 1");
@@ -880,7 +880,7 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 
 	// spec lock
 	g_iSpecTarget[client] = 0;
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (g_iSpecTarget[i] == client) {
 			g_iSpecTarget[i] = 0;
 		}
@@ -963,16 +963,16 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 			FormatEx(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 won the race in%s %s\x01!", cTheme1, cTheme2, client, cTheme2, timeString);
 			g_fRaceFirstTime[raceID] = time;
 			g_iRaceStatus[raceID] = STATUS_WAITING;
-			for (int i = 0; i < MaxClients; i++) {
+			for (int i = 0; i <= MaxClients; ++i) {
 				if (g_iRaceFinishedPlayers[raceID][i] == 0) {
 					g_iRaceFinishedPlayers[raceID][i] = client;
 					g_fRaceTimes[raceID][i] = time;
 					break;
 				}
 			}
-			for (int j = 1; j <= MaxClients; j++) {
-				if (g_iRaceID[j] == raceID) {
-					EmitSoundToClient(j, "misc/killstreak.wav");
+			for (int i = 1; i <= MaxClients; ++i) {
+				if (g_iRaceID[i] == raceID) {
+					EmitSoundToClient(i, "misc/killstreak.wav");
 				}
 			}
 		}
@@ -983,7 +983,7 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 			float diff = time - firstTime;
 			diffFormatted = TimeFormat(diff);
 			
-			for (int i = 0; i < MaxClients; i++) {
+			for (int i = 0; i < MaxClients; ++i) {
 				if (g_iRaceFinishedPlayers[raceID][i] == 0) {
 					g_iRaceFinishedPlayers[raceID][i] = client;
 					g_fRaceTimes[raceID][i] = time;
@@ -991,9 +991,9 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 				}
 			}
 			FormatEx(buffer, sizeof(buffer), "[%sJA\x01]%s %N\x01 finished the race in%s %s \x01(%s+%s\x01)!", cTheme1, cTheme2, client, cTheme2, timeString, cTheme2, diffFormatted);
-			for (int j = 1; j <= MaxClients; j++) {
-				if (g_iRaceID[j] == raceID) {
-					EmitSoundToClient(j, "misc/freeze_cam.wav");
+			for (int i = 1; i <= MaxClients; ++i) {
+				if (g_iRaceID[i] == raceID) {
+					EmitSoundToClient(i, "misc/freeze_cam.wav");
 				}
 			}
 		}
@@ -1006,9 +1006,9 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 
 		if (GetPlayersStillRacing(raceID) == 0) {
 			PrintToRace(raceID, "[%sJA\x01] Everyone has finished the race.", cTheme1);
-			for (int player = 1; player <= MaxClients; player++) {
-				if (IsClientInGame(player) && g_iRaceID[player] == raceID || IsClientSpectatingRace(player, raceID)) {
-					displayRaceTimesMenu(player, player);
+			for (int i = 1; i <= MaxClients; ++i) {
+				if (IsClientInGame(i) && g_iRaceID[i] == raceID || IsClientSpectatingRace(i, raceID)) {
+					displayRaceTimesMenu(i, i);
 				}
 			}
 			
@@ -1089,7 +1089,7 @@ public Action hookVoice(UserMsg msg_id, BfRead bf, const int[] players, int play
 
 	if (IsValidClient(client) && IsPlayerAlive(client)) {
 		if ((vMenu1 == 0) && (vMenu2 == 0) && !g_bHardcore[client] && (!g_iRaceID[client] || g_fRaceTime[client] != 0.0)) {
-			for (int i = 0; i <= 2; i++) {
+			for (int i = 0; i <= 2; ++i) {
 				ReSupply(client, g_iClientWeapons[client][i]);
 			}
 			if (g_TFClientClass[client] == TFClass_Engineer) {
@@ -1475,7 +1475,7 @@ void HookFuncRegenerate() {
 }
 
 void GetClientWeapons(int client) {
-	for (int i = 0; i <= 2; i++) {
+	for (int i = 0; i <= 2; ++i) {
 		g_iClientWeapons[client][i] = GetPlayerWeaponSlot(client, i);
 	}
 }
@@ -1645,8 +1645,8 @@ void EraseLocs(int client) {
 	g_fOrigin[client] = NULL_VECTOR;
 	g_fAngles[client] = NULL_VECTOR;
 
-	for (int j = 0; j < MAX_CAP_POINTS; j++) {
-		g_bCPTouched[client][j] = false;
+	for (int i = 0; i < MAX_CAP_POINTS; ++i) {
+		g_bCPTouched[client][i] = false;
 	}
 
 	g_iCPsTouched[client] = 0;
@@ -1660,7 +1660,7 @@ void CheckTeams() {
 
 	CreateTimer(0.1, timerMapSetUsed);
 	g_bMapSetUsed = true;
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (!IsClientInGame(i) || IsClientObserver(i) || g_iClientTeam[i] == g_iForceTeam) {
 			continue;
 		}
@@ -1828,7 +1828,7 @@ void PrintJAMessageAll(char[] message, any...) {
 	char output[1024];
 	VFormat(output, sizeof(output), message, 2);
 
-	for (int i = 1; i <= MaxClients; i++) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsValidClient(i)) {
 			PrintColoredChatEx(i, CHAT_SOURCE_SERVER, "[%sJA\x01] %s", cTheme1, output);
 		}
