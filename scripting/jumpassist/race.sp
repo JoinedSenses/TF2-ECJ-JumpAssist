@@ -825,7 +825,7 @@ void PostRaceClientRestore(int client) {
 	g_bCPTouched[client] = g_bClientPreRaceCPTouched[client];
 	TF2_SetPlayerClass(client, g_TFClientPreRaceClass[client]);
 	ChangeClientTeam(client, g_iClientPreRaceTeam[client]);
-	TeleportEntity(client, g_fClientPreRaceOrigin[client], g_fClientPreRaceAngles[client], nullVector);
+	TeleportEntity(client, g_fClientPreRaceOrigin[client], g_fClientPreRaceAngles[client], EmptyVector());
 	PrintJAMessage(client, "Pre-race status has been%s restored\x01.", cTheme2);
 }
 

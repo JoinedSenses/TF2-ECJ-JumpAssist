@@ -81,7 +81,7 @@ void DisablePreview(int client, bool restore = false, bool click = false) {
 
 	if (restore) {
 		int flags = GetEntityFlags(client);
-		TeleportEntity(client, g_fPreviewOrigin[client], g_fPreviewAngles[client], nullVector);
+		TeleportEntity(client, g_fPreviewOrigin[client], g_fPreviewAngles[client], EmptyVector());
 
 		SetEntityMoveType(client, MOVETYPE_WALK);
 		SetEntityFlags(client, flags & ~(FL_DONTTOUCH|FL_NOTARGET|FL_FLY));

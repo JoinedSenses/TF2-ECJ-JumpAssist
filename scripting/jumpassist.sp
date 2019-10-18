@@ -85,8 +85,7 @@ float
 	  g_fOrigin[MAXPLAYERS+1][3]
 	, g_fAngles[MAXPLAYERS+1][3]
 	, g_fLastSavePos[MAXPLAYERS+1][3]
-	, g_fLastSaveAngles[MAXPLAYERS+1][3]
-	, nullVector[3];
+	, g_fLastSaveAngles[MAXPLAYERS+1][3];
 TFClassType
 	  g_TFClientClass[MAXPLAYERS+1];
 ConVar
@@ -525,7 +524,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	}
 
 	if (g_bRaceLocked[client]) {
-		vel = nullVector;
+		vel = EmptyVector();
 		buttons = 0;
 	}
 
@@ -733,9 +732,9 @@ public Action listenerJoinTeam(int client, const char[] command, int args) {
 		return Plugin_Handled;
 	}
 
-	g_fOrigin[client] = NULL_VECTOR;
-	g_fAngles[client] = NULL_VECTOR;
-	g_fLastSavePos[client] = NULL_VECTOR;
+	g_fOrigin[client] = EmptyVector();
+	g_fAngles[client] = EmptyVector();
+	g_fLastSavePos[client] = EmptyVector();
 
 	if (newTeam == TEAM_SPECTATOR || g_iForceTeam < 2 || newTeam == g_iForceTeam) {
 		// if client joining spec, no team forced, or client joining already forced team,
@@ -825,7 +824,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 
 	g_iSpecTarget[client] = 0;
 	g_bUnkillable[client] = false;
-	g_fLastSavePos[client] = NULL_VECTOR;
+	g_fLastSavePos[client] = EmptyVector();
 	g_iRaceSpec[client] = 0;
 
 	if (IsClientPreviewing(client)) {
@@ -1169,7 +1168,7 @@ public Action cmdRestart(int client, int args) {
 }
 
 public Action cmdUndo(int client, int args) {
-	if (IsZeroVector(g_fLastSavePos[client])) {
+	if (IsEmptyVector(g_fLastSavePos[client])) {
 		PrintJAMessage(client, "%sNo save\x01 to restore\x01.", cTheme2);
 		return Plugin_Handled;
 	}
@@ -1177,8 +1176,8 @@ public Action cmdUndo(int client, int args) {
 	g_fOrigin[client] = g_fLastSavePos[client];
 	g_fAngles[client] = g_fLastSaveAngles[client];
 		
-	g_fLastSavePos[client] = NULL_VECTOR;
-	g_fLastSaveAngles[client] = NULL_VECTOR;
+	g_fLastSavePos[client] = EmptyVector();
+	g_fLastSaveAngles[client] = EmptyVector();
 		
 	PrintJAMessage(client, "Previous save has been%s restored\x01.", cTheme2);
 	return Plugin_Handled;
@@ -1405,14 +1404,14 @@ void Teleport(int client) {
 	strcopy(teamName, sizeof(teamName), (g_iClientTeam[client] == TEAM_RED) ? "Red Team" : "Blue Team");
 	teamColor = (g_iClientTeam[client] == TEAM_RED) ? cRedTeam : cBlueTeam;
 
-	if (IsZeroVector(g_fOrigin[client])) {
+	if (IsEmptyVector(g_fOrigin[client])) {
 		char className[33];
 		GetClassName(g_TFClientClass[client], className, sizeof(className));
 		PrintJAMessage(client, "You don't have a save for%s %s\x01 on the%s %s\x01.", teamColor, className, teamColor, teamName);
 		return;
 	}
 
-	TeleportEntity(client, g_fOrigin[client], g_fAngles[client], nullVector);
+	TeleportEntity(client, g_fOrigin[client], g_fAngles[client], EmptyVector());
 	if (!g_bHideMessage[client]) {
 		PrintJAMessage(client, "You have been%s teleported\x01.", cTheme2);
 	}
@@ -1642,8 +1641,8 @@ void EraseLocs(int client) {
 		return;
 	}
 	
-	g_fOrigin[client] = NULL_VECTOR;
-	g_fAngles[client] = NULL_VECTOR;
+	g_fOrigin[client] = EmptyVector();
+	g_fAngles[client] = EmptyVector();
 
 	for (int i = 0; i < MAX_CAP_POINTS; ++i) {
 		g_bCPTouched[client][i] = false;
@@ -1788,8 +1787,13 @@ bool IsValidWeapon(int entity) {
 	return (IsValidEntity(entity) && GetEntityClassname(entity, strClassname, sizeof(strClassname)) && StrContains(strClassname, "tf_weapon", false) != -1);
 }
 
-bool IsZeroVector(float vector[3]) {
+bool IsEmptyVector(float vector[3]) {
 	return vector[0] == 0.0 && vector[1] == 0.0 && vector[2] == 0.0;
+}
+
+float[3] EmptyVector() {
+	static float empty[3];
+	return empty;
 }
 
 int FindTarget2(int client, const char[] target, bool nobots = false, bool immunity = true) {

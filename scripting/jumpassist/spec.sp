@@ -368,7 +368,7 @@ void frameRequestFSpecRestore(int client) {
 		TF2_SetPlayerClass(client, g_TFFSpecClass[client]);
 	}
 
-	TeleportEntity(client, g_vFSpecOrigin[client], g_vFSpecAngles[client], nullVector);
+	TeleportEntity(client, g_vFSpecOrigin[client], g_vFSpecAngles[client], EmptyVector());
 	CreateTimer(5.0, timerDisableFSpec, client);
 }
 

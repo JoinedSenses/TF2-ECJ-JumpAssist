@@ -174,7 +174,7 @@ public Action cmdSendPlayer(int client,int args) {
 	GetClientAbsOrigin(target2, TargetOrigin);
 	GetClientAbsAngles(target2, pAngle);
 	
-	TeleportEntity(target1, TargetOrigin, pAngle, nullVector);
+	TeleportEntity(target1, TargetOrigin, pAngle, EmptyVector());
 	
 	PrintJAMessage(client, "Sent%s %N\x01 to%s %N\x01.", cTheme2, target1, cTheme2, target2);
 	PrintJAMessage(target1, "%s%N\x01 sent you to%s %N\x01.", cTheme2, client, cTheme2, target2);
