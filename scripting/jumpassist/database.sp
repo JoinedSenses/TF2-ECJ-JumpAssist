@@ -13,11 +13,12 @@ void SQL_OnConnect(Database db, const char[] error, any data) {
 	RunDBCheck();
 
 	if (g_bLateLoad) {
+		LoadMapCFG();
+
 		for (int client = 1; client <= MaxClients; client++) {
 			if (IsValidClient(client)) {
 				ReloadPlayerData(client);
-				LoadPlayerProfile(client);
-				LoadMapCFG();
+				LoadPlayerProfile(client);		
 			}
 		}
 	}
