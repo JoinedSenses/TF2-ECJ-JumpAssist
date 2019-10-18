@@ -9,6 +9,9 @@ void SQL_OnConnect(Database db, const char[] error, any data) {
 		return;
 	}
 	g_Database = db;
+	
+	RunDBCheck();
+
 	if (g_bLateLoad) {
 		for (int client = 1; client <= MaxClients; client++) {
 			if (IsValidClient(client)) {
@@ -18,7 +21,7 @@ void SQL_OnConnect(Database db, const char[] error, any data) {
 			}
 		}
 	}
-	RunDBCheck();
+	
 }
 
 void RunDBCheck() {
