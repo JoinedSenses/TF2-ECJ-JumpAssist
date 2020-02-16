@@ -24,6 +24,7 @@
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
 #define MAX_CAP_POINTS 32
+#define WELCOMEPREFIX "\x07FFA500[\x03+\x07FFA500] "
 
 #include <sourcemod>
 #include <jumpassist>
@@ -407,7 +408,7 @@ public void OnClientPostAdminCheck(int client) {
 
 	// Welcome message.
 	if (g_cvarWelcomeMsg.BoolValue) {
-		CreateTimer(15.0, WelcomePlayer, client);
+		CreateTimer(15.0, timerWelcomePlayer, GetClientUserId(client));
 	}
 
 	if (!GetClientAuthId(client, AuthId_Steam2, g_sClientSteamID[client], sizeof(g_sClientSteamID[]))) {
@@ -1863,8 +1864,9 @@ void framerequestRespawn(any data) {
 	}
 }
 
-Action WelcomePlayer(Handle timer, int client) {
-	if (!IsClientInGame(client)) {
+Action timerWelcomePlayer(Handle timer, int userid) {
+	int client = GetClientOfUserId(userid);
+	if (!client || !IsClientInGame(client)) {
 		return Plugin_Handled;
 	}
 
@@ -1872,13 +1874,13 @@ Action WelcomePlayer(Handle timer, int client) {
 	g_cvarHostname.GetString(sHostname, sizeof(sHostname));
 
 	PrintColoredChat(client, "\n \x03--------------------------------------------------------");
-	PrintColoredChat(client, "\x07FFA500[\x03+\x07FFA500]\x01 Welcome to\x079999FF %s", sHostname);
-	PrintColoredChat(client, "\x07FFA500[\x03+\x07FFA500]\x01 For help with\x03 JumpAssist\x01, type\x07FFA500 !ja_help");
-	PrintColoredChat(client, "\x07FFA500[\x03+\x07FFA500]\x01 For server information, type\x07FFA500 !help");
-	PrintColoredChat(client, "\x07FFA500[\x03+\x07FFA500]\x03 Be nice to fellow jumpers");
-	PrintColoredChat(client, "\x07FFA500[\x03+\x07FFA500]\x03 No trade chat");
-	PrintColoredChat(client, "\x07FFA500[\x03+\x07FFA500]\x03 No complaining");
-	PrintColoredChat(client, "\x07FFA500[\x03+\x07FFA500]\x03 No chat/voice spam");
+	PrintColoredChat(client, WELCOMEPREFIX ... "\x01Welcome to\x079999FF %s", sHostname);
+	PrintColoredChat(client, WELCOMEPREFIX ... "\x01For help with\x03 JumpAssist\x01, type\x07FFA500 !ja_help");
+	PrintColoredChat(client, WELCOMEPREFIX ... "\x01For server information, type\x07FFA500 !help");
+	PrintColoredChat(client, WELCOMEPREFIX ... "\x03Be nice to fellow jumpers");
+	PrintColoredChat(client, WELCOMEPREFIX ... "\x03No trade chat");
+	PrintColoredChat(client, WELCOMEPREFIX ... "\x03No complaining");
+	PrintColoredChat(client, WELCOMEPREFIX ... "\x03No chat/voice spam");
 	return Plugin_Handled;
 }
 
