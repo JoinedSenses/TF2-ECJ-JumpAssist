@@ -19,7 +19,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.9"
+#define PLUGIN_VERSION "2.3.10"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
@@ -235,6 +235,7 @@ public void OnPluginStart() {
 	AddCommandListener(listenerJoinTeam, "jointeam");
 	AddCommandListener(listenerJoinClass, "joinclass");
 	AddCommandListener(listenerJoinClass, "join_class");
+	AddCommandListener(listenerAutoTeam, "autoteam");
 
 	// HIDE
 	AddNormalSoundHook(hookSound);
@@ -753,6 +754,10 @@ public Action listenerJoinTeam(int client, const char[] command, int args) {
 		return Plugin_Continue;
 	}
 
+	return Plugin_Handled;
+}
+
+public Action listenerAutoTeam(int client, const char[] command, int args) {
 	return Plugin_Handled;
 }
 
@@ -1698,7 +1703,7 @@ void JAHelpMenu(int client) {
 	delete panel;
 }
 
-int menuHandlerJAHelp(Menu menu, MenuAction action, int client, int choice) {
+public int menuHandlerJAHelp(Menu menu, MenuAction action, int client, int choice) {
 	Panel panel = new Panel();
 	switch (choice) {
 		case 1: {
@@ -1753,7 +1758,7 @@ int menuHandlerJAHelp(Menu menu, MenuAction action, int client, int choice) {
 	delete panel;
 }
 
-int menuHandlerJAHelpSubMenu(Menu menu, MenuAction action, int param1, int param2) {
+public int menuHandlerJAHelpSubMenu(Menu menu, MenuAction action, int param1, int param2) {
 	switch (param2) {
 		case 1: {
 			cmdJAHelp(param1, 0);
@@ -1864,7 +1869,7 @@ void framerequestRespawn(any data) {
 	}
 }
 
-Action timerWelcomePlayer(Handle timer, int userid) {
+public Action timerWelcomePlayer(Handle timer, int userid) {
 	int client = GetClientOfUserId(userid);
 	if (!client || !IsClientInGame(client)) {
 		return Plugin_Handled;
@@ -1884,18 +1889,18 @@ Action timerWelcomePlayer(Handle timer, int userid) {
 	return Plugin_Handled;
 }
 
-Action timerSpawnedBool(Handle timer, int client) {
+public Action timerSpawnedBool(Handle timer, int client) {
 	g_bJustSpawned[client] = false;
 }
 
-Action timerMapSetUsed(Handle timer) {
+public Action timerMapSetUsed(Handle timer) {
 	g_bMapSetUsed = false;
 }
 
-Action timerUnfreeze(Handle timer, int client) {
+public Action timerUnfreeze(Handle timer, int client) {
 	SetEntityFlags(client, GetEntityFlags(client) & ~(FL_ATCONTROLS|FL_FROZEN));
 }
 
-Action timerUnpauseTeleport(Handle timer, int client) {
+public Action timerUnpauseTeleport(Handle timer, int client) {
 	g_bTelePaused[client] = true;
 }

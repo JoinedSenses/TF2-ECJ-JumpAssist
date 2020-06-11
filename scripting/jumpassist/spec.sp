@@ -372,6 +372,6 @@ void frameRequestFSpecRestore(int client) {
 	CreateTimer(5.0, timerDisableFSpec, client);
 }
 
-Action timerDisableFSpec(Handle timer, int  client) {
+public Action timerDisableFSpec(Handle timer, int  client) {
 	DisableForceSpec(client);
 }

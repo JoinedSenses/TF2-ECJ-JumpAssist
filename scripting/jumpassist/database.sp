@@ -2,7 +2,7 @@ void ConnectToDatabase() {
 	Database.Connect(SQL_OnConnect, "jumpassist");
 }
 
-void SQL_OnConnect(Database db, const char[] error, any data) {
+public void SQL_OnConnect(Database db, const char[] error, any data) {
 	if (db == null || strlen(error)) {
 		PrintToServer("[JumpAssist] Invalid database configuration, assuming none");
 		PrintToServer(error);
@@ -105,7 +105,7 @@ void LoadMapCFG() {
 	g_Database.Query(SQL_OnMapSettingsLoad, query);
 }
 
-void SQL_OnMapSettingsLoad(Database db, DBResultSet results, const char[] error, any data) {
+public void SQL_OnMapSettingsLoad(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null || results == null) {
 		LogError("Query failed! %s", error);
 		return;
@@ -128,7 +128,7 @@ void CreateMapCFG() {
 	g_iForceTeam = 1;
 }
 
-void SQL_CreateMapCFGCallback(Database db, DBResultSet results, const char[] error, any data) {
+public void SQL_CreateMapCFGCallback(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null || results == null) {
 		LogError("SQL_CreateMapCFGCallback() - Query failed! %s", error);
 	}
@@ -183,7 +183,7 @@ void LoadPlayerProfile(int client) {
 	}
 }
 
-void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] error, any data) {
+public void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] error, any data) {
 	if (db == null || results == null) {
 		LogError("OnLoadPlayerProfile() - Query failed!");
 		return;

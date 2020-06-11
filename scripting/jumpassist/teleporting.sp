@@ -240,12 +240,12 @@ int MenuHandler_Main(Menu menu, MenuAction action, int param1, int param2) {
 	return 0;
 }
 
-Action timerRecentTargetCooldown(Handle timer, int client) {
+public Action timerRecentTargetCooldown(Handle timer, int client) {
 	if (g_aGoToRecent[client].Length) {
 		g_aGoToRecent[client].Erase(0);
 	}
 }
 
-Action timerGoToCooldown(Handle timer, int client) {
+public Action timerGoToCooldown(Handle timer, int client) {
 	g_bGoToCooldown[client] = false;
 }

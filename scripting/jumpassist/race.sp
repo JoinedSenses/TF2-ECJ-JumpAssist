@@ -404,7 +404,7 @@ int menuHandlerInvitePlayers(Menu menu, MenuAction action, int param1, int param
 	return 0;
 }
 
-int panelHandlerInvites(Menu menu, MenuAction action, int param1, int param2) {
+public int panelHandlerInvites(Menu menu, MenuAction action, int param1, int param2) {
 	int leader = g_iRaceInvitedTo[param1];
 	int target = param1;
 
@@ -526,7 +526,7 @@ void displayRaceInfoPanel(int client, int clientToShow) {
 	delete panel;
 }
 
-int panelHandlerDoNothing(Menu menu, MenuAction action, int param1, int param2) {
+public int panelHandlerDoNothing(Menu menu, MenuAction action, int param1, int param2) {
 	// Do nothing.
 }
 
@@ -575,7 +575,7 @@ void SendRaceToStart(int raceid, TFClassType class, int team) {
 char g_sAsterisk[] = "****************************";
 char g_sTab[] = "			   ";
 
-Action RaceCountDown(Handle timer, int raceID) {
+public Action RaceCountDown(Handle timer, int raceID) {
 	char value[4];
 	char message[256];
 	switch (g_iCountDown[raceID]) {
@@ -595,7 +595,7 @@ Action RaceCountDown(Handle timer, int raceID) {
 	PrintToRaceEx(raceID, message);
 }
 
-Action timerPostRace1(Handle timer, DataPack dp) {
+public Action timerPostRace1(Handle timer, DataPack dp) {
 	dp.Reset();
 	int client = dp.ReadCell();
 	CreateTimer(5.0, timerPostRace2, dp);
@@ -603,7 +603,7 @@ Action timerPostRace1(Handle timer, DataPack dp) {
 	PrintJAMessage(client, "%sRestoring\x01 pre-race%s status\x01 in 5 seconds.", cTheme2, cTheme2);
 }
 
-Action timerPostRace2(Handle timer, DataPack dp) {
+public Action timerPostRace2(Handle timer, DataPack dp) {
 	dp.Reset();
 	int client = dp.ReadCell();
 	int raceID = dp.ReadCell();
