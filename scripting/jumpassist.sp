@@ -4,16 +4,25 @@
 	You must have a mysql or sqlite database named jumpassist and configure it in /addons/sourcemod/configs/databases.cfg
 	Once the database is set up, an example configuration would look like:
 
+	// mysql
 	"jumpassist"
 	{
-		"driver"			"default"
-		"host"				"127.0.0.1"
-		"database"			"jumpassist"
-		"user"				"username"
-		"pass"				"password"
-		//"timeout"			"0"
-		//"port"			"0"
+		"driver"          "default"
+		"host"            "127.0.0.1"
+		"database"        "jumpassist"
+		"user"            "username"
+		"pass"            "password"
+		//"timeout"         "0"
+		//"port"            "0"
 	}
+	
+	// sqlite
+	"jumpassist"
+	{
+		"driver"    "sqlite"
+		"host"		"localhost"
+	}
+
 */
 
 #pragma newdecls required
@@ -274,7 +283,14 @@ public void OnPluginStart() {
 		PrintJAMessageAll("%sJumpAssist\x01 has been%s reloaded.", cTheme2, cTheme2);
 		GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 		for (int i = 1; i <= MaxClients; ++i) {
-			if (IsValidClient(i)) {
+			if (!IsClientInGame(i)) {
+				continue;
+			}
+
+			if (IsFakeClient(i)) {
+				SDKHook(i, SDKHook_SetTransmit, hookSetTransmitClient);
+			}
+			else {
 				g_iClientTeam[i] = GetClientTeam(i);
 				g_TFClientClass[i] = TF2_GetPlayerClass(i);
 				g_bFeaturesEnabled[i] = GetClientAuthId(i, AuthId_Steam2, g_sClientSteamID[i], sizeof(g_sClientSteamID[]));
@@ -282,10 +298,8 @@ public void OnPluginStart() {
 				SDKHook(i, SDKHook_SetTransmit, hookSetTransmitClient);
 				GetClientWeapons(i);
 			}
-			else if (IsClientConnected(i) && IsClientInGame(i) && IsFakeClient(i)) {
-				SDKHook(i, SDKHook_SetTransmit, hookSetTransmitClient);
-			}
 		}
+
 		// HIDE
 		int ent = -1;
 		while((ent = FindEntityByClassname(ent, "item_teamflag")) != -1) {
@@ -416,6 +430,7 @@ public void OnClientPostAdminCheck(int client) {
 		LogError("[JumpAssist] Unable to retrieve steam id on %N", client);
 		return;
 	}
+
 	g_bFeaturesEnabled[client] = true;
 	LoadPlayerProfile(client);
 }
