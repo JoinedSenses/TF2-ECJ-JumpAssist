@@ -6,22 +6,22 @@
 
 public Action SL_OnPracticeToggle(int client) {
 	if (GetClientTeam(client) == TEAM_SPECTATOR) {
-		PrintJAMessage(client, "Can't use this feature while%s spectating", cTheme2);
+		PrintJAMessage(client, "Can't use this feature while"...cTheme2..." spectating");
 		return Plugin_Handled;
 	}
 
 	if (IsClientPreviewing(client)) {
-		PrintJAMessage(client, "Can't toggle this feature while in%s preview mode", cTheme2);
+		PrintJAMessage(client, "Can't toggle this feature while in"...cTheme2..." preview mode");
 		return Plugin_Handled;
 	}
 
 	if (IsClientRacing(client)) {
-		PrintJAMessage(client, "Can't toggle this feature while%s racing", cTheme2);
+		PrintJAMessage(client, "Can't toggle this feature while"...cTheme2..." racing");
 		return Plugin_Handled;
 	}
 
 	if (IsClientHardcore(client)) {
-		PrintJAMessage(client, "Can't toggle this feature while in%s hardcore mode", cHardcore);
+		PrintJAMessage(client, "Can't toggle this feature while in"...cHardcore..." hardcore mode");
 		return Plugin_Handled;
 	}
 

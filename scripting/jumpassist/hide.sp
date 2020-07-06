@@ -102,7 +102,7 @@ public void OnEntityCreated(int entity, const char[] classname) {
 public Action cmdHide(int client, int args) {
 	g_bHide[client] = !g_bHide[client];
 	g_bHooked = checkHooks();
-	PrintColoredChat(client, "[%sJA\x01] Other players are now%s %s\x01.", cTheme1, cTheme2, g_bHide[client] ? "hidden" : "visible");
+	PrintJAMessage(client, "Other players are now"...cTheme2..." %s\x01.", g_bHide[client] ? "hidden" : "visible");
 	return Plugin_Handled;
 }
 

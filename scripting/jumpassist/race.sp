@@ -33,7 +33,7 @@ bool
 TFClassType
 	  g_TFClientPreRaceClass[MAXPLAYERS+1];
 RaceStatus
-	  g_iRaceStatus[MAXPLAYERS+1];
+	  g_RaceStatus[MAXPLAYERS+1];
 
 /* ======================================================================
    ------------------------------- Commands
@@ -60,7 +60,7 @@ public Action cmdRace(int client, int args) {
 	}
 
 	if (IsClientRacing(client) || g_iRaceID[client] != 0) {
-		PrintJAMessage(client, "You are already in a race. Wait for it to finish or type %s/r_leave\x01 to leave.", cTheme2);
+		PrintJAMessage(client, "You are already in a race. Wait for it to finish or type"...cTheme2..." /r_leave\x01 to leave.");
 		return Plugin_Handled;
 	}
 
@@ -75,7 +75,7 @@ public Action cmdRaceLeave(int client, int args) {
 	}
 
 	LeaveRace(client);
-	PrintJAMessage(client, "You have%s left\x01 the race.", cTheme2);
+	PrintJAMessage(client, "You have"...cTheme2..." left\x01 the race.");
 	PostRaceClientRestore(client);
 
 	return Plugin_Handled;
@@ -132,7 +132,8 @@ public Action cmdRaceSpec(int client, int args) {
 }
 
 public Action cmdRaceList(int client, int args) {
-	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS (Nolem's note. Not sure exactly what he wanted to do)
+	// (Nolem's note. Not sure exactly what he wanted to do)
+	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS
 	int clientToShow;
 	int iObserverMode;
 	if (!IsClientRacing(client)) {
@@ -165,7 +166,8 @@ public Action cmdRaceInfo(int client, int args) {
 	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
-	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS (nolem's note)
+	// (nolem's note)
+	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS
 	int clientToShow;
 	int iObserverMode;
 
@@ -201,7 +203,7 @@ public Action cmdRaceServer(int client, int args) {
 	}
 
 	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
-		PrintJAMessage(client, "Must be%s alive\x01 and on a%s team\x01 to use this command.", cTheme2, cTheme2);
+		PrintJAMessage(client, "Must be"...cTheme2..." alive\x01 and on a"...cTheme2..." team\x01 to use this command.");
 		return Plugin_Handled;
 	}
 
@@ -215,7 +217,7 @@ public Action cmdRaceServer(int client, int args) {
 	}
 
 	if (IsClientRacing(client)) {
-		PrintJAMessage(client, "[%sJA\x01] You are already in a race. Type%s /r_leave\x01 to leave.", cTheme1, cTheme2);
+		PrintJAMessage(client, "You are already in a race. Type"...cTheme2..." /r_leave\x01 to leave.");
 		return Plugin_Handled;
 	}
 
@@ -272,14 +274,14 @@ int menuHandlerRaceCP(Menu menu, MenuAction action, int param1, int param2) {
 
 			g_iRaceEndPoint[param1] = StringToInt(info);
 			g_iRaceID[param1] = param1;
-			g_iRaceStatus[param1] = STATUS_INVITING;
+			g_RaceStatus[param1] = STATUS_INVITING;
 			g_bRaceClassForce[param1] = true;
 			
 			displayRaceInviteMenu(param1);
 		}
 		case MenuAction_Cancel: {
 			g_iRaceID[param1] = 0;
-			g_iRaceStatus[param1] = STATUS_NONE;
+			g_RaceStatus[param1] = STATUS_NONE;
 			PrintJAMessage(param1, "The race has been cancelled.");	
 		}
 		case MenuAction_End: {
@@ -297,15 +299,16 @@ int menuHandlerServerRaceCP(Menu menu, MenuAction action, int param1, int param2
 			menu.GetItem(param2, info, sizeof(info));
 			if (StrEqual(info, "*[Begin Race]*")) {
 				BeginRace(param1);
-				delete menu;
 				return 0;
 			}
 
 			g_iRaceEndPoint[param1] = StringToInt(info);
 			Panel panel;
+			FormatEx(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
+			
 			for (int i = 1; i <= MaxClients; ++i) {
 				if (IsValidClient(i) && param1 != i && !g_bWaitingInvite[i] && g_iRaceID[i] == 0) {
-					FormatEx(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
+					
 					g_iRaceInvitedTo[i] = param1;
 
 					panel = new Panel();
@@ -319,7 +322,7 @@ int menuHandlerServerRaceCP(Menu menu, MenuAction action, int param1, int param2
 		}
 		case MenuAction_Cancel: {
 			g_iRaceID[param1] = 0;
-			PrintJAMessage(param1, "The race has been %scancelled\x01.", cTheme2);
+			PrintJAMessage(param1, "The race has been"...cTheme2..." cancelled\x01.");
 		}
 		case MenuAction_End: {
 			delete menu;
@@ -328,13 +331,15 @@ int menuHandlerServerRaceCP(Menu menu, MenuAction action, int param1, int param2
 	return 0;
 }
 
+#define BEGIN_RACE "*[Begin Race]*"
+
 void displayRaceInviteMenu(int client) {
 	char buffer[128];
 	char clientName[128];
 
 	Menu menu = new Menu(menuHandlerInvitePlayers, MENU_ACTIONS_DEFAULT);
 	menu.ExitBackButton = true;	
-	menu.AddItem("*[Begin Race]*","*[Begin Race]*");
+	menu.AddItem(BEGIN_RACE, BEGIN_RACE);
 
 	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsValidClient(i) && i != client && !g_bWaitingInvite[i] && g_iRaceID[i] < 1) {
@@ -355,33 +360,33 @@ int menuHandlerInvitePlayers(Menu menu, MenuAction action, int param1, int param
 			char sPlayer[32];
 			menu.GetItem(param2, sPlayer, sizeof(sPlayer));
 
-			if (StrEqual(sPlayer, "*[Begin Race]*")) {
+			if (StrEqual(sPlayer, BEGIN_RACE)) {
 				BeginRace(param1);
 				delete menu;
 				return 0;
 			}
 
-			int iPlayer = StringToInt(sPlayer);
+			int player = StringToInt(sPlayer);
 
 			menu.RemoveItem(param2);
 
-			if (g_bWaitingInvite[iPlayer]) {
-				PrintJAMessage(param1, "%s%N has already been invited", cTheme2, iPlayer);
+			if (g_bWaitingInvite[player]) {
+				PrintJAMessage(param1, cTheme2..."%N has already been invited", player);
 				menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
 				return 0;
 			}
-			PrintJAMessage(param1, "You have invited%s %N \x01to race.", cTheme2, iPlayer);
+			PrintJAMessage(param1, "You have invited"...cTheme2..."%N \x01to race.", player);
 			FormatEx(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
 			
 			Panel panel = new Panel();
 			panel.SetTitle(buffer);
 			panel.DrawItem("Accept");
 			panel.DrawItem("Decline");
-			panel.Send(iPlayer, panelHandlerInvites, 15);
+			panel.Send(player, panelHandlerInvites, 15);
 			delete panel;
 
-			g_iRaceInvitedTo[iPlayer] = param1;
-			g_bWaitingInvite[iPlayer] = true;
+			g_iRaceInvitedTo[player] = param1;
+			g_bWaitingInvite[player] = true;
 
 			menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
 		}
@@ -391,7 +396,7 @@ int menuHandlerInvitePlayers(Menu menu, MenuAction action, int param1, int param
 				displayRaceCPMenu(param1);
 			}
 			else {
-				PrintToRace(param1, "The race has been%s cancelled\x01.", cTheme2);
+				PrintToRace(param1, "The race has been"...cTheme2..." cancelled\x01.");
 				ResetRace(param1, false);
 			}
 		}
@@ -416,20 +421,20 @@ public int panelHandlerInvites(Menu menu, MenuAction action, int param1, int par
 	switch (param2) {
 		case 1: {
 			if (HasRaceStarted(leader)) {
-				PrintJAMessage(leader, "This race has already%s started.", cTheme2);			
+				PrintJAMessage(leader, "This race has already"...cTheme2..." started\x01.");
 				return;
 			}
 			LeaveRace(target);
 			g_iRaceID[target] = leader;
-			PrintJAMessage(leader, "%s%N has%s accepted\x01 your request to race", cTheme2, target, cTheme2);
+			PrintJAMessage(leader, cTheme2..."%N\x01 has"...cTheme2..." accepted\x01 your request to race", target);
 		}
 		case 2: {
 			g_iRaceID[target] = 0;
-			PrintJAMessage(leader, "%s%N\x01 has%s declined\x01 your request to race", cTheme2, target, cTheme2);
+			PrintJAMessage(leader, cTheme2..."%N\x01 has"...cTheme2..." declined\x01 your request to race", target);
 		}
 		default: {
 			g_iRaceID[target] = 0;
-			PrintJAMessage(leader, "%s%N\x01 failed to respond to your invitation", cTheme2, target);			
+			PrintJAMessage(leader, cTheme2..."%N\x01 failed to respond to your invitation", target);			
 		}
 	}
 
@@ -548,7 +553,7 @@ void BeginRace(int raceid) {
 		}
 	}
 
-	g_iRaceStatus[raceid] = STATUS_COUNTDOWN;
+	g_RaceStatus[raceid] = STATUS_COUNTDOWN;
 	CreateTimer(2.0, RaceCountDown, raceid);
 	g_iCountDown[raceid] = 3;
 	SendRaceToStart(raceid, g_TFClientClass[raceid], g_iClientTeam[raceid]);
@@ -572,9 +577,6 @@ void SendRaceToStart(int raceid, TFClassType class, int team) {
 	}
 }
 
-char g_sAsterisk[] = "****************************";
-char g_sTab[] = "			   ";
-
 public Action RaceCountDown(Handle timer, int raceID) {
 	char value[4];
 	char message[256];
@@ -583,7 +585,7 @@ public Action RaceCountDown(Handle timer, int raceID) {
 			value = "GO!";
 			UnlockRacePlayers(raceID);
 			g_fRaceStartTime[raceID] = GetEngineTime();
-			g_iRaceStatus[raceID] = STATUS_RACING;
+			g_RaceStatus[raceID] = STATUS_RACING;
 		}
 		default: {
 			FormatEx(value, sizeof(value), "  %i", g_iCountDown[raceID]);
@@ -591,7 +593,19 @@ public Action RaceCountDown(Handle timer, int raceID) {
 			g_iCountDown[raceID]--;
 		}
 	}
-	FormatEx(message, sizeof(message), "\n \n \n \n \n%s \n \n%s\x03%s\x01\n \n%s", g_sAsterisk, g_sTab, value, g_sAsterisk);
+
+	FormatEx(
+		message,
+		sizeof(message),
+		"\n \n \n \n \n"...
+		"****************************\n"...
+		" \n"...
+		"			   \x03%s\x01\n"...
+		" \n"...
+		"****************************",
+		value
+	);
+
 	PrintToRaceEx(raceID, message);
 }
 
@@ -600,7 +614,7 @@ public Action timerPostRace1(Handle timer, DataPack dp) {
 	int client = dp.ReadCell();
 	CreateTimer(5.0, timerPostRace2, dp);
 
-	PrintJAMessage(client, "%sRestoring\x01 pre-race%s status\x01 in 5 seconds.", cTheme2, cTheme2);
+	PrintJAMessage(client, cTheme2..."Restoring\x01 pre-race"...cTheme2..." status\x01 in 5 seconds.");
 }
 
 public Action timerPostRace2(Handle timer, DataPack dp) {
@@ -611,7 +625,7 @@ public Action timerPostRace2(Handle timer, DataPack dp) {
 
 	if (g_iRaceID[client] == raceID) {	
 		g_iRaceID[client] = 0;
-		g_iRaceStatus[client] = STATUS_NONE;
+		g_RaceStatus[client] = STATUS_NONE;
 		g_fRaceTime[client] = g_fRaceFirstTime[client] = g_fRaceStartTime[client] = 0.0;
 		g_bRaceLocked[client] = g_bRaceAmmoRegen[client] = false;
 		g_iRaceEndPoint[client] = -1;
@@ -668,7 +682,7 @@ char[] FormatTimeComponent(int time) {
 	return final;
 }
 
-void PrintToRace(int raceID, char[] message, any ...) {
+void PrintToRace(int raceID, const char[] message, any ...) {
 	char output[1024];
 	VFormat(output, sizeof(output), message, 3);
 	for (int i = 1; i <= MaxClients; ++i) {
@@ -678,7 +692,7 @@ void PrintToRace(int raceID, char[] message, any ...) {
 	}
 }
 
-void PrintToRaceEx(int raceID, char[] message, any ...) {
+void PrintToRaceEx(int raceID, const char[] message, any ...) {
 	char output[1024];
 	VFormat(output, sizeof(output), message, 3);
 	for (int i = 1; i <= MaxClients; ++i) {
@@ -695,8 +709,8 @@ int GetPlayersStillRacing(int raceID) {
 			++players;
 		}
 	}
-	if (players != 0) {
-		PrintToRace(raceID, "There are%s %i \x01players still racing.", cTheme2, players);
+	if (players) {
+		PrintToRace(raceID, "There are"...cTheme2..." %i \x01players still racing.", players);
 	}
 	return players;
 }
@@ -736,7 +750,7 @@ void LeaveRace(int client, bool raceFinished = false) {
 					int newRace = i;
 					int emptyInt[32];
 					float emptyFloat[32];
-					g_iRaceStatus[i] = g_iRaceStatus[raceID];
+					g_RaceStatus[i] = g_RaceStatus[raceID];
 					g_iRaceEndPoint[i] = g_iRaceEndPoint[raceID];
 					g_fRaceStartTime[i] = g_fRaceStartTime[raceID];
 					g_fRaceFirstTime[i] = g_fRaceFirstTime[raceID];
@@ -779,10 +793,10 @@ void LeaveRace(int client, bool raceFinished = false) {
 }
 
 void ResetRace(int raceID, bool raceEnded = true) {
-	for (int i = 0; i <= MaxClients; ++i) {
+	for (int i = 1; i <= MaxClients; ++i) {
 		if (g_iRaceID[i] == raceID) {
 			g_iRaceID[i] = 0;
-			g_iRaceStatus[i] = STATUS_NONE;
+			g_RaceStatus[i] = STATUS_NONE;
 			g_fRaceTime[i] = g_fRaceFirstTime[i] = g_fRaceStartTime[i] = 0.0;
 			g_bRaceLocked[i] = g_bRaceAmmoRegen[i] = false;
 			g_iRaceEndPoint[i] = -1;
@@ -793,7 +807,7 @@ void ResetRace(int raceID, bool raceEnded = true) {
 				dp.WriteCell(i);
 				dp.WriteCell(raceID);
 				CreateTimer(3.0, timerPostRace1, dp);
-				PrintJAMessage(i, "Race has%s ended\x01.", cTheme2);				
+				PrintJAMessage(i, "Race has"...cTheme2..." ended\x01.");				
 			}
 		}
 
@@ -811,7 +825,7 @@ void PreRaceClientRetrieve(int client) {
 	GetClientAbsAngles(client, g_fClientPreRaceAngles[client]);
 	g_TFClientPreRaceClass[client] = TF2_GetPlayerClass(client);
 	g_iClientPreRaceTeam[client] = GetClientTeam(client);
-	PrintJAMessage(client, "%sSaving\x01 pre-race status.", cTheme2);
+	PrintJAMessage(client, cTheme2..."Saving\x01 pre-race status.");
 }
 
 void PostRaceClientRestore(int client) {
@@ -825,8 +839,8 @@ void PostRaceClientRestore(int client) {
 	g_bCPTouched[client] = g_bClientPreRaceCPTouched[client];
 	TF2_SetPlayerClass(client, g_TFClientPreRaceClass[client]);
 	ChangeClientTeam(client, g_iClientPreRaceTeam[client]);
-	TeleportEntity(client, g_fClientPreRaceOrigin[client], g_fClientPreRaceAngles[client], EmptyVector());
-	PrintJAMessage(client, "Pre-race status has been%s restored\x01.", cTheme2);
+	TeleportEntity(client, g_fClientPreRaceOrigin[client], g_fClientPreRaceAngles[client], EMPTY_VECTOR);
+	PrintJAMessage(client, "Pre-race status has been"...cTheme2..." restored\x01.");
 }
 
 bool IsClientRacing(int client) {
@@ -842,12 +856,11 @@ bool IsRaceLeader(int client, int race) {
 }
 
 RaceStatus GetRaceStatus(int client) {
-	return g_iRaceStatus[g_iRaceID[client]];
+	return g_RaceStatus[g_iRaceID[client]];
 }
 
 bool HasRaceStarted(int client) {
-	int clientRaceStatus = view_as<int>(g_iRaceStatus[g_iRaceID[client]]);
-	return (clientRaceStatus > 1);
+	return (view_as<int>(g_RaceStatus[g_iRaceID[client]]) > 1);
 }
 
 bool IsPlayerFinishedRacing(int client) {

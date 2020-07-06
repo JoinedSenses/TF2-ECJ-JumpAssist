@@ -3,11 +3,11 @@ void ConnectToDatabase() {
 }
 
 public void SQL_OnConnect(Database db, const char[] error, any data) {
-	if (db == null || strlen(error)) {
-		PrintToServer("[JumpAssist] Invalid database configuration, assuming none");
-		PrintToServer(error);
+	if (!db || error[0]) {
+		LogError("[JumpAssist] Unable to connect to database (%s)", error);
 		return;
 	}
+
 	g_Database = db;
 	
 	RunDBCheck();
@@ -22,7 +22,6 @@ public void SQL_OnConnect(Database db, const char[] error, any data) {
 			}
 		}
 	}
-	
 }
 
 void RunDBCheck() {
@@ -35,7 +34,8 @@ void RunDBCheck() {
 
 	char increment[16];
 	strcopy(increment, sizeof(increment),(StrEqual(dbType, "mysql", false)) ? "AUTO_INCREMENT" : "AUTOINCREMENT");
-	g_Database.Format(
+
+	FormatEx(
 		  query
 		, sizeof(query)
 		, "CREATE TABLE IF NOT EXISTS player_saves "
@@ -52,13 +52,15 @@ void RunDBCheck() {
 		... ")"
 		, increment
 	);
+
 	SQL_LockDatabase(g_Database);
 	if (!SQL_FastQuery(g_Database, query)) {
 		SQL_GetError(g_Database, error, sizeof(error));
 		LogError("Failed to query (player_saves) (error: %s)", error);
 	}
 	SQL_UnlockDatabase(g_Database);
-	g_Database.Format(
+
+	FormatEx(
 		  query
 		, sizeof(query)
 		, "CREATE TABLE IF NOT EXISTS player_profiles "
@@ -80,7 +82,8 @@ void RunDBCheck() {
 		LogError("Failed to query (player_profiles) (error: %s)", error);
 	}
 	SQL_UnlockDatabase(g_Database);
-	g_Database.Format(
+
+	FormatEx(
 		  query
 		, sizeof(query)
 		, "CREATE TABLE IF NOT EXISTS map_settings "
@@ -91,6 +94,7 @@ void RunDBCheck() {
 		... ")"
 		, increment
 	);
+
 	SQL_LockDatabase(g_Database);
 	if (!SQL_FastQuery(g_Database, query)) {
 		SQL_GetError(g_Database, error, sizeof(error));
@@ -106,7 +110,7 @@ void LoadMapCFG() {
 }
 
 public void SQL_OnMapSettingsLoad(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	if (!db || !results || error[0]) {
 		LogError("Query failed! %s", error);
 		return;
 	}
@@ -129,7 +133,7 @@ void CreateMapCFG() {
 }
 
 public void SQL_CreateMapCFGCallback(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	if (!db || !results || error[0]) {
 		LogError("SQL_CreateMapCFGCallback() - Query failed! %s", error);
 	}
 }
@@ -149,7 +153,7 @@ void SaveMapSettings(int client, char[] arg1, char[] arg2) {
 			CheckTeams();
 		}
 		else {
-			PrintColoredChat(client, "[%sJA\x01] %sUsage\x01: !mapset team <red|blue|none>", cTheme1, cTheme1);
+			PrintJAMessage(client, cTheme2..."Usage\x01: !mapset team <red|blue|none>");
 			return;	
 		}
 
@@ -160,14 +164,15 @@ void SaveMapSettings(int client, char[] arg1, char[] arg2) {
 }
 
 void SQL_OnMapSettingsUpdated(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	bool isError;
+	if (!db || !results || error[0]) {
 		LogError("Query failed! %s", error);
-		return;
+		isError = true;
 	}
 
 	int client;
 	if (data > 0 && (client = GetClientOfUserId(data)) > 0) {
-		PrintColoredChat(client, "[%sJA\x01] Map settings were%s %ssaved\x01.", cTheme1, cTheme2, (db == null)?"NOT ":"");
+		PrintJAMessage(client, "Map settings were"...cTheme2..." %ssaved\x01.", isError ? "NOT ":"");
 	}
 }
 
@@ -176,15 +181,15 @@ void LoadPlayerProfile(int client) {
 		return;
 	}
 
-	char query[1024];
+	char query[80];
 	if (g_Database != null) {
-		g_Database.Format(query, sizeof(query), "SELECT * FROM player_profiles WHERE SteamID = '%s'", g_sClientSteamID[client]);
+		FormatEx(query, sizeof(query), "SELECT * FROM player_profiles WHERE SteamID = '%s'", g_sClientSteamID[client]);
 		g_Database.Query(SQL_OnLoadPlayerProfile, query, GetClientUserId(client));
 	}
 }
 
 public void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	if (!db || !results || error[0]) {
 		LogError("OnLoadPlayerProfile() - Query failed!");
 		return;
 	}
@@ -224,7 +229,7 @@ void CreatePlayerProfile(int client) {
 }
 
 void SQL_OnCreatePlayerProfile(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	if (!db || !results || error[0]) {
 		LogError("OnCreatePlayerProfile() - Query failed! %s", error);
 		return;
 	}
@@ -261,7 +266,7 @@ void GetPlayerData(int client) {
 }
 
 void SQL_OnGetPlayerData(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	if (!db || !results || error[0]) {
 		LogError("OnGetPlayerData() - Query failed! %s", error);
 		return;
 	}
@@ -342,14 +347,15 @@ void UpdatePlayerData(int client) {
 }
 
 void SQL_SaveLocCallback(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	bool isError;
+	if (!db || !results || error[0]) {
 		LogError("SaveLocCallback() - %N, Query failed! %s", data, error);
-		return;
+		isError = true;
 	}
 
 	int client = GetClientOfUserId(data);
 	if (client > 0 && !g_bHideMessage[client]) {
-		PrintColoredChat(client, "[%sJA\x01] Location has been%s saved\x01.", cTheme1, cTheme2);
+		PrintJAMessage(client, "Location"...cTheme2..." %s\x01.", isError ? "failed to save" : "saved");
 	}
 }
 
@@ -378,7 +384,7 @@ void ReloadPlayerData(int client) {
 }
 
 void SQL_OnReloadPlayerData(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	if (!db || !results || error[0]) {
 		LogError("OnreloadPlayerData() - Query failed! %s", error);
 		return;
 	}
@@ -424,7 +430,7 @@ void LoadPlayerData(int client) {
 }
 
 void SQL_OnLoadPlayerData(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	if (!db || !results || error[0]) {
 		LogError("OnLoadPlayerData() - Query failed! %s", error);
 		return;
 	}
@@ -468,7 +474,7 @@ void DeletePlayerData(int client) {
 }
 
 void SQL_OnDeletePlayerData(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+	if (!db || !results || error[0]) {
 		LogError("OnDeletePlayerData() - Query failed! %s", error);
 		return;
 	}
@@ -505,14 +511,14 @@ void SaveKeyColor(int client, char[] red, char[] green, char[] blue) {
 
 void SQL_OnSetKeys(Database db, DBResultSet results, const char[] error, any data) {
 	bool isError;
-	if (db == null || results == null) {
+	if (!db || !results || error[0]) {
 		LogError("Query failed! %s", error);
 		isError = true;
 	}
 
 	int client = GetClientOfUserId(data);
 	if (client > 0) {
-		PrintJAMessage(client, "Your settings were %s%ssaved\x01.", cTheme2, isError?"NOT ":"");
+		PrintJAMessage(client, "Your settings were "...cTheme2..."%ssaved\x01.", isError ? "NOT " : "");
 	}
 }
 
@@ -533,8 +539,8 @@ void SaveKeyPos(int client, float x, float y) {
 	g_Database.Query(SQL_UpdateSkeys, query, GetClientUserId(client));
 }
 
-void SQL_UpdateSkeys(Database db, DBResultSet results, const char[] error, any data) {
-	if (db == null || results == null) {
+public void SQL_UpdateSkeys(Database db, DBResultSet results, const char[] error, any data) {
+	if (!db || !results || error[0]) {
 		LogError("Query failed! %s", error);
 		return;
 	}

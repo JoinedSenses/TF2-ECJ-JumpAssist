@@ -63,7 +63,7 @@ public Action cmdSpec(int client, int args) {
 	}
 
 	if (!isTargetInSpec) {
-		PrintJAMessage(client, "Spectating%s %N", cTheme2, target);
+		PrintJAMessage(client, "Spectating"...cTheme2..." %N", target);
 	}
 
 	FakeClientCommand(client, "spec_player #%i", GetClientUserId(target));
@@ -103,7 +103,7 @@ public Action cmdSpecLock(int client, int args) {
 
 	if (IsClientObserver(target)) {
 		PrintJAMessage(client, "Target is in spec, will resume with spec when they spawn.");
-		PrintJAMessage(client, "To disable, type%s /speclock 0", cTheme2);
+		PrintJAMessage(client, "To disable, type"...cTheme2..." /speclock 0");
 	}
 
 	if (GetClientTeam(client) > 1) {
@@ -113,7 +113,7 @@ public Action cmdSpecLock(int client, int args) {
 
 	FakeClientCommand(client, "spec_player #%i", GetClientUserId(target));
 	FakeClientCommand(client, "spec_mode 1");
-	PrintJAMessage(client, "Spectating%s %N", cTheme2, target);
+	PrintJAMessage(client, "Spectating"...cTheme2..." %N", target);
 
 	g_iSpecTarget[client] = target;
 	return Plugin_Handled;
@@ -160,7 +160,7 @@ public Action cmdForceSpec(int client, int args) {
 		}
 
 		if (IsClientObserver(targetToSpec)) {
-			PrintJAMessage(client, "Target%s %N\x01 must be alive.", cTheme2, targetToSpec);
+			PrintJAMessage(client, "Target"...cTheme2..." %N\x01 must be alive.", targetToSpec);
 			return Plugin_Handled;
 		}
 
@@ -181,7 +181,7 @@ public Action cmdForceSpec(int client, int args) {
 	FakeClientCommand(target, "spec_player #%i", GetClientUserId(targetToSpec));
 	FakeClientCommand(target, "spec_mode 1");
 
-	PrintJAMessage(client, "Forced%s %N\x01 to spectate%s %s", cTheme2, target, cTheme2, targetToSpecName);
+	PrintJAMessage(client, "Forced"...cTheme2..." %N\x01 to spectate"...cTheme2..." %s", target, targetToSpecName);
 	g_bFSpec[target] = true;
 	return Plugin_Handled;
 }
@@ -368,10 +368,10 @@ void frameRequestFSpecRestore(int client) {
 		TF2_SetPlayerClass(client, g_TFFSpecClass[client]);
 	}
 
-	TeleportEntity(client, g_vFSpecOrigin[client], g_vFSpecAngles[client], EmptyVector());
+	TeleportEntity(client, g_vFSpecOrigin[client], g_vFSpecAngles[client], EMPTY_VECTOR);
 	CreateTimer(5.0, timerDisableFSpec, client);
 }
 
-public Action timerDisableFSpec(Handle timer, int  client) {
+public Action timerDisableFSpec(Handle timer, int client) {
 	DisableForceSpec(client);
 }

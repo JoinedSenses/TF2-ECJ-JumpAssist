@@ -21,41 +21,50 @@ public Action cmdBring(int client, int argc) {
 	}
 
 	if (IsClientPreviewing(client)) {
-		PrintJAMessage(client, "Unable to bring while in%s preview mode\x01.", cTheme2);
+		PrintJAMessage(client, "Unable to bring while in"...cTheme2..." preview mode\x01.");
 		return Plugin_Handled;
 	}
 	
-	char sCommand[256];
+	char cmd[256];
 	if (argc < 1) {
-		if (!GetCmdArg(0, sCommand, sizeof(sCommand))) {
+		if (!GetCmdArg(0, cmd, sizeof(cmd))) {
 			return Plugin_Handled;
 		}
 
-		ReplyToCommand(client, "%s <client>", sCommand);
+		ReplyToCommand(client, "%s <client>", cmd);
 		return Plugin_Handled;
 	}
 	
-	if (!GetCmdArgString(sCommand, sizeof(sCommand))) {
+	if (!GetCmdArgString(cmd, sizeof(cmd))) {
 		return Plugin_Handled;
 	}
 	
-	int iTargetsArray[MAXPLAYERS+1];
-	char sName[MAX_TARGET_LENGTH];
+	int targets[MAXPLAYERS+1];
+	char name[MAX_TARGET_LENGTH];
 	bool tn_is_ml;
 	
-	int iReturn = ProcessTargetString(sCommand, client, iTargetsArray, sizeof(iTargetsArray), COMMAND_FILTER_ALIVE, sName, sizeof(sName), tn_is_ml);
+	int count = ProcessTargetString(
+		cmd,
+		client,
+		targets,
+		sizeof(targets),
+		COMMAND_FILTER_ALIVE,
+		name,
+		sizeof(name),
+		tn_is_ml
+	);
 	
-	if (iReturn < 1) {
-		ReplyToTargetError(client, iReturn);
+	if (count < 1) {
+		ReplyToTargetError(client, count);
 		return Plugin_Handled;
 	}
 	
 	float fPosition[3];
 	GetClientAbsOrigin(client, fPosition);
 	
-	for (int i = 0; i < iReturn; ++i) {
-		TeleportEntity(iTargetsArray[i], fPosition, NULL_VECTOR, NULL_VECTOR);
-		PrintJAMessage(iTargetsArray[i], "%s%N\x01 has brought you to their position", cTheme2, client);
+	for (int i = 0; i < count; ++i) {
+		TeleportEntity(targets[i], fPosition, NULL_VECTOR, NULL_VECTOR);
+		PrintJAMessage(targets[i], cTheme2..."%N\x01 has brought you to their position", client);
 	}
 
 	char plural[5];
@@ -63,8 +72,8 @@ public Action cmdBring(int client, int argc) {
 		strcopy(plural, sizeof(plural), "the ");
 	}
 
-	PrintJAMessage(client, "You have brought %s%s%s\x01 to your position", plural, cTheme2, sName);
-	LogAction(client, -1, "\"%L\" (sm_bring) %N brought %s%s to their position.", client, client, plural, sName);
+	PrintJAMessage(client, "You have brought %s"...cTheme2..."%s\x01 to your position", plural, name);
+	LogAction(client, -1, "\"%L\" (sm_bring) %N brought %s%s to their position.", client, client, plural, name);
 
 	return Plugin_Handled;
 }
@@ -79,12 +88,12 @@ public Action cmdGoTo(int client, int args) {
 		return Plugin_Handled;
 	}
 
-	char sCommand[256];
-	if (!GetCmdArg(1, sCommand, sizeof(sCommand))) {
+	char arg[256];
+	if (!GetCmdArg(1, arg, sizeof(arg))) {
 		return Plugin_Handled;
 	}
 	
-	int target = FindTarget(client, sCommand, !(GetUserFlagBits(client) & ADMFLAG_ROOT), false);
+	int target = FindTarget(client, arg, !(GetUserFlagBits(client) & ADMFLAG_ROOT), false);
 	
 	if (target == -1 || client == target) {
 		return Plugin_Handled;
@@ -101,21 +110,21 @@ public Action cmdGoTo(int client, int args) {
 	}
 
 	if (IsClientPreviewing(target)) {
-		PrintJAMessage(client, "Unable to teleport to players while they're in%s preview mode\x01.", cTheme2);
+		PrintJAMessage(client, "Unable to teleport to players while they're in"...cTheme2..." preview mode\x01.");
 		return Plugin_Handled;
 	}
 
 	if (GetClientTeam(client) != GetClientTeam(target) && !(GetUserFlagBits(client) & (ADMFLAG_GENERIC|ADMFLAG_ROOT))) {
-		PrintJAMessage(client, "Can't go to players on the%s opposite team", cTheme2);
+		PrintJAMessage(client, "Can't go to players on the"...cTheme2..." opposite team");
 		return Plugin_Handled;
 	}
 
-	float fPosition[3];
-	GetClientAbsOrigin(target, fPosition);
-	TeleportEntity(client, fPosition, NULL_VECTOR, NULL_VECTOR);
+	float origin[3];
+	GetClientAbsOrigin(target, origin);
+	TeleportEntity(client, origin, NULL_VECTOR, NULL_VECTOR);
 	
-	PrintJAMessage(client, "You have teleported to%s %N\x01's position", cTheme2, target);
-	PrintJAMessage(target, "%s%N\x01 has teleported to your position.", cTheme2, client);
+	PrintJAMessage(client, "You have teleported to"...cTheme2..." %N\x01's position", target);
+	PrintJAMessage(target, cTheme2..."%N\x01 has teleported to your position.", client);
 
 	if (CheckCommandAccess(client, "sm_bring", ADMFLAG_GENERIC)) {
 		return Plugin_Handled;
@@ -141,7 +150,7 @@ public Action cmdSendPlayer(int client,int args) {
 	}
 
 	if (args < 2) {
-		PrintJAMessage(client, "%sUsage\x01: sm_send <playerName> <targetName>", cTheme2);
+		PrintJAMessage(client, cTheme2..."Usage\x01: sm_send <playerName> <targetName>");
 		return Plugin_Handled;
 	}
 
@@ -159,25 +168,25 @@ public Action cmdSendPlayer(int client,int args) {
 	}
 
 	if (IsClientPreviewing(target1)) {
-		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target1, cTheme2);
+		PrintJAMessage(client, "Unable to send."...cTheme2..." %N\x01 in"...cTheme2..." preview mode\x01.", target1);
 		return Plugin_Handled;
 	}
 
 	if (IsClientPreviewing(target2)) {
-		PrintJAMessage(client, "Unable to send.%s %N\x01 in%s preview mode\x01.", cTheme2, target2, cTheme2);
+		PrintJAMessage(client, "Unable to send."...cTheme2..." %N\x01 in"...cTheme2..." preview mode\x01.", target2);
 		return Plugin_Handled;
 	}
 
-	float TargetOrigin[3];
-	float pAngle[3];
+	float origin[3];
+	float angle[3];
 
-	GetClientAbsOrigin(target2, TargetOrigin);
-	GetClientAbsAngles(target2, pAngle);
+	GetClientAbsOrigin(target2, origin);
+	GetClientAbsAngles(target2, angle);
 	
-	TeleportEntity(target1, TargetOrigin, pAngle, EmptyVector());
+	TeleportEntity(target1, origin, angle, EMPTY_VECTOR);
 	
-	PrintJAMessage(client, "Sent%s %N\x01 to%s %N\x01.", cTheme2, target1, cTheme2, target2);
-	PrintJAMessage(target1, "%s%N\x01 sent you to%s %N\x01.", cTheme2, client, cTheme2, target2);
+	PrintJAMessage(client, "Sent"...cTheme2..." %N\x01 to"...cTheme2..." %N\x01.", target1, target2);
+	PrintJAMessage(target1, cTheme2..."%N\x01 sent you to"...cTheme2..." %N\x01.", client, target2);
 
 	return Plugin_Handled;
 }
@@ -200,16 +209,17 @@ void MainMenu(int client) {
 			menu.AddItem(userid, name);
 		}
 	}
+
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
-int MenuHandler_Main(Menu menu, MenuAction action, int param1, int param2) {
+public int MenuHandler_Main(Menu menu, MenuAction action, int param1, int param2) {
 	switch(action) {
 		case MenuAction_Select: {
 			char userid[64];
 			menu.GetItem(param2, userid, sizeof(userid));
 
-			if (IsValidClient(GetClientOfUserId(StringToInt(userid)))) {
+			if (GetClientOfUserId(StringToInt(userid))) {
 				FakeClientCommand(param1, "sm_goto #%s", userid);
 			}
 			else {

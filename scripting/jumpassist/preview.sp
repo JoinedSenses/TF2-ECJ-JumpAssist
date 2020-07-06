@@ -27,7 +27,7 @@ public Action cmdPreview(int client, int args) {
 	}
 
 	if (IsClientRacing(client)) {
-		PrintJAMessage(client, "Can't use this feature while%s racing.", cTheme2);
+		PrintJAMessage(client, "Can't use this feature while"...cTheme2..." racing\x01.");
 		return Plugin_Handled;
 	}
 
@@ -49,12 +49,12 @@ public Action cmdPreview(int client, int args) {
 void EnablePreview(int client) {
 	int flags = GetEntityFlags(client);
 	if (!(flags & FL_ONGROUND)) {
-		PrintJAMessage(client, "Can't begin preview mode while%s in the air\x01.", cTheme2);
+		PrintJAMessage(client, "Can't begin preview mode while"...cTheme2..." in the air\x01.");
 		return;
 	}
 
 	if ((flags & FL_DUCKING)) {
-		PrintJAMessage(client, "Can't begin preview mode while%s ducking\x01.", cTheme2);
+		PrintJAMessage(client, "Can't begin preview mode while"...cTheme2..." ducking\x01.");
 		return;
 	}
 
@@ -73,7 +73,7 @@ void EnablePreview(int client) {
 
 	g_bIsPreviewing[client] = true;
 
-	PrintJAMessage(client, "Preview mode%s enabled\x01.", cTheme2);
+	PrintJAMessage(client, "Preview mode"...cTheme2..." enabled\x01.");
 }
 
 void DisablePreview(int client, bool restore = false, bool click = false) {
@@ -81,7 +81,7 @@ void DisablePreview(int client, bool restore = false, bool click = false) {
 
 	if (restore) {
 		int flags = GetEntityFlags(client);
-		TeleportEntity(client, g_fPreviewOrigin[client], g_fPreviewAngles[client], EmptyVector());
+		TeleportEntity(client, g_fPreviewOrigin[client], g_fPreviewAngles[client], EMPTY_VECTOR);
 
 		SetEntityMoveType(client, MOVETYPE_WALK);
 		SetEntityFlags(client, flags & ~(FL_DONTTOUCH|FL_NOTARGET|FL_FLY));
@@ -94,7 +94,7 @@ void DisablePreview(int client, bool restore = false, bool click = false) {
 	}
 	
 	if (IsClientInGame(client)) {
-		PrintJAMessage(client, "Preview mode%s disabled\x01.", cTheme2);
+		PrintJAMessage(client, "Preview mode"...cTheme2..." disabled\x01.");
 	}
 }
 

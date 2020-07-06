@@ -36,7 +36,7 @@ float
 
 public Action cmdGetClientKeys(int client, int args) {
 	g_bSKeysEnabled[client] = !g_bSKeysEnabled[client];
-	PrintJAMessage(client, "HUD keys are%s %s\x01.", cTheme2, g_bSKeysEnabled[client]?"enabled":"disabled");
+	PrintJAMessage(client, "HUD keys are"...cTheme2..." %s\x01.", g_bSKeysEnabled[client]?"enabled":"disabled");
 	return Plugin_Handled;
 }
 
@@ -50,7 +50,7 @@ public Action cmdChangeSkeysColor(int client, int args) {
 	char green[4];
 	
 	if (args < 1) {
-		PrintJAMessage(client, "%sUsage\x01: sm_skeys_color <R> <G> <B>", cTheme2);
+		PrintJAMessage(client, cTheme2..."Usage\x01: sm_skeys_color <R> <G> <B>");
 		return Plugin_Handled;
 	}
 
@@ -88,18 +88,16 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 			g_iSkeysMode[client] = EDIT;
 			SetEntityFlags(client, GetEntityFlags(client)|FL_ATCONTROLS|FL_FROZEN);
 
-			char tag[32];
-			FormatEx(tag, sizeof(tag), "[%sSKEYS\x01]", cTheme1);
+#define TAG "["...cTheme1..."SKEYS\x01]"
 
 			PrintColoredChat(
-				  client,
-				"%s Update position using%s mouse movement\x01.\n"
-			... "%s Save with%s attack\x01.\n"
-			... "%s Reset with%s jump\x01."
-				, tag, cTheme2
-				, tag, cTheme2
-				, tag, cTheme2
+				client,
+				TAG..." Update position using"...cTheme2..." mouse movement\x01.\n"
+			...TAG..." Save with"...cTheme2..." attack\x01.\n"
+			...TAG..." Reset with"...cTheme2..." jump\x01."
 			);
+
+#undef TAG
 		}
 	}
 	return Plugin_Handled;
