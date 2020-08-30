@@ -28,7 +28,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.11"
+#define PLUGIN_VERSION "2.3.12"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
@@ -49,78 +49,78 @@
 #define REQUIRE_PLUGIN
 
 enum {
-	  TEAM_UNASSIGNED = 0
-	, TEAM_SPECTATOR
-	, TEAM_RED
-	, TEAM_BLUE
+	TEAM_UNASSIGNED = 0,
+	TEAM_SPECTATOR,
+	TEAM_RED,
+	TEAM_BLUE
 }
 
 enum {
-	  INTEL_PICKEDUP = 1
-	, INTEL_CAPTURED
-	, INTEL_DEFENDED
-	, INTEL_DROPPED
-	, INTEL_RETURNED
+	INTEL_PICKEDUP = 1,
+	INTEL_CAPTURED,
+	INTEL_DEFENDED,
+	INTEL_DROPPED,
+	INTEL_RETURNED
 }
 
 bool
-	  g_bLateLoad
-	, g_bFeaturesEnabled[MAXPLAYERS+1]
-	, g_bCPFallback
-	, g_bHideMessage[MAXPLAYERS+1]
-	, g_bIsPreviewing[MAXPLAYERS+1]
-	, g_bAmmoRegen[MAXPLAYERS+1]
-	, g_bHardcore[MAXPLAYERS+1]
-	, g_bCPTouched[MAXPLAYERS+1][MAX_CAP_POINTS]
-	, g_bJustSpawned[MAXPLAYERS+1]
-	, g_bTelePaused[MAXPLAYERS+1]
-	, g_bUsedReset[MAXPLAYERS+1]
-	, g_bBeatTheMap[MAXPLAYERS+1]
-	, g_bUnkillable[MAXPLAYERS+1]
-	, g_bMapSetUsed
-	, g_bSaveLoc;
+	g_bLateLoad,
+	g_bFeaturesEnabled[MAXPLAYERS+1],
+	g_bCPFallback,
+	g_bHideMessage[MAXPLAYERS+1],
+	g_bIsPreviewing[MAXPLAYERS+1],
+	g_bAmmoRegen[MAXPLAYERS+1],
+	g_bHardcore[MAXPLAYERS+1],
+	g_bCPTouched[MAXPLAYERS+1][MAX_CAP_POINTS],
+	g_bJustSpawned[MAXPLAYERS+1],
+	g_bTelePaused[MAXPLAYERS+1],
+	g_bUsedReset[MAXPLAYERS+1],
+	g_bBeatTheMap[MAXPLAYERS+1],
+	g_bUnkillable[MAXPLAYERS+1],
+	g_bMapSetUsed,
+	g_bSaveLoc;
 char
-	  g_sWebsite[128] = "http:// www.jump.tf/"
-	, g_sForum[128] = "http://tf2rj.com/forum/"
-	, g_sJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0"
-	, g_sCurrentMap[64]
-	, g_sClientSteamID[MAXPLAYERS+1][32];
+	g_sWebsite[128] = "http:// www.jump.tf/",
+	g_sForum[128] = "http://tf2rj.com/forum/",
+	g_sJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0",
+	g_sCurrentMap[64],
+	g_sClientSteamID[MAXPLAYERS+1][32];
 int
-	  g_iLastTeleport[MAXPLAYERS+1]
-	, g_iClientTeam[MAXPLAYERS+1]
-	, g_iClientWeapons[MAXPLAYERS+1][3]
-	, g_iIntelCarrier
-	, g_iCPCount
-	, g_iForceTeam = 1
-	, g_iCPsTouched[MAXPLAYERS+1];
+	g_iLastTeleport[MAXPLAYERS+1],
+	g_iClientTeam[MAXPLAYERS+1],
+	g_iClientWeapons[MAXPLAYERS+1][3],
+	g_iIntelCarrier,
+	g_iCPCount,
+	g_iForceTeam = 1,
+	g_iCPsTouched[MAXPLAYERS+1];
 float
-	  g_fOrigin[MAXPLAYERS+1][3]
-	, g_fAngles[MAXPLAYERS+1][3]
-	, g_fLastSavePos[MAXPLAYERS+1][3]
-	, g_fLastSaveAngles[MAXPLAYERS+1][3];
+	g_fOrigin[MAXPLAYERS+1][3],
+	g_fAngles[MAXPLAYERS+1][3],
+	g_fLastSavePos[MAXPLAYERS+1][3],
+	g_fLastSaveAngles[MAXPLAYERS+1][3];
 TFClassType
-	  g_TFClientClass[MAXPLAYERS+1];
+	g_TFClientClass[MAXPLAYERS+1];
 ConVar
-	  g_cvarHostname
-	, g_cvarPluginEnabled
-	, g_cvarWelcomeMsg
-	, g_cvarCriticals
-	, g_cvarSuperman
-	, g_cvarAmmoCheat
-	, g_cvarWaitingForPlayers;
+	g_cvarHostname,
+	g_cvarPluginEnabled,
+	g_cvarWelcomeMsg,
+	g_cvarCriticals,
+	g_cvarSuperman,
+	g_cvarAmmoCheat,
+	g_cvarWaitingForPlayers;
 Cookie
-	  g_hJAMessageCookie;
+	g_hJAMessageCookie;
 GlobalForward
-	  g_hForwardSKeys;
+	g_hForwardSKeys;
 ArrayList
-	  g_aNoFuncRegen;
+	g_aNoFuncRegen;
 Database
-	  g_Database;
+	g_Database;
 StringMap
-	  g_smCapturePoint
-	, g_smCapturePointName
-	, g_smCaptureArea
-	, g_smCaptureAreaName;
+	g_smCapturePoint,
+	g_smCapturePointName,
+	g_smCaptureArea,
+	g_smCaptureAreaName;
 
 #include "jumpassist/skeys.sp"
 #include "jumpassist/database.sp"
@@ -158,15 +158,17 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart() {
 	// CONVAR
-	CreateConVar("jumpassist_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
+	CreateConVar(
+		"jumpassist_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD
+	).SetString(PLUGIN_VERSION);
 	g_cvarHostname = FindConVar("hostname");
 	g_cvarWaitingForPlayers = FindConVar("mp_waitingforplayers_time");
-	g_cvarPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NONE);
-	g_cvarWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NONE);
-	g_cvarAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo?", FCVAR_NONE);
-	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits?", FCVAR_NONE);
-	g_cvarSuperman = CreateConVar("ja_superman", "1", "Allows everyone to be invincible?", FCVAR_NONE);
-	g_cvarExplosions = CreateConVar("sm_hide_explosions", "1", "Enable/Disable hiding explosions.", 0);
+	g_cvarPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.");
+	g_cvarWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?");
+	g_cvarAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo?");
+	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits?");
+	g_cvarSuperman = CreateConVar("ja_superman", "1", "Allows everyone to be invincible?");
+	g_cvarExplosions = CreateConVar("sm_hide_explosions", "1", "Enable/Disable hiding explosions.");
 
 	g_cvarAmmoCheat.AddChangeHook(cvarAmmoCheatChanged);
 	g_cvarWelcomeMsg.AddChangeHook(cvarWelcomeMsgChanged);
@@ -241,6 +243,7 @@ public void OnPluginStart() {
 	HookEvent("player_disconnect", eventPlayerDisconnect);
 	HookEvent("teamplay_flag_event", eventIntelPickedUp, EventHookMode_Pre);
 	HookEvent("rocket_jump", eventRocketJump, EventHookMode_Pre);
+	HookEvent("sticky_jump", eventRocketJump, EventHookMode_Pre);
 
 	HookUserMessage(GetUserMessageId("VoiceSubtitle"), hookVoice, true);
 
@@ -499,38 +502,35 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			}
 		}
 
-		int
-			  R = g_iSkeysColor[client][RED]
-			, G = g_iSkeysColor[client][GREEN]
-			, B = g_iSkeysColor[client][BLUE]
-			, alpha = 255;
-		bool
-			  W = !!(buttonsToShow & IN_FORWARD)
-			, A = !!(buttonsToShow & IN_MOVELEFT)
-			, S = !!(buttonsToShow & IN_BACK)
-			, D = !!(buttonsToShow & IN_MOVERIGHT)
-			, Duck = !!(buttonsToShow & IN_DUCK)
-			, Jump = !!(buttonsToShow & IN_JUMP)
-			, M1 = !!(buttonsToShow & IN_ATTACK)
-			, M2 = !!(buttonsToShow & IN_ATTACK2);
-		float
-			  hold = 0.3
-			, X = g_fSkeysPos[client][XPOS]
-			, Y = g_fSkeysPos[client][YPOS];
+		int r = g_iSkeysColor[client][RED];
+		int g = g_iSkeysColor[client][GREEN];
+		int b = g_iSkeysColor[client][BLUE];
+		const int alpha = 255;
 
-		SetHudTextParams(X+(W?0.047:0.052), Y, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
-		ShowSyncHudText(client, g_hHudDisplayForward, (W?"W":"-"));
+		bool w = !!(buttonsToShow & IN_FORWARD);
+		bool a = !!(buttonsToShow & IN_MOVELEFT);
+		bool s = !!(buttonsToShow & IN_BACK);
+		bool d = !!(buttonsToShow & IN_MOVERIGHT);
+		bool duck = !!(buttonsToShow & IN_DUCK);
+		bool jump = !!(buttonsToShow & IN_JUMP);
+		bool m1 = !!(buttonsToShow & IN_ATTACK);
+		bool m2 = !!(buttonsToShow & IN_ATTACK2);
+		
+		float x = g_fSkeysPos[client][XPOS];
+		float y = g_fSkeysPos[client][YPOS];
+		const float hold = 0.3;
 
-		SetHudTextParams(X+0.04-(A?0.0042:0.0)-(S?0.0015:0.0), Y+0.04, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
-		ShowSyncHudText(client, g_hHudDisplayASD, "%c %c %c", (A?'A':'-'), (S?'S':'-'), (D?'D':'-'));
+		SetHudTextParams(x+(w?0.047:0.052), y, hold, r, g, b, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		ShowSyncHudText(client, g_hHudDisplayForward, (w?"W":"-"));
 
-		SetHudTextParams(X+0.08, Y, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
-		ShowSyncHudText(client, g_hHudDisplayJump, "%s\n%s", (Duck?" Duck":""), (Jump?"Jump":""));
+		SetHudTextParams(x+0.04-(a?0.0042:0.0)-(s?0.0015:0.0), y+0.04, hold, r, g, b, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		ShowSyncHudText(client, g_hHudDisplayASD, "%c %c %c", (a?'A':'-'), (s?'S':'-'), (d?'D':'-'));
 
-		SetHudTextParams(X, Y, hold, R, G, B, alpha, .fadeIn=0.0, .fadeOut=0.0);
-		ShowSyncHudText(client, g_hHudDisplayAttack, "%s\n%s", (M1?"M1":""), (M2?"M2":""));
+		SetHudTextParams(x+0.08, y, hold, r, g, b, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		ShowSyncHudText(client, g_hHudDisplayJump, "%s\n%s", (duck?" Duck":""), (jump?"Jump":""));
 
-		//.54 x def and .4 y def
+		SetHudTextParams(x, y, hold, r, g, b, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		ShowSyncHudText(client, g_hHudDisplayAttack, "%s\n%s", (m1?"M1":""), (m2?"M2":""));
 	}
 
 	if (IsClientPreviewing(client) && (buttons & IN_ATTACK)) {
@@ -538,7 +538,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	}
 
 	if (g_bAmmoRegen[client] && buttons & (IN_ATTACK|IN_ATTACK2) && !IsClientObserver(client)) {
-		for (int i = 0; i <= 2; ++i) {
+		for (int i = 0; i < 3; ++i) {
 			ReSupply(client, g_iClientWeapons[client][i]);
 		}
 	}
@@ -571,6 +571,10 @@ public int Native_IsClientHiding(Handle plugin, int numParams) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
 
+	if (!IsClientInGame(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+
 	return IsClientHiding(client);
 }
 
@@ -582,6 +586,10 @@ public int Native_IsClientHardcore(Handle plugin, int numParams) {
 
 	if (!IsClientConnected(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
+	}
+
+	if (!IsClientInGame(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 
 	return IsClientHardcore(client);
@@ -597,6 +605,10 @@ public int Native_IsClientRacing(Handle plugin, int numParams) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
 
+	if (!IsClientInGame(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+
 	return IsClientRacing(client);
 }
 
@@ -610,7 +622,12 @@ public int Native_ToggleKeys(Handle plugin, int numParams) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
 
+	if (!IsClientInGame(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+
 	g_bSKeysEnabled[client] = GetNativeCell(2);
+
 	return 1;
 }
 
@@ -624,14 +641,27 @@ public int Native_PauseTeleport(Handle plugin, int numParams) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
 
+	if (!IsClientInGame(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+
 	PauseTeleport(client);
+
 	return 1;
 }
 
 public int Native_PrintMessage(Handle plugin, int numParams) {
 	int client = GetNativeCell(1);
-	if (!IsValidClient(client)) {
-		return 0;
+	if (client < 1 || client > MaxClients) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
+	}
+
+	if (!IsClientConnected(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
+	}
+
+	if (!IsClientInGame(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 
 	char buffer[1024]; 
@@ -640,6 +670,7 @@ public int Native_PrintMessage(Handle plugin, int numParams) {
 	FormatNativeString(0, 2, 3, sizeof(buffer), written, buffer);
 
 	PrintJAMessage(client, buffer);
+
 	return 1;
 }
 
@@ -650,6 +681,7 @@ public int Native_PrintMessageAll(Handle plugin, int numParams) {
 	FormatNativeString(0, 1, 2, sizeof(buffer), written, buffer);
 
 	PrintJAMessageAll(buffer);
+
 	return 1;
 }
 
