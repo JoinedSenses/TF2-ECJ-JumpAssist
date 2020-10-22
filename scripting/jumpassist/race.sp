@@ -40,7 +40,7 @@ RaceStatus
 */
 
 public Action cmdRace(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client)) {
+	if (!IsValidClient(client)) {
 		return Plugin_Handled;
 	}
 

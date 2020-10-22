@@ -28,7 +28,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.3.12"
+#define PLUGIN_VERSION "2.3.13"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
@@ -102,7 +102,6 @@ TFClassType
 	g_TFClientClass[MAXPLAYERS+1];
 ConVar
 	g_cvarHostname,
-	g_cvarPluginEnabled,
 	g_cvarWelcomeMsg,
 	g_cvarCriticals,
 	g_cvarSuperman,
@@ -163,7 +162,6 @@ public void OnPluginStart() {
 	).SetString(PLUGIN_VERSION);
 	g_cvarHostname = FindConVar("hostname");
 	g_cvarWaitingForPlayers = FindConVar("mp_waitingforplayers_time");
-	g_cvarPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.");
 	g_cvarWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?");
 	g_cvarAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo?");
 	g_cvarCriticals = CreateConVar("ja_crits", "0", "Allow critical hits?");
@@ -328,10 +326,6 @@ public void OnPluginEnd() {
 }
 
 public void OnMapStart() {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
-	}
-
 	g_bCPFallback = false;
 	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
 
@@ -413,10 +407,6 @@ public void OnClientCookiesCached(int client) {
 }
 
 public void OnClientPostAdminCheck(int client) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
-	}
-
 	SDKHook(client, SDKHook_SetTransmit, hookSetTransmitClient);
 
 	if (IsFakeClient(client)) {
@@ -706,10 +696,6 @@ public void cvarSupermanChanged(ConVar convar, const char[] oldValue, const char
 */
 
 public Action listenerJoinClass(int client, const char[] command, int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Continue;
-	}
-
 	if (IsClientPreviewing(client)) {
 		PrintJAMessage(client, "You may not change class during"...cTheme2..." preview mode\x01.");
 		return Plugin_Handled;
@@ -724,10 +710,6 @@ public Action listenerJoinClass(int client, const char[] command, int args) {
 }
 
 public Action listenerJoinTeam(int client, const char[] command, int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Continue;
-	}
-
 	if (IsClientPreviewing(client)) {
 		PrintJAMessage(client, "You may not change team during"...cTheme2..." preview mode\x01.");
 		return Plugin_Handled;
@@ -839,10 +821,6 @@ public void eventPlayerChangeClass(Event event, const char[] name, bool dontBroa
 }
 
 public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Continue;
-	}
-	
 	int client = GetClientOfUserId(event.GetInt("userid"));
 
 	if (GetClientTeam(client) == g_iClientTeam[client] || g_bMapSetUsed) {
@@ -857,10 +835,6 @@ public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcas
 }
 
 public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Continue;
-	}
-
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if (IsFakeClient(client)) {
 		return Plugin_Continue;
@@ -923,10 +897,6 @@ public void eventInventoryUpdate(Event event, char[] strName, bool bDontBroadcas
 }
 
 public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadcast) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
-	}
-
 	if (event.GetBool("bot")) {
 		return;
 	}
@@ -960,10 +930,6 @@ public void eventPlayerDisconnect(Event event, char[] strName, bool bDontBroadca
 }
 
 public void eventRoundStart(Event event, const char[] name, bool dontBroadcast) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
-	}
-
 	HookFuncRegenerate();
 	SetUpCapturePoints();
 }
@@ -993,10 +959,6 @@ public void eventRocketJump(Event event, const char[] name, bool dontBroadcast) 
 }
 
 public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Continue;
-	}
-
 	int client = event.GetInt("player");
 
 	if (IsFakeClient(client) || IsClientPreviewing(client) || g_bSaveLoc && SL_IsClientPracticing(client)) {
@@ -1156,9 +1118,6 @@ public void hookOnWeaponEquipPost(int client, int weapon) {
 }
 
 public Action hookVoice(UserMsg msg_id, BfRead bf, const int[] players, int playersNum, bool reliable, bool init) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Continue;
-	}
 	int client = bf.ReadByte();
 
 	if (IsClientPreviewing(client)) {
@@ -1186,31 +1145,25 @@ public Action hookVoice(UserMsg msg_id, BfRead bf, const int[] players, int play
 */
 
 public Action cmdSave(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Handled;
-	}
-
 	if (g_bSaveLoc && SL_IsClientPracticing(client)) {
 		PrintJAMessage(client, "Can't save while using saveloc. Type"...cTheme2..." /practice\x01 to disable");
 		return Plugin_Handled;
 	}
 
 	SaveLoc(client);
+
 	return Plugin_Handled;
 }
 
 public Action cmdTele(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Handled;
-	}
-
 	Teleport(client);
 	g_iLastTeleport[client] = RoundFloat(GetEngineTime());
+
 	return Plugin_Handled;
 }
 
 public Action cmdReset(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue || IsClientObserver(client)) {
+	if (IsClientObserver(client)) {
 		return Plugin_Handled;
 	}
 
@@ -1226,7 +1179,7 @@ public Action cmdReset(int client, int args) {
 }
 
 public Action cmdRestart(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client) || IsClientObserver(client)) {
+	if (!IsValidClient(client) || IsClientObserver(client)) {
 		return Plugin_Handled;
 	}
 
@@ -1286,10 +1239,6 @@ public Action cmdToggleAmmo(int client, int args) {
 }
 
 public Action cmdUnkillable(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Handled;
-	}
-
 	if (!g_cvarSuperman.BoolValue && !IsUserAdmin(client)) {
 		PrintJAMessage(client, "Command disabled by server admin.");
 		return Plugin_Handled;
@@ -1318,10 +1267,6 @@ public Action cmdHideMessage(int client, int args) {
 }
 
 public Action cmdMapSet(int client, int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Handled;
-	}
-
 	if (g_Database == null) {
 		PrintJAMessage(client, "This feature is not supported without a database configuration");
 		return Plugin_Handled;
@@ -1356,25 +1301,19 @@ public Action cmdJAHelp(int client, int args) {
 }
 
 public Action cmdJumpTF(int client, int args) {
-	if (g_cvarPluginEnabled.BoolValue) {
-		ShowMOTDPanel(client, "Jump Assist Help", g_sWebsite, MOTDPANEL_TYPE_URL);
-	}
+	ShowMOTDPanel(client, "Jump Assist Help", g_sWebsite, MOTDPANEL_TYPE_URL);
 	
 	return Plugin_Handled;
 }
 
 public Action cmdJumpForums(int client, int args) {
-	if (g_cvarPluginEnabled.BoolValue) {
-		ShowMOTDPanel(client, "Jump Assist Help", g_sForum, MOTDPANEL_TYPE_URL);
-	}
+	ShowMOTDPanel(client, "Jump Assist Help", g_sForum, MOTDPANEL_TYPE_URL);
 	
 	return Plugin_Handled;
 }
 
 public Action cmdJumpAssist(int client, int args) {
-	if (g_cvarPluginEnabled.BoolValue) {
-		ShowMOTDPanel(client, "Jump Assist Help", g_sJumpAssist, MOTDPANEL_TYPE_URL);
-	}
+	ShowMOTDPanel(client, "Jump Assist Help", g_sJumpAssist, MOTDPANEL_TYPE_URL);
 	
 	return Plugin_Handled;
 }
@@ -1409,10 +1348,6 @@ void SetPlayerDefaults(int client) {
 }
 
 void SaveLoc(int client) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
-	}
-
 	if (!g_bFeaturesEnabled[client]) {
 		PrintJAMessage(client, "Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.");
 		return;
@@ -1456,7 +1391,7 @@ void SaveLoc(int client) {
 }
 
 void Teleport(int client) {
-	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client)) {
+	if (!IsValidClient(client)) {
 		return;
 	}
 
@@ -1500,13 +1435,13 @@ void Teleport(int client) {
 }
 
 void ResetPlayerPos(int client) {
-	if (g_cvarPluginEnabled.BoolValue && IsClientInGame(client) && !IsClientObserver(client) && g_bFeaturesEnabled[client]) {
+	if (IsClientInGame(client) && !IsClientObserver(client) && g_bFeaturesEnabled[client]) {
 		DeletePlayerData(client);
 	}
 }
 
 void Hardcore(int client) {
-	if (!g_cvarPluginEnabled.BoolValue || !IsClientInGame(client) || IsClientObserver(client)) {
+	if (!IsClientInGame(client) || IsClientObserver(client)) {
 		return;
 	}
 
@@ -1562,7 +1497,7 @@ void GetClientWeapons(int client) {
 }
 
 void ReSupply(int client, int weapon) {
-	if (!g_cvarPluginEnabled.BoolValue || !IsValidWeapon(weapon) || !IsValidClient(client) || !IsPlayerAlive(client)) {
+	if (!IsValidWeapon(weapon) || !IsValidClient(client) || !IsPlayerAlive(client)) {
 		return;
 	}
 
@@ -1719,10 +1654,6 @@ void SetAmmo(int client, int weapon, int ammo) {
 }
 
 void EraseLocs(int client) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
-	}
-	
 	g_fOrigin[client] = EMPTY_VECTOR;
 	g_fAngles[client] = EMPTY_VECTOR;
 
@@ -1735,10 +1666,6 @@ void EraseLocs(int client) {
 }
 
 void CheckTeams() {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return;
-	}
-
 	CreateTimer(0.1, timerMapSetUsed);
 	g_bMapSetUsed = true;
 	for (int i = 1; i <= MaxClients; ++i) {
@@ -1753,7 +1680,7 @@ void CheckTeams() {
 }
 
 void SendToStart(int client) {
-	if (!g_cvarPluginEnabled.BoolValue || !IsValidClient(client) || IsClientObserver(client)) {
+	if (!IsValidClient(client) || IsClientObserver(client)) {
 		return;
 	}
 	

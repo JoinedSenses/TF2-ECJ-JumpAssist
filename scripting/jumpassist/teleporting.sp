@@ -140,10 +140,6 @@ public Action cmdGoTo(int client, int args) {
 }
 
 public Action cmdSendPlayer(int client,int args) {
-	if (!g_cvarPluginEnabled.BoolValue) {
-		return Plugin_Handled;
-	}
-
 	if (g_Database == null) {
 		PrintJAMessage(client, "This feature is not supported without a database configuration");
 		return Plugin_Handled;
