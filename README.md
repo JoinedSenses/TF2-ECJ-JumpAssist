@@ -16,6 +16,9 @@ Tons of other undocumented misc changes.
 
 This plugin supports SaveLoc functionality found here:  
 https://github.com/JoinedSenses/SM-SaveLoc  
+
+### Dependencies
+https://github.com/JoinedSenses/SM-JSLib/blob/main/jslib.inc
   
 ## Public Commands
 Command | Description

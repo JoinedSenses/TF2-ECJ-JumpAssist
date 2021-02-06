@@ -139,7 +139,7 @@ public Action cmdGoTo(int client, int args) {
 	return Plugin_Handled;
 }
 
-public Action cmdSendPlayer(int client,int args) {
+public Action cmdSendPlayer(int client, int args) {
 	if (g_Database == null) {
 		PrintJAMessage(client, "This feature is not supported without a database configuration");
 		return Plugin_Handled;
@@ -151,15 +151,20 @@ public Action cmdSendPlayer(int client,int args) {
 	}
 
 	char arg1[MAX_NAME_LENGTH];
-	char arg2[MAX_NAME_LENGTH];
-
 	GetCmdArg(1, arg1, sizeof(arg1));
+
+	int target1 = FindTargetEx(client, arg1, false, false);
+	if (target1 == -1) {
+		ReplyToCommand(client, "No target found (arg 1)");
+		return Plugin_Handled;
+	}
+
+	char arg2[MAX_NAME_LENGTH];
 	GetCmdArg(2, arg2, sizeof(arg2));
 
-	int target1 = FindTarget2(client, arg1, false, false);
-	int target2 = FindTarget2(client, arg2, false, false);
-
-	if (target1 < 1 || target2 < 1) {
+	int target2 = FindTargetEx(client, arg2, false, false);
+	if (target2 == -1) {
+		ReplyToCommand(client, "No target found (arg 2)");
 		return Plugin_Handled;
 	}
 
@@ -174,9 +179,9 @@ public Action cmdSendPlayer(int client,int args) {
 	}
 
 	float origin[3];
-	float angle[3];
-
 	GetClientAbsOrigin(target2, origin);
+
+	float angle[3];
 	GetClientAbsAngles(target2, angle);
 	
 	TeleportEntity(target1, origin, angle, EMPTY_VECTOR);
@@ -194,8 +199,9 @@ public Action cmdSendPlayer(int client,int args) {
 void MainMenu(int client) {
 	Menu menu = new Menu(MenuHandler_Main, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem);
 	menu.SetTitle("GoTo Menu!");
+
 	for (int i = 1; i <= MaxClients; ++i) {
-		if (IsValidClient(i) && IsPlayerAlive(i) && !IsClientPreviewing(i)) {
+		if (IsClientInGame(i) && !IsFakeClient(i) && IsPlayerAlive(i) && !IsClientPreviewing(i)) {
 			char name[MAX_NAME_LENGTH];
 			FormatEx(name, sizeof(name), "%N", i);
 

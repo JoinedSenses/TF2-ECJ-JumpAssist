@@ -1,9 +1,7 @@
 bool
-	  g_bHide[MAXPLAYERS+1]
-	, g_bHooked
-	, g_bIntelPickedUp;
-ConVar
-	  g_cvarExplosions;
+	g_bHide[MAXPLAYERS+1],
+	g_bHooked,
+	g_bIntelPickedUp;
 
 //Sounds to block.  
 char g_sSoundHook[][] = {
@@ -38,7 +36,7 @@ char g_sGeneralList[][] = {
 
 public void OnClientDisconnect_Post(int client) {
     g_bHide[client] = false;
-    g_bHooked = checkHooks();
+    CheckHooks();
 }
 
 public void OnEntityCreated(int entity, const char[] classname) {
@@ -60,8 +58,10 @@ public void OnEntityCreated(int entity, const char[] classname) {
 		if ((building = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity")) < 1) {
 			return;
 		}
+
 		char className2[32];
 		GetEntityClassname(building, className2, sizeof(className2));
+
 		if (StrContains(className2, "obj_") != -1) {
 			SDKHook(entity, SDKHook_SetTransmit, hookSetTransmitObjects);
 			return;
@@ -101,7 +101,7 @@ public void OnEntityCreated(int entity, const char[] classname) {
 
 public Action cmdHide(int client, int args) {
 	g_bHide[client] = !g_bHide[client];
-	g_bHooked = checkHooks();
+	CheckHooks();
 	PrintJAMessage(client, "Other players are now"...cTheme2..." %s\x01.", g_bHide[client] ? "hidden" : "visible");
 	return Plugin_Handled;
 }
@@ -143,7 +143,7 @@ public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PL
 
 	for (int i = 0; i < numClients; ++i) {
 		int client = clients[i];
-		if (!IsClientInGame(client) || (IsValidClient(client) && IsClientHiding(client) && client != entity && client != owner && g_iClientTeam[client] != 1)) {
+		if (!IsClientInGame(client) || (IsValidClient(client) && g_bHide[client] && client != entity && client != owner && g_iClientTeam[client] != 1)) {
 			//Remove the client from the array if they have hide toggled, if they are not the creator of the sound, and if they are not in spectate.
 			for (int j = i; j < numClients-1; ++j) {
 				clients[j] = clients[j+1];
@@ -157,9 +157,9 @@ public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PL
 }
 
 public Action hookSetTransmitClient(int entity, int client) {
-	setFlags(entity);
+	SetFlags(entity);
 	//Transmit hook on player models.
-	if ((entity != client && (IsClientHiding(client) || IsClientPreviewing(entity)) && g_iClientTeam[client] > 1)) {
+	if (entity != client && (g_bHide[client] || IsClientPreviewing(entity)) && g_iClientTeam[client] > 1) {
 		return Plugin_Handled;
 	}
 
@@ -167,74 +167,75 @@ public Action hookSetTransmitClient(int entity, int client) {
 }
 
 public Action hookSetTransmitPipes(int entity, int client) {
-	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
-		return Plugin_Continue;
+	if (g_bHide[client] && g_iClientTeam[client] > 1
+	&& GetEntPropEnt(entity, Prop_Send, "m_hThrower") != client) {
+		return Plugin_Handled;
 	}
 
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	return (owner == client) ? Plugin_Continue : Plugin_Handled;
+	return Plugin_Continue;
 }
 
 public Action hookSetTransmitOwnerEntity(int entity, int client) {
-	setFlags(entity);
-	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
-		return Plugin_Continue;
+	SetFlags(entity);
+
+	if (g_bHide[client] && g_iClientTeam[client] > 1
+	&& GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity") != client) {
+		return Plugin_Handled;
 	}
 
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
-	return (owner == client) ? Plugin_Continue : Plugin_Handled;
+	return Plugin_Continue;
 }
 
 public Action hookSetTransmitObjects(int entity, int client) {
-	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
-		return Plugin_Continue;
+	if (g_bHide[client] && g_iClientTeam[client] > 1
+	&& GetEntPropEnt(entity, Prop_Send, "m_hBuilder") != client) {
+		return Plugin_Handled;
 	}
 
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hBuilder");
-	return (owner == client) ? Plugin_Continue : Plugin_Handled;
+	return Plugin_Continue;
 }
 
 public Action hookSetTransmitProjectiles(int entity, int client) {
-	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
-		return Plugin_Continue;
+	if (g_bHide[client] && g_iClientTeam[client] > 1) {
+		return Plugin_Handled;
 	}
 
-	return Plugin_Handled;
+	return Plugin_Continue;
 }
 
 public Action hookSetTransmitParticle(int entity, int client) {
-	setFlags(entity);
+	SetFlags(entity);
 	return Plugin_Continue;
 }
 
 public Action hookSetTransmitIntel(int entity, int client) {
-	setFlags(entity);
-	if (!IsClientHiding(client) || g_iClientTeam[client] == 1) {
-		return Plugin_Continue;
+	SetFlags(entity);
+
+	if (g_bIntelPickedUp && IsClientHiding(client) && g_iClientTeam[client] > 1) {
+		return Plugin_Handled;
 	}
 
-	return g_bIntelPickedUp ? Plugin_Handled : Plugin_Continue;
+	return Plugin_Continue;
 }
 
+// Remove explosion, blood, and cow mangler temp ents from game.
 public Action hookTempEnt(const char[] te_name, const int[] players, int numClients, float delay) {
-	if (g_cvarExplosions.BoolValue) {
-		//Remove explosion, blood, and cow mangler temp ents from game.
-		if (StrEqual(te_name, "TFExplosion") || StrEqual(te_name, "TFBlood")) {
-			return Plugin_Handled;
-		}
-		else if (StrContains(te_name, "ParticleEffect") != -1) {
-			switch (TE_ReadNum("m_iParticleSystemIndex")) {
-				case 1138, 1147, 1153, 1154: {
-					return Plugin_Handled;
-				}
+	if (StrEqual(te_name, "TFExplosion") || StrEqual(te_name, "TFBlood")) {
+		return Plugin_Handled;
+	}
+
+	if (StrContains(te_name, "ParticleEffect") != -1) {
+		switch (TE_ReadNum("m_iParticleSystemIndex")) {
+			case 1138, 1147, 1153, 1154: {
+				return Plugin_Handled;
 			}
 		}
 	}
+
 	return Plugin_Continue;
 }
 
 public Action hookTouch(int entity, int other) {
-	//If valid client and hide is toggled, prevent them from touching buildings
 	if (0 < other <= MaxClients && IsClientHiding(other)) {
 		return Plugin_Handled;
 	}
@@ -246,17 +247,18 @@ public Action hookTouch(int entity, int other) {
    ------------------------------- Internal Functions
 */
 
-bool checkHooks() {	
+bool CheckHooks() {	
 	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsValidClient(i) && g_bHide[i]) {
-			return true;
+			g_bHooked = true;
+			return;
 		}
 	}
-	//Fake (un)hook because toggling actual hooks will cause server instability.
-	return false;
+
+	g_bHooked = false;
 }
 
-void setFlags(int edict) {
+void SetFlags(int edict) {
 	//Function for allowing transmit hook for entities set to always transmit
 	if (GetEdictFlags(edict) & FL_EDICT_ALWAYS) {
 		SetEdictFlags(edict, (GetEdictFlags(edict) & ~FL_EDICT_ALWAYS));

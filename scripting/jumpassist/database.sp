@@ -36,21 +36,21 @@ void RunDBCheck() {
 	strcopy(increment, sizeof(increment),(StrEqual(dbType, "mysql", false)) ? "AUTO_INCREMENT" : "AUTOINCREMENT");
 
 	FormatEx(
-		  query
-		, sizeof(query)
-		, "CREATE TABLE IF NOT EXISTS player_saves "
-		... "("
-			... "RecID INTEGER PRIMARY KEY %s, "
-			... "steamID VARCHAR(32) NOT NULL, "
-			... "playerClass TINYINT UNSIGNED NOT NULL, "
-			... "playerTeam TINYINT UNSIGNED NOT NULL, "
-			... "playerMap VARCHAR(32) NOT NULL, "
-			... "origin1 SMALLINT NOT NULL, "
-			... "origin2 SMALLINT NOT NULL, "
-			... "origin3 SMALLINT NOT NULL, "
-			... "angle2 SMALLINT NOT NULL"
-		... ")"
-		, increment
+		query,
+		sizeof(query),
+		"CREATE TABLE IF NOT EXISTS player_saves " ...
+		"(" ...
+			"RecID INTEGER PRIMARY KEY %s, " ...
+			"steamID VARCHAR(32) NOT NULL, " ...
+			"playerClass TINYINT UNSIGNED NOT NULL, " ...
+			"playerTeam TINYINT UNSIGNED NOT NULL, " ...
+			"playerMap VARCHAR(32) NOT NULL, " ...
+			"origin1 SMALLINT NOT NULL, " ...
+			"origin2 SMALLINT NOT NULL, " ...
+			"origin3 SMALLINT NOT NULL, " ...
+			"angle2 SMALLINT NOT NULL" ...
+		")",
+		increment
 	);
 
 	SQL_LockDatabase(g_Database);
@@ -61,19 +61,19 @@ void RunDBCheck() {
 	SQL_UnlockDatabase(g_Database);
 
 	FormatEx(
-		  query
-		, sizeof(query)
-		, "CREATE TABLE IF NOT EXISTS player_profiles "
-		... "("
-			... "ID INTEGER PRIMARY KEY %s, "
-			... "SteamID TEXT NOT NULL, "
-			... "SKEYS_RED_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
-			... "SKEYS_GREEN_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
-			... "SKEYS_BLUE_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, "
-			... "SKEYSX DECIMAL(5,4) NOT NULL DEFAULT 0.54, "
-			... "SKEYSY DECIMAL(5,4) NOT NULL DEFAULT 0.40"
-		... ")"
-		, increment
+		query,
+		sizeof(query),
+		"CREATE TABLE IF NOT EXISTS player_profiles " ...
+		"(" ...
+			"ID INTEGER PRIMARY KEY %s, " ...
+			"SteamID TEXT NOT NULL, " ...
+			"SKEYS_RED_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, " ...
+			"SKEYS_GREEN_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, " ...
+			"SKEYS_BLUE_COLOR TINYINT UNSIGNED NOT NULL DEFAULT 255, " ...
+			"SKEYSX DECIMAL(5,4) NOT NULL DEFAULT 0.54, " ...
+			"SKEYSY DECIMAL(5,4) NOT NULL DEFAULT 0.40" ...
+		")",
+		increment
 	);
 	
 	SQL_LockDatabase(g_Database);
@@ -84,15 +84,15 @@ void RunDBCheck() {
 	SQL_UnlockDatabase(g_Database);
 
 	FormatEx(
-		  query
-		, sizeof(query)
-		, "CREATE TABLE IF NOT EXISTS map_settings "
-		... "("
-			... "ID INTEGER PRIMARY KEY %s, "
-			... "Map TEXT NOT NULL, "
-			... "Team TINYINT UNSIGNED NOT NULL"
-		... ")"
-		, increment
+		query,
+		sizeof(query),
+		"CREATE TABLE IF NOT EXISTS map_settings " ...
+		"(" ...
+			"ID INTEGER PRIMARY KEY %s, " ...
+			"Map TEXT NOT NULL, " ...
+			"Team TINYINT UNSIGNED NOT NULL" ...
+		")",
+		increment
 	);
 
 	SQL_LockDatabase(g_Database);
@@ -200,12 +200,12 @@ public void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char
 	}
 
 	if (results.FetchRow()) {
-		g_iSkeysColor[client][RED] = results.FetchInt(2);
-		g_iSkeysColor[client][GREEN] = results.FetchInt(3);
-		g_iSkeysColor[client][BLUE] = results.FetchInt(4);
+		g_iSKeysColor[client][RED] = results.FetchInt(2);
+		g_iSKeysColor[client][GREEN] = results.FetchInt(3);
+		g_iSKeysColor[client][BLUE] = results.FetchInt(4);
 
-		g_fSkeysPos[client][XPOS] = results.FetchFloat(5);
-		g_fSkeysPos[client][YPOS] = results.FetchFloat(6);
+		g_fSKeysPos[client][XPOS] = results.FetchFloat(5);
+		g_fSKeysPos[client][YPOS] = results.FetchFloat(6);
 	}
 	else if (IsValidClient(client)) {
 		// No profile
@@ -216,14 +216,14 @@ public void SQL_OnLoadPlayerProfile(Database db, DBResultSet results, const char
 void CreatePlayerProfile(int client) {
 	char query[1024];
 	g_Database.Format(
-		  query
-		, sizeof(query)
-		, "INSERT INTO player_profiles "
-		... "VALUES"
-		... "("
-			... "null, '%s', '255', '255', '255', '0.54', '0.40'"
-		... ")"
-		, g_sClientSteamID[client]
+		query,
+		sizeof(query),
+		"INSERT INTO player_profiles " ...
+		"VALUES" ...
+		"(" ...
+			"null, '%s', '255', '255', '255', '0.54', '0.40'" ...
+		")",
+		g_sClientSteamID[client]
 	);
 	g_Database.Query(SQL_OnCreatePlayerProfile, query, GetClientUserId(client));
 }
@@ -249,18 +249,18 @@ void GetPlayerData(int client) {
 	char query[256];
 
 	g_Database.Format(
-		  query
-		, sizeof(query)
-		, "SELECT * "
-		... "FROM player_saves "
-		... "WHERE steamID = '%s' "
-		... "AND playerTeam = '%i' "
-		... "AND playerClass = '%i' "
-		... "AND playerMap = '%s'"
-		, g_sClientSteamID[client]
-		, g_iClientTeam[client]
-		, view_as<int>(g_TFClientClass[client])
-		, g_sCurrentMap
+		query,
+		sizeof(query),
+		"SELECT * " ...
+		"FROM player_saves " ...
+		"WHERE steamID = '%s' " ...
+		"AND playerTeam = '%i' " ...
+		"AND playerClass = '%i' " ...
+		"AND playerMap = '%s'",
+		g_sClientSteamID[client],
+		g_iClientTeam[client],
+		view_as<int>(g_TFClientClass[client]),
+		g_sCurrentMap
 	);
 	g_Database.Query(SQL_OnGetPlayerData, query, GetClientUserId(client));
 }
@@ -292,28 +292,29 @@ void SavePlayerData(int client) {
 	char query[1024];
 
 	g_Database.Format(
-		  query
-		, sizeof(query)
-		, "INSERT INTO player_saves "
-		... "VALUES("
-			... "null, "
-			... "'%s', "	// g_sClientSteamID[client]
-			... "'%i', "	// view_as<int>(g_TFClientClass[client])
-			... "'%i', "	// g_iClientTeam[client]
-			... "'%s', "	// g_sCurrentMap
-			... "'%f', "	// SavePos1[client][0]
-			... "'%f', "	// SavePos1[client][1]
-			... "'%f', "	// SavePos1[client][2]
-			... "'%f'"		// SavePos2[client][1]
-		... ")"
-		, g_sClientSteamID[client]
-		, view_as<int>(g_TFClientClass[client])
-		, g_iClientTeam[client]
-		, g_sCurrentMap
-		, g_fOrigin[client][0]
-		, g_fOrigin[client][1]
-		, float(RoundToCeil(g_fOrigin[client][2]))
-		, g_fAngles[client][1]
+		query,
+		sizeof(query),
+		"INSERT INTO player_saves " ...
+		"VALUES" ...
+		"(" ...
+			"null, " ...
+			"'%s', " ... // g_sClientSteamID[client]
+			"'%i', " ... // view_as<int>(g_TFClientClass[client])
+			"'%i', " ... // g_iClientTeam[client]
+			"'%s', " ... // g_sCurrentMap
+			"'%f', " ... // SavePos1[client][0]
+			"'%f', " ... // SavePos1[client][1]
+			"'%f', " ... // SavePos1[client][2]
+			"'%f'"   ... // SavePos2[client][1]
+		")",
+		g_sClientSteamID[client],
+		view_as<int>(g_TFClientClass[client]),
+		g_iClientTeam[client],
+		g_sCurrentMap,
+		g_fOrigin[client][0],
+		g_fOrigin[client][1],
+		float(RoundToCeil(g_fOrigin[client][2])),
+		g_fAngles[client][1]
 	);
 	g_Database.Query(SQL_SaveLocCallback, query, GetClientUserId(client));
 }
@@ -322,26 +323,26 @@ void UpdatePlayerData(int client) {
 	char query[1024];
 
 	g_Database.Format(
-		  query
-		, sizeof(query)
-		, "UPDATE player_saves "
-		... "SET "
-			... "origin1 = '%f', "		// SavePos1[client][0]
-			... "origin2 = '%f', "		// SavePos1[client][1]
-			... "origin3 = '%f', "		// SavePos1[client][2]
-			... "angle2 = '%f' "		// SavePos2[client][1]
-		... "WHERE steamID = '%s' "		// g_sClientSteamID[client]
-		... "AND playerTeam = '%i' "	// g_iClientTeam[client]
-		... "AND playerClass = '%i' "	// view_as<int>(g_TFClientClass[client])
-		... "AND playerMap = '%s'"		// g_sCurrentMap
-		, g_fOrigin[client][0]
-		, g_fOrigin[client][1]
-		, float(RoundToCeil(g_fOrigin[client][2]))
-		, g_fAngles[client][1]
-		, g_sClientSteamID[client]
-		, g_iClientTeam[client]
-		, view_as<int>(g_TFClientClass[client])
-		, g_sCurrentMap
+		query,
+		sizeof(query),
+		"UPDATE player_saves " ...
+		"SET " ...
+			"origin1 = '%f', " ...    // SavePos1[client][0]
+			"origin2 = '%f', " ...    // SavePos1[client][1]
+			"origin3 = '%f', " ...    // SavePos1[client][2]
+			"angle2 = '%f' " ...      // SavePos2[client][1]
+		"WHERE steamID = '%s' " ...   // g_sClientSteamID[client]
+		"AND playerTeam = '%i' " ...  // g_iClientTeam[client]
+		"AND playerClass = '%i' " ... // view_as<int>(g_TFClientClass[client])
+		"AND playerMap = '%s'",       // g_sCurrentMap
+		g_fOrigin[client][0],
+		g_fOrigin[client][1],
+		float(RoundToCeil(g_fOrigin[client][2])),
+		g_fAngles[client][1],
+		g_sClientSteamID[client],
+		g_iClientTeam[client],
+		view_as<int>(g_TFClientClass[client]),
+		g_sCurrentMap
 	);
 	g_Database.Query(SQL_SaveLocCallback, query, GetClientUserId(client));
 }
@@ -367,18 +368,18 @@ void ReloadPlayerData(int client) {
 	char query[1024];
 
 	g_Database.Format(
-		  query
-		, sizeof(query)
-		, "SELECT origin1, origin2, origin3, angle2 "
-		... "FROM player_saves "
-		... "WHERE steamID = '%s' "		// g_sClientSteamID[client]
-		... "AND playerTeam = '%i' "	// g_iClientTeam[client]
-		... "AND playerClass = '%i' "	// view_as<int>(g_TFClientClass[client])
-		... "AND playerMap = '%s'"		// g_sCurrentMap
-		, g_sClientSteamID[client]
-		, g_iClientTeam[client]
-		, view_as<int>(g_TFClientClass[client])
-		, g_sCurrentMap
+		query,
+		sizeof(query),
+		"SELECT origin1, origin2, origin3, angle2 " ...
+		"FROM player_saves " ...
+		"WHERE steamID = '%s' " ...   // g_sClientSteamID[client]
+		"AND playerTeam = '%i' " ...  // g_iClientTeam[client]
+		"AND playerClass = '%i' " ... // view_as<int>(g_TFClientClass[client])
+		"AND playerMap = '%s'",       // g_sCurrentMap
+		g_sClientSteamID[client],
+		g_iClientTeam[client],
+		view_as<int>(g_TFClientClass[client]),
+		g_sCurrentMap
 	);
 	g_Database.Query(SQL_OnReloadPlayerData, query, GetClientUserId(client), DBPrio_High);
 }
@@ -413,18 +414,18 @@ void LoadPlayerData(int client) {
 	char query[1024];
 	
 	g_Database.Format(
-		  query
-		, sizeof(query)
-		, "SELECT origin1, origin2, origin3, angle2 "
-		... "FROM player_saves "
-		... "WHERE steamID = '%s' "		// g_sClientSteamID[client]
-		... "AND playerTeam = '%i' "	// g_iClientTeam[client]
-		... "AND playerClass = '%i' "	// view_as<int>(g_TFClientClass[client])
-		... "AND playerMap = '%s'"		// g_sCurrentMap
-		, g_sClientSteamID[client]
-		, g_iClientTeam[client]
-		, view_as<int>(g_TFClientClass[client])
-		, g_sCurrentMap
+		query,
+		sizeof(query),
+		"SELECT origin1, origin2, origin3, angle2 " ...
+		"FROM player_saves " ...
+		"WHERE steamID = '%s' " ...   // g_sClientSteamID[client]
+		"AND playerTeam = '%i' " ...  // g_iClientTeam[client]
+		"AND playerClass = '%i' " ... // view_as<int>(g_TFClientClass[client])
+		"AND playerMap = '%s'",       // g_sCurrentMap
+		g_sClientSteamID[client],
+		g_iClientTeam[client],
+		view_as<int>(g_TFClientClass[client]),
+		g_sCurrentMap
 	);
 	g_Database.Query(SQL_OnLoadPlayerData, query, GetClientUserId(client), DBPrio_High);
 }
@@ -458,17 +459,17 @@ void DeletePlayerData(int client) {
 	char query[1024];
 	
 	g_Database.Format(
-		  query
-		, sizeof(query)
-		, "DELETE FROM player_saves "
-		... "WHERE steamID = '%s' "		// g_sClientSteamID[client]
-		... "AND playerMap = '%s'"		// g_sCurrentMap
-		... "AND playerTeam = '%i' "	// g_iClientTeam[client]
-		... "AND playerClass = '%i' "	// view_as<int>(g_TFClientClass[client])
-		, g_sClientSteamID[client]
-		, g_sCurrentMap
-		, g_iClientTeam[client]
-		, view_as<int>(g_TFClientClass[client])
+		query,
+		sizeof(query),
+		"DELETE FROM player_saves " ...
+		"WHERE steamID = '%s' " ...   // g_sClientSteamID[client]
+		"AND playerMap = '%s'" ...    // g_sCurrentMap
+		"AND playerTeam = '%i' " ...  // g_iClientTeam[client]
+		"AND playerClass = '%i' ",    // view_as<int>(g_TFClientClass[client])
+		g_sClientSteamID[client],
+		g_sCurrentMap,
+		g_iClientTeam[client],
+		view_as<int>(g_TFClientClass[client])
 	);
 	g_Database.Query(SQL_OnDeletePlayerData, query, GetClientUserId(client));
 }
@@ -488,23 +489,23 @@ void SQL_OnDeletePlayerData(Database db, DBResultSet results, const char[] error
 
 void SaveKeyColor(int client, char[] red, char[] green, char[] blue) {
 	char query[512];
-	g_iSkeysColor[client][RED] = StringToInt(red);
-	g_iSkeysColor[client][GREEN] = StringToInt(blue);
-	g_iSkeysColor[client][BLUE] = StringToInt(green);
+	g_iSKeysColor[client][RED] = Clamp(StringToInt(red), 0, 255);
+	g_iSKeysColor[client][GREEN] = StringToInt(blue);
+	g_iSKeysColor[client][BLUE] = StringToInt(green);
 
 	g_Database.Format(
-		  query
-		, sizeof(query)
-		, "UPDATE player_profiles "
-		... "SET "
-			... "SKEYS_RED_COLOR = %i, "
-			... "SKEYS_GREEN_COLOR = %i, "
-			... "SKEYS_BLUE_COLOR = %i "
-		... "WHERE steamid = '%s'"
-		, g_iSkeysColor[client][RED]
-		, g_iSkeysColor[client][GREEN]
-		, g_iSkeysColor[client][BLUE]
-		, g_sClientSteamID[client]
+		query,
+		sizeof(query),
+		"UPDATE player_profiles " ...
+		"SET " ...
+			"SKEYS_RED_COLOR = %i, " ...
+			"SKEYS_GREEN_COLOR = %i, " ...
+			"SKEYS_BLUE_COLOR = %i " ...
+		"WHERE steamid = '%s'",
+		g_iSKeysColor[client][RED],
+		g_iSKeysColor[client][GREEN],
+		g_iSKeysColor[client][BLUE],
+		g_sClientSteamID[client]
 	);
 	g_Database.Query(SQL_OnSetKeys, query, GetClientUserId(client));
 }
@@ -525,16 +526,16 @@ void SQL_OnSetKeys(Database db, DBResultSet results, const char[] error, any dat
 void SaveKeyPos(int client, float x, float y) {
 	char query[256];
 	g_Database.Format(
-		  query
-		, sizeof(query)
-		, "UPDATE player_profiles "
-		... "SET "
-			... "SKEYSX = %0.4f, "
-			... "SKEYSY = %0.04f "
-		... "WHERE steamid = '%s'"
-		, x
-		, y
-		, g_sClientSteamID[client]
+		query,
+		sizeof(query),
+		"UPDATE player_profiles " ...
+		"SET " ...
+			"SKEYSX = %0.4f, " ...
+			"SKEYSY = %0.04f " ...
+		"WHERE steamid = '%s'",
+		x,
+		y,
+		g_sClientSteamID[client]
 	);
 	g_Database.Query(SQL_UpdateSkeys, query, GetClientUserId(client));
 }

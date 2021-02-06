@@ -5,30 +5,26 @@
 #define ALLKEYS 3615
 #define DEFAULTSKEYSCOLOR {255, 255, 255}
 
-enum {
-	DISPLAY = 0,
-	EDIT
-}
+#define DISPLAY 0
+#define EDIT 1
 
-enum {
-	RED = 0,
-	GREEN,
-	BLUE
-}
+#define RED 0
+#define GREEN 1
+#define BLUE 2
 
 Handle
-	  g_hHudDisplayForward
-	, g_hHudDisplayASD
-	, g_hHudDisplayJump
-	, g_hHudDisplayAttack;
+	g_hHudDisplayForward,
+	g_hHudDisplayASD,
+	g_hHudDisplayJump,
+	g_hHudDisplayAttack;
 bool
-	  g_bSKeysEnabled[MAXPLAYERS+1];
+	g_bSKeysEnabled[MAXPLAYERS+1];
 int
-	  g_iButtons[MAXPLAYERS+1]
-	, g_iSkeysColor[MAXPLAYERS+1][3]
-	, g_iSkeysMode[MAXPLAYERS+1];
+	g_iButtons[MAXPLAYERS+1],
+	g_iSKeysColor[MAXPLAYERS+1][3],
+	g_iSKeysMode[MAXPLAYERS+1];
 float
-	  g_fSkeysPos[MAXPLAYERS+1][2];
+	g_fSKeysPos[MAXPLAYERS+1][2];
 
 /* ======================================================================
    ------------------------------- Commands
@@ -44,18 +40,19 @@ public Action cmdChangeSkeysColor(int client, int args) {
 	if (client == 0) {
 		return Plugin_Handled;
 	}
-
-	char red[4];
-	char blue[4];
-	char green[4];
 	
-	if (args < 1) {
+	if (args < 3) {
 		PrintJAMessage(client, cTheme2..."Usage\x01: sm_skeys_color <R> <G> <B>");
 		return Plugin_Handled;
 	}
 
+	char red[4];
 	GetCmdArg(1, red, sizeof(red));
+
+	char green[4];
 	GetCmdArg(2, green, sizeof(green));
+	
+	char blue[4];
 	GetCmdArg(3, blue, sizeof(blue));
 
 	if (!IsStringNumeric(red) || !IsStringNumeric(blue) || !IsStringNumeric(green)) {
@@ -79,22 +76,22 @@ public Action cmdChangeSkeysLoc(int client, int args) {
 
 	g_bSKeysEnabled[client] = true;
 
-	switch (g_iSkeysMode[client]) {
+	switch (g_iSKeysMode[client]) {
 		case EDIT: {
-			g_iSkeysMode[client] = DISPLAY;
+			g_iSKeysMode[client] = DISPLAY;
 			SetEntityFlags(client, GetEntityFlags(client)&~(FL_ATCONTROLS|FL_FROZEN));
 		}
 		case DISPLAY: {
-			g_iSkeysMode[client] = EDIT;
+			g_iSKeysMode[client] = EDIT;
 			SetEntityFlags(client, GetEntityFlags(client)|FL_ATCONTROLS|FL_FROZEN);
 
 #define TAG "["...cTheme1..."SKEYS\x01]"
 
 			PrintColoredChat(
 				client,
-				TAG..." Update position using"...cTheme2..." mouse movement\x01.\n"
-			...TAG..." Save with"...cTheme2..." attack\x01.\n"
-			...TAG..." Reset with"...cTheme2..." jump\x01."
+				TAG..." Update position using"...cTheme2..." mouse movement\x01.\n" ...
+				TAG..." Save with"...cTheme2..." attack\x01.\n" ...
+				TAG..." Reset with"...cTheme2..." jump\x01."
 			);
 
 #undef TAG
@@ -114,9 +111,9 @@ void SetAllSkeysDefaults() {
 }
 
 void SetSkeysDefaults(int client) {
-	g_fSkeysPos[client][XPOS] = XPOSDEFAULT;
-	g_fSkeysPos[client][YPOS] = YPOSDEFAULT;
-	g_iSkeysColor[client] = DEFAULTSKEYSCOLOR;
+	g_fSKeysPos[client][XPOS] = XPOSDEFAULT;
+	g_fSKeysPos[client][YPOS] = YPOSDEFAULT;
+	g_iSKeysColor[client] = DEFAULTSKEYSCOLOR;
 }
 
 int IsStringNumeric(const char[] MyString) {

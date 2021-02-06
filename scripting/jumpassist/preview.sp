@@ -1,28 +1,25 @@
-enum {
-	HIDEHUD_WEAPONSELECTION = (1<<0),
-	HIDEHUD_FLASHLIGHT = (1<<1),
-	HIDEHUD_ALL = (1<<2),
-	HIDEHUD_HEALTH = (1<<3),
-	HIDEHUD_PLAYERDEAD = (1<<4),
-	HIDEHUD_NEEDSUIT = (1<<5),
-	HIDEHUD_MISCSTATUS = (1<<6),
-	HIDEHUD_CHAT = (1<<7),
-	HIDEHUD_CROSSHAIR = (1<<8),
-	HIDEHUD_VEHICLE_CROSSHAIR = (1<<9),
-	HIDEHUD_INVEHICLE = (1<<10),
-	HIDEHUD_BONUS_PROGRESS = (1<<11)
-}
+/*
+ * Preview is a feature which allows clients to noclip.
+ * While in this state:
+ * - HUD is disabled
+ * - Viewmodel visibility is disabled
+ * - Attacking and weapon switching is disabled
+ * - Invisible to other players who are alive
+ * - Many JumpAssist features are disabled, such as saving
+ */
 
-float
-	  g_fPreviewOrigin[MAXPLAYERS+1][3]
-	, g_fPreviewAngles[MAXPLAYERS+1][3];
+
+
+float g_fPreviewOrigin[MAXPLAYERS+1][3];
+float g_fPreviewAngles[MAXPLAYERS+1][3];
 
 /* ======================================================================
    ------------------------------- Commands
 */
 
 public Action cmdPreview(int client, int args) {
-	if (!IsValidClient(client) || !IsPlayerAlive(client)) {
+	if (!client || !IsPlayerAlive(client)) {
+		PrintJAMessage(client, "Must be"...cTheme2..." alive\x01 to use this feature.");
 		return Plugin_Handled;
 	}
 
@@ -38,7 +35,6 @@ public Action cmdPreview(int client, int args) {
 		EnablePreview(client);
 	}
 
-
 	return Plugin_Handled;
 }
 
@@ -46,14 +42,20 @@ public Action cmdPreview(int client, int args) {
    ------------------------------- Functions
 */
 
+/**
+ * Purpose: Enable preview mode on a specific client
+ * 
+ * @param client       Client index
+ */
 void EnablePreview(int client) {
 	int flags = GetEntityFlags(client);
+
 	if (!(flags & FL_ONGROUND)) {
 		PrintJAMessage(client, "Can't begin preview mode while"...cTheme2..." in the air\x01.");
 		return;
 	}
 
-	if ((flags & FL_DUCKING)) {
+	if (flags & FL_DUCKING) {
 		PrintJAMessage(client, "Can't begin preview mode while"...cTheme2..." ducking\x01.");
 		return;
 	}
@@ -76,6 +78,13 @@ void EnablePreview(int client) {
 	PrintJAMessage(client, "Preview mode"...cTheme2..." enabled\x01.");
 }
 
+/**
+ * Purpose: Disable preview mode on a specific client
+ * 
+ * @param client       Client index
+ * @param restore      Set to true to restore state prior to preview mode being enabled
+ * @param click        Set to true if preview mode disabled due to player clicking mouse
+ */
 void DisablePreview(int client, bool restore = false, bool click = false) {
 	g_bIsPreviewing[client] = false;
 
@@ -98,6 +107,12 @@ void DisablePreview(int client, bool restore = false, bool click = false) {
 	}
 }
 
+/**
+ * Purpose: Checks if client is currently in preview state
+ * 
+ * @param client       Client index
+ * @return             True if preview state enabled, else false
+ */
 bool IsClientPreviewing(int client) {
 	return g_bIsPreviewing[client];
 }
@@ -106,6 +121,7 @@ bool IsClientPreviewing(int client) {
    ------------------------------- Hooks
 */
 
+// Hooked during preview state, preventing client from switching weapons.
 public Action hookWeaponSwitch(int client, int weapon) {
 	return Plugin_Handled;
 }

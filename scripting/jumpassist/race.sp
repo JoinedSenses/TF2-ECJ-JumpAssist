@@ -7,33 +7,33 @@ enum RaceStatus {
 }
 
 int
-	  g_iRaceID[MAXPLAYERS+1]
-	, g_iRaceFinishedPlayers[MAXPLAYERS+1][MAXPLAYERS]
-	, g_iRaceEndPoint[MAXPLAYERS+1] = {-1, ...}
-	, g_iRaceInvitedTo[MAXPLAYERS+1]
-	, g_iRaceSpec[MAXPLAYERS+1]
-	, g_iCountDown[MAXPLAYERS+1]
-	, g_iClientPreRaceTeam[MAXPLAYERS+1]
-	, g_iClientPreRaceCPsTouched[MAXPLAYERS+1];
+	g_iRaceID[MAXPLAYERS+1],
+	g_iRaceFinishedPlayers[MAXPLAYERS+1][MAXPLAYERS],
+	g_iRaceEndPoint[MAXPLAYERS+1] = {-1, ...},
+	g_iRaceInvitedTo[MAXPLAYERS+1],
+	g_iRaceSpec[MAXPLAYERS+1],
+	g_iCountDown[MAXPLAYERS+1],
+	g_iClientPreRaceTeam[MAXPLAYERS+1],
+	g_iClientPreRaceCPsTouched[MAXPLAYERS+1];
 float
-	  g_fRaceStartTime[MAXPLAYERS+1]
-	, g_fRaceTime[MAXPLAYERS+1]
-	, g_fRaceTimes[MAXPLAYERS+1][MAXPLAYERS]
-	, g_fRaceFirstTime[MAXPLAYERS+1]
-	, g_fClientPreRaceOrigin[MAXPLAYERS+1][3]
-	, g_fClientPreRaceAngles[MAXPLAYERS+1][3];
+	g_fRaceStartTime[MAXPLAYERS+1],
+	g_fRaceTime[MAXPLAYERS+1],
+	g_fRaceTimes[MAXPLAYERS+1][MAXPLAYERS],
+	g_fRaceFirstTime[MAXPLAYERS+1],
+	g_fClientPreRaceOrigin[MAXPLAYERS+1][3],
+	g_fClientPreRaceAngles[MAXPLAYERS+1][3];
 bool
-	  g_bRaceLocked[MAXPLAYERS+1]
-	, g_bRaceAmmoRegen[MAXPLAYERS+1]
-	, g_bRaceClassForce[MAXPLAYERS+1]
-	, g_bWaitingInvite[MAXPLAYERS+1]
-	, g_bClientPreRaceBeatTheMap[MAXPLAYERS+1]
-	, g_bClientPreRaceAmmoRegen[MAXPLAYERS+1]
-	, g_bClientPreRaceCPTouched[MAXPLAYERS+1][32];
+	g_bRaceLocked[MAXPLAYERS+1],
+	g_bRaceAmmoRegen[MAXPLAYERS+1],
+	g_bRaceClassForce[MAXPLAYERS+1],
+	g_bWaitingInvite[MAXPLAYERS+1],
+	g_bClientPreRaceBeatTheMap[MAXPLAYERS+1],
+	g_bClientPreRaceAmmoRegen[MAXPLAYERS+1],
+	g_bClientPreRaceCPTouched[MAXPLAYERS+1][32];
 TFClassType
-	  g_TFClientPreRaceClass[MAXPLAYERS+1];
+	g_TFClientPreRaceClass[MAXPLAYERS+1];
 RaceStatus
-	  g_RaceStatus[MAXPLAYERS+1];
+	g_RaceStatus[MAXPLAYERS+1];
 
 /* ======================================================================
    ------------------------------- Commands
@@ -580,28 +580,26 @@ void SendRaceToStart(int raceid, TFClassType class, int team) {
 public Action RaceCountDown(Handle timer, int raceID) {
 	char value[4];
 	char message[256];
-	switch (g_iCountDown[raceID]) {
-		case 0: {
-			value = "GO!";
-			UnlockRacePlayers(raceID);
-			g_fRaceStartTime[raceID] = GetEngineTime();
-			g_RaceStatus[raceID] = STATUS_RACING;
-		}
-		default: {
-			FormatEx(value, sizeof(value), "  %i", g_iCountDown[raceID]);
-			CreateTimer(1.0, RaceCountDown, raceID);
-			g_iCountDown[raceID]--;
-		}
+	if (g_iCountDown[raceID]) {
+		FormatEx(value, sizeof value, "  %i", g_iCountDown[raceID]);
+		CreateTimer(1.0, RaceCountDown, raceID);
+		g_iCountDown[raceID]--;
+	}
+	else {
+		strcopy(value, sizeof value, "GO!");
+		UnlockRacePlayers(raceID);
+		g_fRaceStartTime[raceID] = GetEngineTime();
+		g_RaceStatus[raceID] = STATUS_RACING;
 	}
 
 	FormatEx(
 		message,
 		sizeof(message),
-		"\n \n \n \n \n"...
-		"****************************\n"...
-		" \n"...
-		"			   \x03%s\x01\n"...
-		" \n"...
+		"\n \n \n \n \n" ...
+		"****************************\n" ...
+		" \n" ...
+		"			   \x03%s\x01\n" ...
+		" \n" ...
 		"****************************",
 		value
 	);
@@ -646,31 +644,27 @@ char[] GetCPNameByIndex(int index) {
 	return cpName;
 }
 
+
+// !!!!!!!!!!!!! TODO: Review Changes !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 char[] TimeFormat(float timeTaken) {
 	char msFormat[128];
-	char msFormatFinal[128];
 	char final[128];
-	char secondsString[128];
-	char minutesString[128];
-	char hoursString[128];
 	
 	float ms = timeTaken-RoundToZero(timeTaken);
 	FormatEx(msFormat, sizeof(msFormat), "%.3f", ms);
-	strcopy(msFormatFinal, sizeof(msFormatFinal), msFormat[2]);
 	
 	int intTimeTaken = RoundToZero(timeTaken);
 	int seconds = intTimeTaken % 60;
-	int minutes = (intTimeTaken-seconds)/60;
-	int hours = (intTimeTaken-seconds - minutes * 60)/60;
-	secondsString = FormatTimeComponent(seconds);
-	minutesString = FormatTimeComponent(minutes);
-	hoursString = FormatTimeComponent(hours);
-	
+	intTimeTaken -= seconds;
+	int minutes = intTimeTaken / 60;
+	intTimeTaken -= minutes;
+	int hours = (intTimeTaken * 60)/60;
+
 	if (hours != 0) {
-		FormatEx(final, sizeof(final), "%s:%s:%s:%s", hoursString, minutesString, secondsString, msFormatFinal);
+		FormatEx(final, sizeof(final), "%02i:%02i:%02i:%s", hours, minutes, seconds, msFormat[2]);
 	}
 	else {
-		FormatEx(final, sizeof(final), "%s:%s:%s", minutesString, secondsString, msFormatFinal);
+		FormatEx(final, sizeof(final), "%02i:%02i:%s", minutes, seconds, msFormat[2]);
 	}
 
 	return final;
@@ -698,7 +692,7 @@ void PrintToRaceEx(int raceID, const char[] message, any ...) {
 	for (int i = 1; i <= MaxClients; ++i) {
 		if (IsClientInGame(i) && (IsClientInRace(i, raceID) || IsClientSpectatingRace(i, raceID))) {
 			PrintColoredChat(i, "%s", output);
-		}		
+		}
 	}
 }
 
@@ -709,9 +703,11 @@ int GetPlayersStillRacing(int raceID) {
 			++players;
 		}
 	}
+
 	if (players) {
 		PrintToRace(raceID, "There are"...cTheme2..." %i \x01players still racing.", players);
 	}
+
 	return players;
 }
 
@@ -860,7 +856,7 @@ RaceStatus GetRaceStatus(int client) {
 }
 
 bool HasRaceStarted(int client) {
-	return (view_as<int>(g_RaceStatus[g_iRaceID[client]]) > 1);
+	return view_as<int>(g_RaceStatus[g_iRaceID[client]]) > 1;
 }
 
 bool IsPlayerFinishedRacing(int client) {
@@ -872,8 +868,8 @@ bool IsClientSpectatingRace(int client, int race) {
 		return false;
 	}
 
-	int iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
+	int observerMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
 	int clientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
 
-	return (IsValidClient(clientToShow) && iObserverMode != 6 && IsClientInRace(clientToShow, race));
+	return (IsValidClient(clientToShow) && observerMode != 6 && IsClientInRace(clientToShow, race));
 }
