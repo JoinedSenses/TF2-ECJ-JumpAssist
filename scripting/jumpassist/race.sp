@@ -648,9 +648,6 @@ char[] TimeFormat(float timeTaken) {
 	char msFormat[128];
 	char msFormatFinal[128];
 	char final[128];
-	char secondsString[128];
-	char minutesString[128];
-	char hoursString[128];
 	
 	float ms = timeTaken-RoundToZero(timeTaken);
 	FormatEx(msFormat, sizeof(msFormat), "%.3f", ms);
@@ -658,25 +655,16 @@ char[] TimeFormat(float timeTaken) {
 	
 	int intTimeTaken = RoundToZero(timeTaken);
 	int seconds = intTimeTaken % 60;
-	int minutes = (intTimeTaken-seconds)/60;
-	int hours = (intTimeTaken-seconds - minutes * 60)/60;
-	secondsString = FormatTimeComponent(seconds);
-	minutesString = FormatTimeComponent(minutes);
-	hoursString = FormatTimeComponent(hours);
+	int minutes = (intTimeTaken-seconds) / 60;
+	int hours = (intTimeTaken-seconds - minutes * 60) / 60;
 	
-	if (hours != 0) {
-		FormatEx(final, sizeof(final), "%s:%s:%s:%s", hoursString, minutesString, secondsString, msFormatFinal);
+	if (hours) {
+		FormatEx(final, sizeof(final), "%02i:%02i:%02i:%s", hours, minutes, seconds, msFormatFinal);
 	}
 	else {
-		FormatEx(final, sizeof(final), "%s:%s:%s", minutesString, secondsString, msFormatFinal);
+		FormatEx(final, sizeof(final), "%02i:%02i:%s", minutes, seconds, msFormatFinal);
 	}
 
-	return final;
-}
-
-char[] FormatTimeComponent(int time) {
-	char final[8];
-	FormatEx(final, sizeof(final), (time > 9) ? "%d" : "0%d", time);
 	return final;
 }
 
