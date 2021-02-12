@@ -781,7 +781,7 @@ void LeaveRace(int client, bool raceFinished = false) {
 }
 
 void ResetRace(int raceID, bool raceEnded = true) {
-	for (int i = 1; i <= MaxClients; ++i) {
+	for (int i = 0; i <= MaxClients; ++i) {
 		if (g_iRaceID[i] == raceID) {
 			g_iRaceID[i] = 0;
 			g_RaceStatus[i] = STATUS_NONE;
