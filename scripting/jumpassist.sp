@@ -18,7 +18,7 @@
 	"jumpassist"
 	{
 		"driver"    "sqlite"
-		"host"		"localhost"
+		"host"      "localhost"
 	}
 */
 
