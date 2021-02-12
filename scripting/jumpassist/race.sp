@@ -670,11 +670,11 @@ char[] TimeFormat(float timeTaken) {
 	return final;
 }
 
-char[] FormatTimeComponent(int time) {
-	char final[8];
-	FormatEx(final, sizeof(final), (time > 9) ? "%d" : "0%d", time);
-	return final;
-}
+// char[] FormatTimeComponent(int time) {
+// 	char final[8];
+// 	FormatEx(final, sizeof(final), (time > 9) ? "%d" : "0%d", time);
+// 	return final;
+// }
 
 void PrintToRace(int raceID, const char[] message, any ...) {
 	char output[1024];
