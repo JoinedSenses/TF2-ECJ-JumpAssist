@@ -23,22 +23,40 @@ public Action cmdSpec(int client, int args) {
 		return Plugin_Handled;	
 	}
 
-	if (args < 1) {
-		menuSpec(client);
+	// When no args, display menu
+	if (!args) {
+		showSpecMenu(client);
 		return Plugin_Handled;
 	}
 
-	char targetName[MAX_NAME_LENGTH];
-	GetCmdArg(1, targetName, sizeof(targetName));
-	int target;
-	if ((target = FindTarget(client, targetName, false, false)) < 1) {
+	// Get arg
+	char arg[MAX_NAME_LENGTH];
+	GetCmdArg(1, arg, sizeof arg);
+
+	int[] targets = new int[MaxClients];
+	char buffer[MAX_NAME_LENGTH];
+
+	int count = 0;
+	for (int i = 1; i <= MaxClients; ++i) {
+		if (i != client && IsClientInGame(i)/*  && !IsFakeClient(i) */) {
+			GetClientName(i, buffer, sizeof buffer);
+			if (StrContains(buffer, arg, false) != -1) {
+				targets[count++] = i;
+			}
+		}
+	}
+
+	if (count < 1) {
+		ReplyToTargetError(client, COMMAND_TARGET_NONE);
 		return Plugin_Handled;
 	}
 
-	if (target == client) {
-		PrintJAMessage(client, "Unable to spectate yourself. That would be pretty weird.");
+	if (count > 1) {
+		showSpecMenuMultiple(client, targets, count);
 		return Plugin_Handled;
 	}
+
+	int target = targets[0];
 	
 	bool isTargetInSpec;
 	if (IsClientObserver(target)) {
@@ -53,7 +71,7 @@ public Action cmdSpec(int client, int args) {
 			return Plugin_Handled;
 		}
 
-		PrintJAMessage(client, "Target is in spec. Now spectating their target");
+		PrintJAMessage(client, "Target is in spec. Now spectating their target:" ... cTheme2 ... " %N", target);
 		isTargetInSpec = true;
 	}
 
@@ -83,7 +101,7 @@ public Action cmdSpecLock(int client, int args) {
 	}
 
 	if (args < 1) {
-		menuSpec(client, true);
+		showSpecMenu(client, true);
 		return Plugin_Handled;
 	}
 
@@ -190,8 +208,25 @@ public Action cmdForceSpec(int client, int args) {
    ------------------------------- Menus
 */
 
-void menuSpec(int client, bool lock = false) {
-	Menu menu = new Menu(lock ? menuHandler_SpecLock : menuHandler_Spec, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem);
+void showSpecMenuMultiple(int client, int[] targets, int count) {
+	Menu menu = new Menu(menuHandler_Spec, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem);
+	menu.SetTitle("Spectate List");
+
+	char name[MAX_NAME_LENGTH];
+	char userid[6];
+	for (int i = 0; i < count; ++i) {
+		int target = targets[i];
+		GetClientName(target, name, sizeof name);
+		FormatEx(userid, sizeof userid, "%i", GetClientUserId(target));
+
+		menu.AddItem(userid, name);
+	}
+
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+void showSpecMenu(int client, bool lock = false) {
+	Menu menu = new Menu(lock ? menuHandler_SpecLock : menuHandler_Spec, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem);
 	menu.SetTitle("Spectate Menu");
 
 	if (GetClientTeam(client) > 1 && !lock) {
@@ -202,13 +237,17 @@ void menuSpec(int client, bool lock = false) {
 		menu.AddItem("", "DISABLE LOCK");
 	}
 	
-	int id;
 	char userid[6];
 	char clientName[MAX_NAME_LENGTH];
 	for (int i = 1; i <= MaxClients; ++i) {
-		if ((id = isValidClient(i)) > 0 && client != i) {
-			FormatEx(userid, sizeof(userid), "%i", id);
+		if (client != i && IsClientInGame(i)) {
+			if (lock && !IsPlayerAlive(i)) {
+				continue;
+			}
+
+			FormatEx(userid, sizeof(userid), "%i", GetClientUserId(i));
 			FormatEx(clientName, sizeof(clientName), "%N", i);
+
 			menu.AddItem(userid, clientName);
 		}
 	}
@@ -230,11 +269,30 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 				return 0;
 			}
 
-			if (GetClientOfUserId(userid) == 0) {
+			int target = GetClientOfUserId(userid);
+			if (!target) {
 				PrintJAMessage(param1, "Player no longer in game");
-				menuSpec(param1);
+				showSpecMenu(param1);
 				delete menu;
 				return 0;
+			}
+
+			if (IsClientObserver(target)) {
+				target = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
+				if (target < 1) {
+					PrintToChat(param1, "Target is in spec, but not spectating anyone.");
+					menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
+					return 0;
+				}
+
+				if (target == param1) {
+					PrintToChat(param1, "Target is spectating you. Unable to spectate");
+					menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
+					return 0;
+				}
+
+				PrintToChat(param1, "Target is in spec. Now spectating their target, %N", target);
+				userid = GetClientUserId(target);
 			}
 
 			if (GetClientTeam(param1) > 1) {
@@ -249,10 +307,53 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 		}
 		case MenuAction_DrawItem: {
 			char targetid[6];
-			menu.GetItem(param2, targetid, sizeof(targetid));
+			int style;
+			menu.GetItem(param2, targetid, sizeof targetid, style);
+
 			int target = GetClientOfUserId(StringToInt(targetid));
+
+			if (!target) {
+				return ITEMDRAW_DISABLED;
+			}
+
 			if (IsClientObserver(param1) && GetEntPropEnt(param1, Prop_Send, "m_hObserverTarget") == target) {
 				return ITEMDRAW_DISABLED;
+			}
+
+			if (IsClientObserver(target)) {
+				int observerTarget = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
+
+				if (!observerTarget || observerTarget == param1) {
+					return ITEMDRAW_DISABLED;
+				}
+			}
+
+			return style;
+		}
+		case MenuAction_DisplayItem: {
+			char targetid[6];
+			char display[128];
+			menu.GetItem(param2, targetid, sizeof targetid, _, display, sizeof display);
+			int target = GetClientOfUserId(StringToInt(targetid));
+
+			if (!target) {
+				StrCat(display, sizeof display, " (No longer in game)");
+				return RedrawMenuItem(display);
+			}
+
+			if (IsClientObserver(target)) {
+				int observerTarget = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
+				if (observerTarget == param1) {
+					StrCat(display, sizeof display, " (Observing you)");
+				}
+				else if (!observerTarget) {
+					StrCat(display, sizeof display, " (Observing no one)");
+				}
+				else {
+					Format(display, sizeof display, "%s (Observing %N)", display, observerTarget);
+				}
+
+				return RedrawMenuItem(display);
 			}
 		}
 		case MenuAction_End: {
@@ -261,6 +362,7 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 			}
 		}
 	}
+
 	return 0;
 }
 
@@ -281,7 +383,7 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 			int target = GetClientOfUserId(userid);
 			if (target < 0) {
 				PrintJAMessage(param1, "Player no longer in game");
-				menuSpec(param1);
+				showSpecMenu(param1);
 				delete menu;
 				return 0;
 			}
@@ -320,14 +422,6 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 /* ======================================================================
    ------------------------------- Stocks
 */
-
-int isValidClient(int client) {
-	if (!IsClientInGame(client) || !IsPlayerAlive(client)) {
-		return 0;
-	}
-
-	return GetClientUserId(client);
-}
 
 bool IsClientForcedSpec(int client) {
 	return g_bFSpec[client];
