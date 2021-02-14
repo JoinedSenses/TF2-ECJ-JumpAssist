@@ -258,22 +258,24 @@ void showSpecMenu(int client, bool lock = false) {
 int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 	switch (action) {
 		case MenuAction_Select: {
-			char targetid[6];
-			menu.GetItem(param2, targetid, sizeof(targetid));
-
-			int userid = StringToInt(targetid);
-			if (userid == 0) {
+			char info[6];
+			menu.GetItem(param2, info, sizeof(info));
+			
+			if (info[0] == '\0') {
 				ChangeClientTeam(param1, 1);
 				PrintJAMessage(param1, "Sent to spec");
 				delete menu;
 				return 0;
 			}
 
+			int userid = StringToInt(info);
 			int target = GetClientOfUserId(userid);
 			if (!target) {
 				PrintJAMessage(param1, "Player no longer in game");
+
+				CloseHandle(menu);
 				showSpecMenu(param1);
-				delete menu;
+				
 				return 0;
 			}
 
@@ -310,8 +312,15 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 			int style;
 			menu.GetItem(param2, targetid, sizeof targetid, style);
 
-			int target = GetClientOfUserId(StringToInt(targetid));
+			if (targetid[0] == '\0') {
+				if (IsClientObserver(param1)) {
+					return ITEMDRAW_IGNORE;
+				}
 
+				return style;
+			}
+
+			int target = GetClientOfUserId(StringToInt(targetid));
 			if (!target) {
 				return ITEMDRAW_DISABLED;
 			}
@@ -323,7 +332,7 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 			if (IsClientObserver(target)) {
 				int observerTarget = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
 
-				if (!observerTarget || observerTarget == param1) {
+				if (observerTarget < 1|| observerTarget == param1) {
 					return ITEMDRAW_DISABLED;
 				}
 			}
@@ -334,6 +343,11 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 			char targetid[6];
 			char display[128];
 			menu.GetItem(param2, targetid, sizeof targetid, _, display, sizeof display);
+
+			if (targetid[0] == '\0') {
+				return 0;
+			}
+			
 			int target = GetClientOfUserId(StringToInt(targetid));
 
 			if (!target) {
@@ -346,7 +360,7 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 				if (observerTarget == param1) {
 					StrCat(display, sizeof display, " (Observing you)");
 				}
-				else if (!observerTarget) {
+				else if (observerTarget < 1) {
 					StrCat(display, sizeof display, " (Observing no one)");
 				}
 				else {
@@ -358,7 +372,7 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 		}
 		case MenuAction_End: {
 			if (param2 != MenuEnd_Selected) {
-				delete menu;
+				CloseHandle(menu);
 			}
 		}
 	}
@@ -376,15 +390,17 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 			if (userid == 0) {
 				g_iSpecTarget[param1] = 0;
 				PrintJAMessage(param1, "Spec lock is now disabled");
-				delete menu;
+				CloseHandle(menu);
 				return 0;
 			}
 
 			int target = GetClientOfUserId(userid);
 			if (target < 0) {
 				PrintJAMessage(param1, "Player no longer in game");
+
+				CloseHandle(menu);
 				showSpecMenu(param1);
-				delete menu;
+				
 				return 0;
 			}
 
