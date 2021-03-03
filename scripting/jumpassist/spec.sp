@@ -61,7 +61,7 @@ public Action cmdSpec(int client, int args) {
 	bool isTargetInSpec;
 	if (IsClientObserver(target)) {
 		target = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
-		if (target < 1) {
+		if (target < 1 || target > MaxClients) {
 			PrintJAMessage(client, "Target is in spec, but not spectating anyone.");
 			return Plugin_Handled;
 		}
@@ -332,7 +332,7 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 			if (IsClientObserver(target)) {
 				int observerTarget = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
 
-				if (observerTarget < 1|| observerTarget == param1) {
+				if (observerTarget < 1 || observerTarget > MaxClients || observerTarget == param1) {
 					return ITEMDRAW_DISABLED;
 				}
 			}
@@ -360,7 +360,7 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 				if (observerTarget == param1) {
 					StrCat(display, sizeof display, " (Observing you)");
 				}
-				else if (observerTarget < 1) {
+				else if (observerTarget < 1 || observerTarget > MaxClients) {
 					StrCat(display, sizeof display, " (Observing no one)");
 				}
 				else {
