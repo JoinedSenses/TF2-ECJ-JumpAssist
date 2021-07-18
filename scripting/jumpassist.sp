@@ -1349,6 +1349,8 @@ void SetPlayerDefaults(int client) {
 	g_sClientSteamID[client][0] = '\0';
 	g_iRaceID[client] = 0;
 	g_bRaceLocked[client] = false;
+	g_bExplosions[client] = false;
+	g_bHideMessage[client] = false;
 
 	EraseLocs(client);
 	SetSkeysDefaults(client);
