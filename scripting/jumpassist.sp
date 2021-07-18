@@ -25,7 +25,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.4.4"
+#define PLUGIN_VERSION "2.4.5"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
@@ -58,7 +58,8 @@ bool
 	g_bBeatTheMap[MAXPLAYERS+1],
 	g_bSuperman[MAXPLAYERS+1],
 	g_bMapSetUsed,
-	g_bSaveLoc;
+	g_bSaveLoc,
+	g_bExplosions[MAXPLAYERS+1];
 char
 	g_sWebsite[128] = "http:// www.jump.tf/",
 	g_sForum[128] = "http://tf2rj.com/forum/",
@@ -85,7 +86,8 @@ ConVar
 	g_cvarWelcomeMsg,
 	g_cvarWaitingForPlayers;
 Cookie
-	g_hJAMessageCookie;
+	g_hJAMessageCookie,
+	g_hExplosionCookie;
 GlobalForward
 	g_hForwardSKeys;
 ArrayList
@@ -164,6 +166,7 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Enables hardcore mode (No regen, no saves)");
 	
 	RegConsoleCmd("sm_hidemessage", cmdHideMessage, "Toggles display of JA messages, such as save and teleport");
+	RegConsoleCmd("sm_explosions", cmdExplosions, "Toggles displaying explosions");
 
 	// HIDE
 	RegConsoleCmd("sm_hide", cmdHide, "Show/Hide Other Players");
@@ -246,6 +249,7 @@ public void OnPluginStart() {
 	LoadTranslations("common.phrases");
 
 	g_hJAMessageCookie = new Cookie("JAMessage_cookie", "Jump Assist Message Cookie", CookieAccess_Protected);
+	g_hExplosionCookie = new Cookie("JAExplosion_cookie", "Jump Assist Explosion Cookie", CookieAccess_Protected);
 
 	SetAllSkeysDefaults();
 	ConnectToDatabase();
@@ -272,6 +276,10 @@ public void OnPluginStart() {
 				SDKHook(i, SDKHook_WeaponEquipPost, hookOnWeaponEquipPost);
 				SDKHook(i, SDKHook_SetTransmit, hookSetTransmitClient);
 				GetClientWeapons(i);
+
+				if (AreClientCookiesCached(i)) {
+					OnClientCookiesCached(i);
+				}
 			}
 		}
 
@@ -375,6 +383,9 @@ public void OnClientCookiesCached(int client) {
 	char value[8];
 	g_hJAMessageCookie.Get(client, value, sizeof(value));
 	g_bHideMessage[client] = (value[0] != '\0' && StringToInt(value));
+
+	g_hExplosionCookie.Get(client, value, sizeof(value));
+	g_bExplosions[client] = value[0] == '1';
 }
 
 public void OnClientPostAdminCheck(int client) {
@@ -468,14 +479,14 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		int b = g_iSKeysColor[client][BLUE];
 		static const int alpha = 255;
 
-		bool w = !!(buttonsToShow & IN_FORWARD);
-		bool a = !!(buttonsToShow & IN_MOVELEFT);
-		bool s = !!(buttonsToShow & IN_BACK);
-		bool d = !!(buttonsToShow & IN_MOVERIGHT);
-		bool duck = !!(buttonsToShow & IN_DUCK);
-		bool jump = !!(buttonsToShow & IN_JUMP);
-		bool m1 = !!(buttonsToShow & IN_ATTACK);
-		bool m2 = !!(buttonsToShow & IN_ATTACK2);
+		bool w = view_as<bool>(buttonsToShow & IN_FORWARD);
+		bool a = view_as<bool>(buttonsToShow & IN_MOVELEFT);
+		bool s = view_as<bool>(buttonsToShow & IN_BACK);
+		bool d = view_as<bool>(buttonsToShow & IN_MOVERIGHT);
+		bool duck = view_as<bool>(buttonsToShow & IN_DUCK);
+		bool jump = view_as<bool>(buttonsToShow & IN_JUMP);
+		bool m1 = view_as<bool>(buttonsToShow & IN_ATTACK);
+		bool m2 = view_as<bool>(buttonsToShow & IN_ATTACK2);
 		
 		float x = g_fSKeysPos[client][XPOS];
 		float y = g_fSKeysPos[client][YPOS];
@@ -1212,8 +1223,25 @@ public Action cmdHideMessage(int client, int args) {
 		g_hJAMessageCookie.Set(client, "1");
 	}
 	else {
-		PrintJAMessage(client, "Messages will now be"...cTheme2..." displayed");
+		PrintJAMessage(client, "Messages will now be"...cTheme2..." visible");
 		g_hJAMessageCookie.Set(client, "0");
+	}
+
+	return Plugin_Handled;
+}
+
+public Action cmdExplosions(int client, int args) {
+	if (!client) {
+		return Plugin_Handled;
+	}
+
+	if ((g_bExplosions[client] = !g_bExplosions[client])) {
+		PrintJAMessage(client, "Explosions will now be"...cTheme2..." visible");
+		g_hExplosionCookie.Set(client, "1");
+	}
+	else {
+		PrintJAMessage(client, "Explosions will now be"...cTheme2..." hidden");
+		g_hExplosionCookie.Set(client, "0");
 	}
 
 	return Plugin_Handled;

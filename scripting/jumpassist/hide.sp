@@ -220,14 +220,61 @@ public Action hookSetTransmitIntel(int entity, int client) {
 
 // Remove explosion, blood, and cow mangler temp ents from game.
 public Action hookTempEnt(const char[] te_name, const int[] players, int numClients, float delay) {
-	if (StrEqual(te_name, "TFExplosion") || StrEqual(te_name, "TFBlood")) {
-		return Plugin_Handled;
+	if (StrEqual(te_name, "TFBlood")) {
+		return Plugin_Stop;
 	}
 
-	if (StrContains(te_name, "ParticleEffect") != -1) {
+	if (StrEqual(te_name, "TFExplosion")) {
+		static bool sending = false;
+		if (sending) { // Ignore the TE we just sent
+			sending = false;
+			return Plugin_Continue;
+		}
+
+		int[] clients = new int[numClients];
+		int idx = 0;
+		for (int i = 0; i < numClients; ++i) {
+			int client = players[i];
+			if (g_bExplosions[client]) {
+				clients[idx++] = client;
+			}
+		}
+
+		if (idx) {
+			sending = true;
+
+			// Create new TE with same info and send to modified list
+			float origin[3];
+			TE_ReadVector("m_vecOrigin[0]", origin);
+
+			float normal[3];
+			TE_ReadVector("m_vecNormal", normal);
+
+			int weaponID = TE_ReadNum("m_iWeaponID");
+			int entIndex = TE_ReadNum("entindex");
+			int defID = TE_ReadNum("m_nDefID");
+			int sound = TE_ReadNum("m_nSound");
+			int customParticleIndex = TE_ReadNum("m_iCustomParticleIndex");
+
+			// sm_dump_teprops
+			TE_Start("TFExplosion");
+			TE_WriteVector("m_vecOrigin[0]", origin);
+			TE_WriteVector("m_vecNormal", normal);
+			TE_WriteNum("m_iWeaponID", weaponID);
+			TE_WriteNum("entindex", entIndex);
+			TE_WriteNum("m_nDefID", defID);
+			TE_WriteNum("m_nSound", sound);
+			TE_WriteNum("m_iCustomParticleIndex", customParticleIndex);
+			TE_Send(clients, idx);
+		}
+
+		return Plugin_Stop;
+	}
+
+	if (StrEqual(te_name, "TFParticleEffect")) {
 		switch (TE_ReadNum("m_iParticleSystemIndex")) {
 			case 1138, 1147, 1153, 1154: {
-				return Plugin_Handled;
+				return Plugin_Stop;
 			}
 		}
 	}
@@ -243,13 +290,14 @@ public Action hookTouch(int entity, int other) {
 	return Plugin_Continue;
 }
 
+
 /* ======================================================================
    ------------------------------- Internal Functions
 */
 
 bool CheckHooks() {	
 	for (int i = 1; i <= MaxClients; ++i) {
-		if (IsValidClient(i) && g_bHide[i]) {
+		if (IsClientInGame(i) && g_bHide[i]) {
 			g_bHooked = true;
 			return;
 		}

@@ -341,7 +341,7 @@ void UpdatePlayerData(int client) {
 		g_fAngles[client][1],
 		g_sClientSteamID[client],
 		g_iClientTeam[client],
-		view_as<int>(g_TFClientClass[client]),
+		g_TFClientClass[client],
 		g_sCurrentMap
 	);
 	g_Database.Query(SQL_SaveLocCallback, query, GetClientUserId(client));
