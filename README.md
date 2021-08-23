@@ -1,9 +1,9 @@
 # TF2-ECJ-JumpAssist
 
 ## Build Requirements:
-https://github.com/JoinedSenses/SM-JSLib
-https://github.com/JoinedSenses/SM-SaveLoc
-https://github.com/JoinedSenses/SourceMod-IncludeLibrary/blob/master/include/color_literals.inc
+https://github.com/JoinedSenses/SM-JSLib  
+https://github.com/JoinedSenses/SM-SaveLoc  
+https://github.com/JoinedSenses/SourceMod-IncludeLibrary/blob/master/include/color_literals.inc  
 
 ## Various differences compared to nolem's (arispoloway) version:
 #### If switching from nolem's version to this one, a new database will need to be created due to changes in the database structure.  
