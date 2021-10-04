@@ -73,7 +73,8 @@ int
 	g_iIntelCarrier,
 	g_iCPCount,
 	g_iForceTeam = 1,
-	g_iCPsTouched[MAXPLAYERS+1];
+	g_iCPsTouched[MAXPLAYERS+1],
+	g_iInitialGameType;
 float
 	g_fOrigin[MAXPLAYERS+1][3],
 	g_fAngles[MAXPLAYERS+1][3],
@@ -302,6 +303,8 @@ public void OnPluginEnd() {
 		   PrintJAMessage(i, "Plugin reloading: Restoring location");
 		}
 	}
+	
+	GameRules_SetProp("m_nGameType", g_iInitialGameType);
 }
 
 public void OnMapStart() {
@@ -321,6 +324,7 @@ public void OnMapStart() {
 	PrecacheSound("misc/freeze_cam.wav");
 	PrecacheSound("misc/killstreak.wav");
 
+	g_iInitialGameType = GameRules_GetProp("m_nGameType");
 	GameRules_SetProp("m_nGameType", 2);
 
 	HookFuncRegenerate();
