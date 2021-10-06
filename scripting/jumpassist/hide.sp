@@ -272,8 +272,12 @@ public Action hookTempEnt(const char[] te_name, const int[] players, int numClie
 	}
 
 	if (StrEqual(te_name, "TFParticleEffect")) {
+		// 1137: drg_cow_explosioncore_normal
+		// 1146: drg_cow_explosioncore_charged
+		// 1152: drg_cow_explosioncore_charged_blue
+		// 1153: drg_cow_explosioncore_normal_blue
 		switch (TE_ReadNum("m_iParticleSystemIndex")) {
-			case 1138, 1147, 1153, 1154: {
+			case 1137, 1146, 1152, 1153: {
 				return Plugin_Stop;
 			}
 		}
