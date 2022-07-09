@@ -226,7 +226,10 @@ void showSpecMenuMultiple(int client, int[] targets, int count) {
 }
 
 void showSpecMenu(int client, bool lock = false) {
-	Menu menu = new Menu(lock ? menuHandler_SpecLock : menuHandler_Spec, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem);
+	Menu menu = new Menu(
+		lock ? menuHandler_SpecLock : menuHandler_Spec,
+		MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem
+	);
 	menu.SetTitle("Spectate Menu");
 
 	if (GetClientTeam(client) > 1 && !lock) {

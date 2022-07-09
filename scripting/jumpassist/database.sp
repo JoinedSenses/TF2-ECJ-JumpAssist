@@ -158,7 +158,12 @@ void SaveMapSettings(int client, char[] arg1, char[] arg2) {
 		}
 
 		char query[512];
-		g_Database.Format(query, sizeof(query), "UPDATE map_settings SET Team = '%i' WHERE Map = '%s'", g_iForceTeam, g_sCurrentMap);
+		g_Database.Format(
+			query,
+			sizeof(query),
+			"UPDATE map_settings SET Team = '%i' WHERE Map = '%s'",
+			g_iForceTeam, g_sCurrentMap
+		);
 		g_Database.Query(SQL_OnMapSettingsUpdated, query, client > 0 ? GetClientUserId(client) : 0);
 	}
 }
@@ -183,7 +188,12 @@ void LoadPlayerProfile(int client) {
 
 	char query[80];
 	if (g_Database != null) {
-		FormatEx(query, sizeof(query), "SELECT * FROM player_profiles WHERE SteamID = '%s'", g_sClientSteamID[client]);
+		FormatEx(
+			query,
+			sizeof(query),
+			"SELECT * FROM player_profiles WHERE SteamID = '%s'",
+			g_sClientSteamID[client]
+		);
 		g_Database.Query(SQL_OnLoadPlayerProfile, query, GetClientUserId(client));
 	}
 }
@@ -259,7 +269,7 @@ void GetPlayerData(int client) {
 		"AND playerMap = '%s'",
 		g_sClientSteamID[client],
 		g_iClientTeam[client],
-		view_as<int>(g_TFClientClass[client]),
+		g_TFClientClass[client],
 		g_sCurrentMap
 	);
 	g_Database.Query(SQL_OnGetPlayerData, query, GetClientUserId(client));
@@ -299,7 +309,7 @@ void SavePlayerData(int client) {
 		"(" ...
 			"null, " ...
 			"'%s', " ... // g_sClientSteamID[client]
-			"'%i', " ... // view_as<int>(g_TFClientClass[client])
+			"'%i', " ... // g_TFClientClass[client]
 			"'%i', " ... // g_iClientTeam[client]
 			"'%s', " ... // g_sCurrentMap
 			"'%f', " ... // SavePos1[client][0]
@@ -308,7 +318,7 @@ void SavePlayerData(int client) {
 			"'%f'"   ... // SavePos2[client][1]
 		")",
 		g_sClientSteamID[client],
-		view_as<int>(g_TFClientClass[client]),
+		g_TFClientClass[client],
 		g_iClientTeam[client],
 		g_sCurrentMap,
 		g_fOrigin[client][0],
@@ -333,11 +343,11 @@ void UpdatePlayerData(int client) {
 			"angle2 = '%f' " ...      // SavePos2[client][1]
 		"WHERE steamID = '%s' " ...   // g_sClientSteamID[client]
 		"AND playerTeam = '%i' " ...  // g_iClientTeam[client]
-		"AND playerClass = '%i' " ... // view_as<int>(g_TFClientClass[client])
+		"AND playerClass = '%i' " ... // g_TFClientClass[client]
 		"AND playerMap = '%s'",       // g_sCurrentMap
 		g_fOrigin[client][0],
 		g_fOrigin[client][1],
-		float(RoundToCeil(g_fOrigin[client][2])),
+		float(RoundToCeil(g_fOrigin[client][2])), // Round up to prevent getting stuck in ground
 		g_fAngles[client][1],
 		g_sClientSteamID[client],
 		g_iClientTeam[client],
@@ -374,11 +384,11 @@ void ReloadPlayerData(int client) {
 		"FROM player_saves " ...
 		"WHERE steamID = '%s' " ...   // g_sClientSteamID[client]
 		"AND playerTeam = '%i' " ...  // g_iClientTeam[client]
-		"AND playerClass = '%i' " ... // view_as<int>(g_TFClientClass[client])
+		"AND playerClass = '%i' " ... // g_TFClientClass[client]
 		"AND playerMap = '%s'",       // g_sCurrentMap
 		g_sClientSteamID[client],
 		g_iClientTeam[client],
-		view_as<int>(g_TFClientClass[client]),
+		g_TFClientClass[client],
 		g_sCurrentMap
 	);
 	g_Database.Query(SQL_OnReloadPlayerData, query, GetClientUserId(client), DBPrio_High);
@@ -420,11 +430,11 @@ void LoadPlayerData(int client) {
 		"FROM player_saves " ...
 		"WHERE steamID = '%s' " ...   // g_sClientSteamID[client]
 		"AND playerTeam = '%i' " ...  // g_iClientTeam[client]
-		"AND playerClass = '%i' " ... // view_as<int>(g_TFClientClass[client])
+		"AND playerClass = '%i' " ... // g_TFClientClass[client]
 		"AND playerMap = '%s'",       // g_sCurrentMap
 		g_sClientSteamID[client],
 		g_iClientTeam[client],
-		view_as<int>(g_TFClientClass[client]),
+		g_TFClientClass[client],
 		g_sCurrentMap
 	);
 	g_Database.Query(SQL_OnLoadPlayerData, query, GetClientUserId(client), DBPrio_High);
@@ -448,7 +458,10 @@ void SQL_OnLoadPlayerData(Database db, DBResultSet results, const char[] error, 
 
 		g_fAngles[client][1] = results.FetchFloat(3);
 
-		if (!IsClientHardcore(client) && !IsClientRacing(client) && !IsTeleportPaused(client) && !IsClientForcedSpec(client)) {
+		if (!IsClientHardcore(client)
+		&& !IsClientRacing(client)
+		&& !IsTeleportPaused(client)
+		&& !IsClientForcedSpec(client)) {
 			Teleport(client);
 			g_iLastTeleport[client] = RoundFloat(GetEngineTime());
 		}
@@ -465,11 +478,11 @@ void DeletePlayerData(int client) {
 		"WHERE steamID = '%s' " ...   // g_sClientSteamID[client]
 		"AND playerMap = '%s'" ...    // g_sCurrentMap
 		"AND playerTeam = '%i' " ...  // g_iClientTeam[client]
-		"AND playerClass = '%i' ",    // view_as<int>(g_TFClientClass[client])
+		"AND playerClass = '%i' ",    // g_TFClientClass[client]
 		g_sClientSteamID[client],
 		g_sCurrentMap,
 		g_iClientTeam[client],
-		view_as<int>(g_TFClientClass[client])
+		g_TFClientClass[client]
 	);
 	g_Database.Query(SQL_OnDeletePlayerData, query, GetClientUserId(client));
 }

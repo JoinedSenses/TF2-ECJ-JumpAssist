@@ -203,7 +203,10 @@ public Action cmdRaceServer(int client, int args) {
 	}
 
 	if (g_iClientTeam[client] < 2 || !IsPlayerAlive(client)) {
-		PrintJAMessage(client, "Must be"...cTheme2..." alive\x01 and on a"...cTheme2..." team\x01 to use this command.");
+		PrintJAMessage(
+			client,
+			"Must be"...cTheme2..." alive\x01 and on a"...cTheme2..." team\x01 to use this command."
+		);
 		return Plugin_Handled;
 	}
 
@@ -304,7 +307,13 @@ int menuHandlerServerRaceCP(Menu menu, MenuAction action, int param1, int param2
 
 			g_iRaceEndPoint[param1] = StringToInt(info);
 			Panel panel;
-			FormatEx(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
+			FormatEx(
+				buffer,
+				sizeof(buffer),
+				"[JA] You have been invited to race to %s by %N",
+				GetCPNameByIndex(g_iRaceEndPoint[param1]),
+				param1
+			);
 			
 			for (int i = 1; i <= MaxClients; ++i) {
 				if (IsValidClient(i) && param1 != i && !g_bWaitingInvite[i] && g_iRaceID[i] == 0) {
@@ -376,7 +385,13 @@ int menuHandlerInvitePlayers(Menu menu, MenuAction action, int param1, int param
 				return 0;
 			}
 			PrintJAMessage(param1, "You have invited"...cTheme2..."%N \x01to race.", player);
-			FormatEx(buffer, sizeof(buffer), "[JA] You have been invited to race to %s by %N", GetCPNameByIndex(g_iRaceEndPoint[param1]), param1);
+			FormatEx(
+				buffer,
+				sizeof(buffer),
+				"[JA] You have been invited to race to %s by %N",
+				GetCPNameByIndex(g_iRaceEndPoint[param1]),
+				param1
+			);
 			
 			Panel panel = new Panel();
 			panel.SetTitle(buffer);
@@ -469,7 +484,12 @@ void displayRaceTimesMenu(int client, int clientToShow) {
 			racerDiff = "00:00:000";
 		}
 
-		FormatEx(racerEntryFormatted, sizeof(racerEntryFormatted), "%d. %N - %s (+%s)", (i+1), racer, racerTimes, racerDiff);
+		FormatEx(
+			racerEntryFormatted,
+			sizeof(racerEntryFormatted),
+			"%d. %N - %s (+%s)",
+			(i+1), racer, racerTimes, racerDiff
+		);
 		panel.DrawText(racerEntryFormatted);
 	}
 
@@ -516,7 +536,12 @@ void displayRaceInfoPanel(int client, int clientToShow) {
 		}
 	}
 
-	FormatEx(classForce, sizeof(classForce), "Class Force: %s", g_bRaceClassForce[g_iRaceID[clientToShow]] ? "Enabled" : "Disabled");
+	FormatEx(
+		classForce,
+		sizeof(classForce),
+		"Class Force: %s",
+		g_bRaceClassForce[g_iRaceID[clientToShow]] ? "Enabled" : "Disabled"
+	);
 		
 	Panel panel = new Panel();
 	panel.DrawText(leaderFormatted);

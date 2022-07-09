@@ -114,7 +114,8 @@ public Action cmdGoTo(int client, int args) {
 		return Plugin_Handled;
 	}
 
-	if (GetClientTeam(client) != GetClientTeam(target) && !(GetUserFlagBits(client) & (ADMFLAG_GENERIC|ADMFLAG_ROOT))) {
+	if (GetClientTeam(client) != GetClientTeam(target)
+	&& !(GetUserFlagBits(client) & (ADMFLAG_GENERIC|ADMFLAG_ROOT))) {
 		PrintJAMessage(client, "Can't go to players on the"...cTheme2..." opposite team");
 		return Plugin_Handled;
 	}

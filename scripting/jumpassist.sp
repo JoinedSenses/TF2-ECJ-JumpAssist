@@ -25,7 +25,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define PLUGIN_VERSION "2.4.7"
+#define PLUGIN_VERSION "2.4.8"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "JoinedSenses (Original author: rush, with previous updates from nolem and happs)"
 #define PLUGIN_DESCRIPTION "Tools to run a jump server with ease."
@@ -60,10 +60,11 @@ bool
 	g_bMapSetUsed,
 	g_bSaveLoc,
 	g_bExplosions[MAXPLAYERS+1];
-char
+static const char
 	g_sWebsite[128] = "http:// www.jump.tf/",
 	g_sForum[128] = "http://tf2rj.com/forum/",
-	g_sJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0",
+	g_sJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0";
+char
 	g_sCurrentMap[64],
 	g_sClientSteamID[MAXPLAYERS+1][32];
 int
@@ -189,8 +190,16 @@ public void OnPluginStart() {
 
 	// SPEC
 	RegConsoleCmd("sm_spec", cmdSpec, "sm_spec <target> - Spectate a player.");
-	RegConsoleCmd("sm_spec_ex", cmdSpecLock, "sm_spec_ex <target> - Consistently spectate a player, even through their death");
-	RegConsoleCmd("sm_speclock", cmdSpecLock, "sm_speclock <target> - Consistently spectate a player, even through their death");
+	RegConsoleCmd(
+		"sm_spec_ex",
+		cmdSpecLock,
+		"sm_spec_ex <target> - Consistently spectate a player, even through their death"
+	);
+	RegConsoleCmd(
+		"sm_speclock",
+		cmdSpecLock,
+		"sm_speclock <target> - Consistently spectate a player, even through their death"
+	);
 	RegAdminCmd("sm_fspec", cmdForceSpec, ADMFLAG_GENERIC, "sm_fspec <target> <targetToSpec>.");
 
 	// RACE
@@ -273,9 +282,16 @@ public void OnPluginStart() {
 			else {
 				g_iClientTeam[i] = GetClientTeam(i);
 				g_TFClientClass[i] = TF2_GetPlayerClass(i);
-				g_bFeaturesEnabled[i] = GetClientAuthId(i, AuthId_Steam2, g_sClientSteamID[i], sizeof(g_sClientSteamID[]));
+				g_bFeaturesEnabled[i] = GetClientAuthId(
+					i,
+					AuthId_Steam2,
+					g_sClientSteamID[i],
+					sizeof(g_sClientSteamID[])
+				);
+
 				SDKHook(i, SDKHook_WeaponEquipPost, hookOnWeaponEquipPost);
 				SDKHook(i, SDKHook_SetTransmit, hookSetTransmitClient);
+
 				GetClientWeapons(i);
 
 				if (AreClientCookiesCached(i)) {
@@ -370,6 +386,7 @@ void SetUpCapturePoints() {
 		AcceptEntityInput(entity, "SetTeamCanCap");
 		++g_iCPCount;
 	}
+
 	//PrintToChatAll("CPCount = %i trigger count = %i", cpCount, g_iCPCount);
 	if (cpCount < g_iCPCount) {
 		g_bCPFallback = true;
@@ -425,7 +442,8 @@ public void OnGameFrame() {
 	}
 }
 
-public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2]) {
+public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon,
+		int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2]) {
 	if (!IsValidClient(client)) {
 		return Plugin_Continue;
 	}
@@ -433,7 +451,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	// FOR SKEYS
 	int observerMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
 	int clientToShow = IsClientObserver(client) ? GetEntPropEnt(client, Prop_Send, "m_hObserverTarget") : client;
-	if (IsValidClient(clientToShow, true) && (g_bSKeysEnabled[client] || IsFakeClient(clientToShow)) && !(buttons & IN_SCORE) && observerMode != 7) {
+	if (IsValidClient(clientToShow, true)
+	&& (g_bSKeysEnabled[client] || IsFakeClient(clientToShow))
+	&& !(buttons & IN_SCORE)
+	&& observerMode != 7) {
 		bool isEditing;
 		if (g_iSKeysMode[client] == EDIT) {
 			isEditing = true;
@@ -496,16 +517,22 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		float y = g_fSKeysPos[client][YPOS];
 		static const float hold = 0.3;
 
-		SetHudTextParams(x+(w?0.047:0.052), y, hold, r, g, b, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		SetHudTextParams(x + (w ? 0.047 : 0.052), y, hold, r, g, b, alpha, .fadeIn=0.0, .fadeOut=0.0);
 		ShowSyncHudText(client, g_hHudDisplayForward, (w?"W":"-"));
 
-		SetHudTextParams(x+0.04-(a?0.0042:0.0)-(s?0.0015:0.0), y+0.04, hold, r, g, b, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		SetHudTextParams(
+			x + 0.04 - (a ? 0.0042 : 0.0) - (s ? 0.0015 : 0.0),
+			y + 0.04,
+			hold,
+			r, g, b, alpha,
+			.fadeIn=0.0, .fadeOut=0.0
+		);
 		ShowSyncHudText(client, g_hHudDisplayASD, "%c %c %c", (a?'A':'-'), (s?'S':'-'), (d?'D':'-'));
 
-		SetHudTextParams(x+0.08, y, hold, r, g, b, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		SetHudTextParams(x + 0.08, y, hold, r, g, b, alpha, .fadeIn = 0.0, .fadeOut = 0.0);
 		ShowSyncHudText(client, g_hHudDisplayJump, "%s\n%s", (duck?" Duck":""), (jump?"Jump":""));
 
-		SetHudTextParams(x, y, hold, r, g, b, alpha, .fadeIn=0.0, .fadeOut=0.0);
+		SetHudTextParams(x, y, hold, r, g, b, alpha, .fadeIn = 0.0, .fadeOut = 0.0);
 		ShowSyncHudText(client, g_hHudDisplayAttack, "%s\n%s", (m1?"M1":""), (m2?"M2":""));
 	}
 
@@ -619,7 +646,10 @@ public Action listenerJoinClass(int client, const char[] command, int args) {
 		return Plugin_Handled;
 	}
 
-	if (IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client) && g_bRaceClassForce[g_iRaceID[client]]) {
+	if (IsClientRacing(client)
+	&& !IsPlayerFinishedRacing(client)
+	&& HasRaceStarted(client)
+	&& g_bRaceClassForce[g_iRaceID[client]]) {
 		PrintJAMessage(client, "Cannot change class while racing.");
 		return Plugin_Handled;
 	}
@@ -670,17 +700,20 @@ public Action listenerJoinTeam(int client, const char[] command, int args) {
 			// if class is not chosen, let client choose
 			return Plugin_Continue;
 		}
+
 		return Plugin_Handled;
 	}
 	else {
 		// if unknown arg, do nothing.
 		delete dp;
+
 		return Plugin_Handled;
 	}
 
 	if (newTeam == oldTeam) {
 		// if new team is old team, do nothing.
 		delete dp;
+
 		return Plugin_Handled;
 	}
 
@@ -699,6 +732,7 @@ public Action listenerJoinTeam(int client, const char[] command, int args) {
 	}
 	
 	RequestFrame(framerequestChangeTeam, dp);
+
 	if (TF2_GetPlayerClass(client) == TFClass_Unknown) {
 		// fallback: if class is not chosen, let client choose
 		return Plugin_Continue;
@@ -719,7 +753,7 @@ public void eventPlayerChangeTeam(Event event, const char[] name, bool dontBroad
 
 	if (g_iIntelCarrier == client) {
 		int ent = -1;
-		while((ent = FindEntityByClassname(ent, "item_teamflag")) != -1) {
+		while ((ent = FindEntityByClassname(ent, "item_teamflag")) != -1) {
 			AcceptEntityInput(ent, "ForceDrop");
 			AcceptEntityInput(ent, "ForceReset");
 			g_iIntelCarrier = 0;
@@ -941,7 +975,8 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 			FormatEx(
 				buffer,
 				sizeof(buffer),
-				"["...cTheme1..."JA\x01]"...cTheme2..." %N\x01 finished the race in"...cTheme2..." %s\x01 ("...cTheme2..."+%s\x01)!",
+				"["...cTheme1..."JA\x01]"...cTheme2...
+				" %N\x01 finished the race in"...cTheme2..." %s\x01 ("...cTheme2..."+%s\x01)!",
 				client, timeString, diffFormatted
 			);
 
@@ -972,9 +1007,10 @@ public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast) {
 	}
 	// If client has not yet touched the cap and also if they haven't used the teleport command within 10 seconds.
 	else if (!g_bCPTouched[client][area] && ((RoundFloat(GetEngineTime()) - g_iLastTeleport[client]) > 10)) {
-		char cpName[32];
 		char areaidx[3];
 		FormatEx(areaidx, sizeof(areaidx), "%i", area);
+
+		char cpName[32];
 		(g_bCPFallback ? g_smCaptureAreaName : g_smCapturePointName).GetString(areaidx, cpName, sizeof(cpName));
 
 		char className[33];
@@ -1368,7 +1404,10 @@ void SetPlayerDefaults(int client) {
  */
 void SaveLoc(int client) {
 	if (!g_bFeaturesEnabled[client]) {
-		PrintJAMessage(client, "Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.");
+		PrintJAMessage(
+			client,
+			"Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes."
+		);
 		return;
 	}
 
@@ -1416,11 +1455,15 @@ void SaveLoc(int client) {
  */
 void Teleport(int client) {
 	if (!g_bFeaturesEnabled[client]) {
-		PrintJAMessage(client, "Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes.");
+		PrintJAMessage(
+			client,
+			"Feature disabled: Unable to retrieve steamid. Reconnect or try again in a few minutes."
+		);
 		return;
 	}
 
-	if (g_iRaceID[client] && (g_RaceStatus[g_iRaceID[client]] == STATUS_COUNTDOWN || g_RaceStatus[g_iRaceID[client]] == STATUS_RACING)) {
+	if (g_iRaceID[client]
+	&& (g_RaceStatus[g_iRaceID[client]] == STATUS_COUNTDOWN || g_RaceStatus[g_iRaceID[client]] == STATUS_RACING)) {
 		PrintJAMessage(client, "Cannot teleport while racing.");
 		return;
 	}
@@ -1444,7 +1487,11 @@ void Teleport(int client) {
 	if (IsEmptyVector(g_fOrigin[client])) {
 		char className[33];
 		GetClassName(g_TFClientClass[client], className, sizeof(className));
-		PrintJAMessage(client, "You don't have a save for%s %s\x01 on the%s %s\x01.", teamColor, className, teamColor, teamName);
+		PrintJAMessage(
+			client,
+			"You don't have a save for%s %s\x01 on the%s %s\x01.",
+			teamColor, className, teamColor, teamName
+		);
 		return;
 	}
 

@@ -110,7 +110,8 @@ public Action cmdHide(int client, int args) {
    ------------------------------- Hooks
 */
 
-public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags, char soundEntry[PLATFORM_MAX_PATH], int &seed) {
+public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity,
+		int &channel, float &volume, int &level, int &pitch, int &flags, char soundEntry[PLATFORM_MAX_PATH], int &seed) {
 	//Block sounds within g_sSoundHook list.
 	for (int i = 0; i < sizeof(g_sSoundHook); ++i) {
 		if (StrContains(sample, g_sSoundHook[i], false) != -1) {
@@ -143,8 +144,16 @@ public Action hookSound(int clients[MAXPLAYERS], int &numClients, char sample[PL
 
 	for (int i = 0; i < numClients; ++i) {
 		int client = clients[i];
-		if (!IsClientInGame(client) || (IsValidClient(client) && g_bHide[client] && client != entity && client != owner && g_iClientTeam[client] != 1)) {
-			//Remove the client from the array if they have hide toggled, if they are not the creator of the sound, and if they are not in spectate.
+		if (!IsClientInGame(client)
+		|| (IsValidClient(client)
+			&& g_bHide[client]
+			&& client != entity
+			&& client != owner
+			&& g_iClientTeam[client] != 1
+		)) {
+			//Remove the client from the array if they have hide toggled,
+			// if they are not the creator of the sound,
+			// and if they are not in spectate.
 			for (int j = i; j < numClients-1; ++j) {
 				clients[j] = clients[j+1];
 			}
